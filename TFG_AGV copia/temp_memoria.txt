@@ -1,0 +1,544 @@
+
+
+Universidad Pontificia de Salamanca
+Facultad de Informática
+Grado en Informática
+
+
+
+
+
+
+Trabajo Fin de Grado
+
+Detección y corrección de movimiento para telerehabilitación de lesiones
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Aarón Gómez Vera
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Dr. Alberto Pedrero Esteban
+Director
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Salamanca, Julio de 2026
+
+Resumen
+Aunque la inteligencia artificial y los servicios digitales han experimentado un crecimiento exponencial, el sector de la telemedicina y la telerehabilitación ha evidenciado un retraso significativo en su adopción práctica para los pacientes. Por eso este trabajo de fin de grado aborda la urgente necesidad de descentralizar los servicios de fisioterapia mediante el diseño y desarrollo de una plataforma integral de telerehabilitación preventiva asistida por Inteligencia Artificial. El objetivo clínico principal es ayudar al análisis biomecánico de los pacientes, evitando la estricta dependencia de entornos médicos presenciales y sustituyendo los costosos laboratorios de captura de movimiento y sensores corporales inerciales.
+Para lograrlo, se ha llevado a cabo una interactiva aplicación desarrollada nativamente en Python, impulsada por la red neuronal de inferencia topológica MediaPipe y el puente audiovisual de OpenCV. El sistema emplea una cámara web convencional periférica para extraer, en tiempo real sin utilizar marcadores físicos, las coordenadas tridimensionales anatómicas del individuo. Paralelamente, mediante un núcleo trigonométrico estructurado por NumPy, el software calcula los ángulos articulares biométricos.
+La arquitectura de la herramienta destaca fundamentalmente por su gran escalabilidad orientada a objetos. Integra un diseño de máquina de estados finita capaz de auditar dinámicamente las fases mecánicas y tolerancias de protocolos de ejercicios distintos. Ante infracciones de los umbrales fisiológicos seguros, el sistema frena los falsos positivos y emite retroalimentación audiovisual correctora.
+Finalmente, este ecosistema certifica la calidad del tratamiento, unificando y almacenando de forma autónoma los historiales en una base de datos relacional e imprimiendo informes de progresión telemétricos en texto para garantizar el seguimiento por parte del fisioterapeuta profesional.
+Abstract
+Although artificial intelligence and digital services have experienced exponential growth, the fields of telemedicine and telerehabilitation have shown a significant delay in their practical adoption for patients. Therefore, this Final Degree Project addresses the urgent need to decentralize physical therapy services through the design and development of a comprehensive, Artificial Intelligence-assisted preventive telerehabilitation platform. The primary clinical objective is to assist in the biomechanical analysis of patients, mitigating the strict dependence on in-person medical environments and replacing costly motion capture laboratories and wearable inertial sensors.
+To achieve this, an interactive desktop application has been developed natively in Python, powered by the MediaPipe topological inference neural network and the OpenCV audiovisual framework. The system utilizes a conventional peripheral webcam to extract, in real-time and without the use of physical markers (markerless), the three-dimensional anatomical coordinates of the individual. Concurrently, through a trigonometric core structured by NumPy, the software instantaneously calculates the biometric joint angles.
+The architecture of the tool is fundamentally distinguished by its high object-oriented scalability. It integrates a Finite State Machine design capable of dynamically auditing the mechanical phases and tolerances of various distinct exercise protocols. Upon infringement of safe physiological thresholds, the system prevents false positives and issues corrective audiovisual feedback.
+Finally, this ecosystem certifies the quality of the treatment by unifying and autonomously storing patient histories in a relational database (SQLite), generating and exporting telemetric progression reports in text format to ensure qualified monitoring by physiotherapy professionals.
+
+Descriptores
+Telerehabilitación, Mediapipe, Análisis biomecánico y Monitorización en tiempo real 
+
+
+Índice
+1.	Introducción	10
+1.1	Motivación del TFG	10
+1.2	Objetivos del TFG	11
+2.	Telerehabilitación	13
+2.1	¿Qué es la telerehabilitación?	13
+2.2	¿Cómo funciona el proceso de telerehabilitación?	13
+2.3	Aspecto claves de la telerehabilitación	13
+2.4	Beneficios de la telerehabilitación	14
+2.4.1	Innovación Tecnológica y Modernización de la Salud	14
+2.4.2	Democratización y Accesibilidad	14
+2.4.3	Mejora en la Adherencia al Tratamiento	14
+2.4.4	Empoderamiento del Paciente y Prevención de Recaídas	15
+2.4.5	Optimización del Tiempo del Profesional	15
+2.5	Objetivos de la telerehabilitación	15
+2.5.1	Investigación y Evaluación de Tecnologías:	15
+2.5.2	Desarrollo del Algoritmo	15
+2.5.3	Desarrollo de la Plataforma e Interfaz de Usuario:	15
+2.5.4	Tratamiento de Datos e Informes:	15
+2.5.5	Validación y Pruebas:	15
+2.6	Telerehabilitación en la actualidad	16
+2.6.1	Sistemas Basados en Inteligencia Artificial y Visión Computacional	16
+2.6.2	Sistemas de Realidad Virtual y Aumentada	16
+2.6.3	Dispositivos Wearables y Sensores Inerciales	16
+2.6.4	Telemedicina y Teleconsulta	16
+2.6.5	Principales aplicaciones actuales de la telerehabilitación	16
+2.7	Pros y contras de la telerehabilitación	17
+2.7.1	Aspectos a favor de la telerehabilitación	17
+2.7.2	Aspectos en contra de la telerehabilitación	17
+2.8	Posibilidades de mejora para la telerehabilitación	17
+2.9	Estado del arte : trabajos similares y antecedentes	18
+2.9.1	Validación científica de MediaPipe para el cálculo del rango de movimiento	18
+2.9.2	Análisis de la marcha y patologías del tren Inferior	19
+3.	Aplicación desarrollada	21
+3.1	Librerías utilizadas	21
+3.1.1	Mediapipe	21
+3.1.2	OpenCV	22
+3.1.3	NumPy	23
+3.2	Descripción de la aplicación desarrollada	24
+3.2.1	El marco de trabajo modular	25
+3.2.2	Implementaciones polimórficas	25
+3.2.3	El orquestador principal	26
+3.2.4	Integración funcional de librerías en el software	26
+3.2.5	Flujo de digitalización, verificación y almacenamiento de datos biomecánicos	27
+3.3	Dificultades sufridas a lo largo del desarrollo de la aplicación	28
+3.3.1	Mantenibilidad del código al escalar ejercicios	28
+3.3.2	Dificultad vectorial y falsos positivos por perspectiva planimétrica	29
+3.3.3	Ambigüedad de lateralidad en ejercicios asimétricos unilaterales	29
+3.4	Funcionamiento de mi aplicación	30
+3.4.1	Explicación general	30
+3.4.2	Explicación de captura y análisis	31
+4.	Bibliografía	32
+
+Índice de Figuras
+(Nota: El índice de Figuras y Tablas se ha de crear automáticamente al finalizar la memoria mediante la opción “Insertar Tabla de Ilustraciones” de Word, y siempre que previamente se haya añadido un título o descripción a cada Figura y Tabla con la opción “Insertar Título”).
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Introducción
+
+Este TFG describe el diseño, la arquitectura y la implementación de una plataforma avanzada de telerehabilitación física asistida por Inteligencia Artificial y Visión por Computador. En el contexto actual de la salud digital, donde la supervisión a distancia y la eficiencia clínica son demandas crecientes, este proyecto propone una solución de escritorio pionera capaz de guiar, evaluar y corregir ejercicios biomecánicos en tiempo real utilizando únicamente una cámara web estándar. Mediante la integración de redes neuronales de estimación de pose tridimensional (MediaPipe y OpenCV), el sistema procesa el esqueleto del paciente, analiza la cinemática de sus articulaciones de manera ininterrumpida y le ofrece una retroalimentación visual instantánea a través de un esquema semafórico inmersivo. De este modo, la plataforma no solo actúa como un asistente virtual que salvaguarda la técnica del usuario en rutinas como sentadillas, press militar o apoyos monopodales, sino que también funciona como un puente de telemetría directo hacia el profesional de la salud, automatizando la recolección de métricas de rendimiento y la generación de historiales clínicos.
+Motivación del TFG
+La principal motivación que ha impulsado el desarrollo de este trabajo radica en la urgente necesidad de democratizar y enriquecer el proceso de rehabilitación física en el entorno domiciliario. Históricamente, cuando los pacientes deben continuar sus rutinas terapéuticas en casa, se exponen a un doble riesgo clínico: la adherencia irregular al tratamiento y la ejecución de ejercicios con una higiene postural defectuosa, lo que a menudo desemboca en la cronicidad o el agravamiento de sus lesiones. Aunque la tecnología clínica moderna dispone de sistemas de captura de movimiento excepcionalmente precisos, estos suelen ser inaccesibles para el usuario medio debido a sus excesivos costes de hardware y a su complejidad dependiente de sensores físicos o trajes inerciales. Por consiguiente, la determinación central de este proyecto es demostrar que, empleando estrategias eficientes de Machine Learning y una interfaz centrada en la experiencia de usuario (UX), es posible proporcionar una red de seguridad biométrica de primer nivel sin coste extra para el paciente, fusionando la tecnología puntera con las necesidades reales del sector de la fisioterapia y la actividad física.
+
+
+
+
+
+Objetivos del TFG
+El objetivo general de este trabajo es crear y validar una aplicación interactiva, modular y robusta para la supervisión analítica de ejercicios físicos a distancia. Para alcanzar este fin, la solución se ha estructurado en torno a los siguientes objetivos específicos:
+	•	Diseñar motores de detección espacial con capacidad para evaluar desviaciones biomecánicas y clasificar las repeticiones aplicando rigurosas reglas de rango de movimiento .
+	•	Programar sistemas de seguridad clínica proactivos, capaces de abortar agresivamente la sesión de entrenamiento y re-educar al usuario al detectar un acumulado crítico de fallos técnicos, garantizando el principio terapéutico de no dañar.
+	•	Diseño e Interacción: Construir una Interfaz Gráfica de Usuario caracterizada por un minimalismo extremo, apta para pacientes con baja alfabetización digital, prescindiendo de lecturas de texto e integrando barras de interpolación dinámicas y retroalimentación volumétrica.
+	•	Diseñar un robusto sistema de bases de datos y exportación de archivos en texto plano para garantizar la persistencia del historial del paciente, asegurando que los terapeutas reciban resúmenes diarios estructurados con los niveles de dificultad superados y los porcentajes de éxito en sus rutinas.
+
+
+
+
+
+
+
+
+Telerehabilitación
+¿Qué es la telerehabilitación?
+La telerehabilitación es la prestación de servicios de rehabilitación a distancia utilizando tecnologías de la información y comunicación, como aplicaciones, vídeos y videollamadas.(1). Permite realizar ejercicios terapéuticos y el seguimiento profesional desde casa, mejorando el acceso, la comodidad y la adherencia al tratamiento.
+
+¿Cómo funciona el proceso de telerehabilitación?
+
+Primero se lleva a cabo una valuación Inicial la cual el profesional valora al paciente y diseña un plan personalizado. Seguido se desarrolla un plan de ejercicios en los cuales se envían pautas a través de plataformas digitales, incluyendo vídeos o ejercicios interactivos para que el paciente pueda interactuar. Por último, el especialista supervisa los avances mediante reportes automáticos, sensores de movimiento y videollamadas, ajustando el tratamiento según la evolución(2)
+
+
+Aspecto claves de la telerehabilitación
+	•	Funcionamiento: Inicia con una evaluación virtual, seguida de un plan de ejercicios personalizado a través de una plataforma digital. El profesional supervisa el progreso mediante reportes automáticos y seguimiento remoto.(3)
+	•	Ventajas: Elimina barreras geográficas, ahorra tiempo y dinero en desplazamientos, ofrece flexibilidad horaria y fomenta la autonomía del paciente en su recuperación.
+	•	Patologías tratadas: Es muy común en condiciones musculoesqueléticas, por ejemplo, la tendidits, rehabilitación postquirúrgica y, en ocasiones, en rehabilitación cardíaca o pulmonar crónica.(4)
+	•	Seguridad: Se recomienda usar plataformas específicas que garanticen la seguridad de los datos clínicos, en lugar de herramientas de mensajería.
+
+La telerehabilitación mejora la accesibilidad para personas con movilidad reducida o que viven en zonas remotas. Además, las plataformas avanzadas a menudo integran Inteligencia Artificial para monitorizar en tiempo real, lo que permite al terapeuta ajustar el tratamiento rápidamente y mejorar la eficacia de la recuperación. Esta modalidad ofrece una alternativa eficaz y conveniente para llevar a cabo sesiones de rehabilitación a distancia, permitiendo a los pacientes acceder a la atención médica desde la comodidad de sus hogares. 
+La combinación de telerehabilitación y guías de práctica clínica amplía el acceso a la atención médica. Además, garantiza la prestación de servicios de alta calidad y la aplicación de tratamientos basados en la evidencia. En un momento en el que la demanda de servicios de rehabilitación está en constante aumento y las necesidades de los pacientes evolucionan, esta combinación se convierte en una herramienta imprescindible para optimizar la atención y mejorar los resultados del tratamiento.
+Por eso, cada vez son más las compañías aseguradoras, hospitales y centros de fisioterapia que apuestan por plataformas de telerehabilitación para complementar sus servicios de fisioterapia sin renunciar a la calidad de servicio a sus pacientes.(5)
+
+Beneficios de la telerehabilitación
+Innovación Tecnológica y Modernización de la Salud 
+	•	Integración de la Inteligencia Artificial en la Fisioterapia: El uso de visión artificial como el seguimiento de puntos clave o pose estimation en ejercicios introduce una herramienta objetiva que antes solo estaba disponible en laboratorios de biomecánica muy caros. (6)
+	•	Monitorización Objetiva: Tradicionalmente, los ejercicios mandados a casa dependen de la memoria y percepción del paciente. Mi solución permite una evaluación cuantitativa (ángulos, repeticiones, postura correcta) que el profesional puede revisar en diferido o en tiempo real.
+Democratización y Accesibilidad 
+	•	Superación de Barreras Geográficas y de Movilidad: Muchos pacientes con lesiones graves o personas mayores tienen dificultades para desplazarse constantemente a una clínica. La telerehabilitación lleva el tratamiento a su hogar.
+	•	Reducción de Costes y Tiempos: Disminuye el tiempo de traslado y los costes asociados tanto para el paciente como para el sistema sanitario, optimizando los recursos limitados de las clínicas de rehabilitación.
+Mejora en la Adherencia al Tratamiento 
+	•	Mayor Cumplimiento Terapéutico: Uno de los mayores problemas en fisioterapia es que los pacientes abandonan los ejercicios en casa. Una aplicación interactiva que analiza sus movimientos les da feedback inmediato, lo que aumenta drásticamente la adherencia al tratamiento.
+	•	Continuidad Asistencial: Permite que no haya vacíos entre las sesiones presenciales, manteniendo un flujo de trabajo continuo y reduciendo el tiempo total de recuperación de la lesión.
+ Empoderamiento del Paciente y Prevención de Recaídas
+	•	El paciente toma un papel activo en su recuperación al poder ver sus propios fallos posturales en tiempo real.
+	•	La corrección automática previene lesiones secundarias por realizar un movimiento compensatorio repetitivo en casa de forma incorrecta.
+Optimización del Tiempo del Profesional 
+	•	Escalabilidad: Un profesional puede analizar de forma rápida el progreso de múltiples pacientes sin necesidad de estar presente físicamente en cada repetición.
+	•	Toma de Decisiones Basada en Datos: El profesional recibe un resumen gráfico o analítico de cómo ha ejecutado el paciente los ejercicios durante la semana, permitiéndole reajustar las cargas o cambiar de serie de forma mucho más precisa.
+
+Objetivos de la telerehabilitación
+Investigación y Evaluación de Tecnologías:
+	•	Evaluar e integrar librerías de visión artificial para el seguimiento preciso de puntos anatómicos corporales mediante una cámara web estándar.
+	•	Analizar la biomecánica de ejercicios específicos para definir los rangos de movimiento articulares óptimos y los errores posturales más comunes.
+Desarrollo del Algoritmo
+	•	Desarrollar algoritmos capaces de calcular ángulos articulares y evaluar la trayectoria del movimiento en tiempo real o a partir de vídeos pregrabados.
+	•	Implementar un sistema de feedback automático que identifique fallos en la ejecución tales como compensaciones y asimetrías y genere una corrección visual para el usuario.
+Desarrollo de la Plataforma e Interfaz de Usuario:
+	•	Diseñar una interfaz interactiva y accesible que permita una navegación intuitiva tanto para el paciente como para el profesional.
+	•	Crear un sistema de gestión de perfiles y bases de datos que permita almacenar la evolución de los alumnos/pacientes de forma individualizada.(4)
+Tratamiento de Datos e Informes:
+	•	Desarrollar un sistema de generación de informes cuantitativos (estadísticas de aciertos, gráficas de rango de movimiento, histórico) para facilitar la toma de decisiones clínicas del fisioterapeuta o educador físico.
+Validación y Pruebas:
+	•	Realizar pruebas de usabilidad y precisión del software para comprobar que las mediciones del sistema se ajustan a un entorno de práctica real con usuarios.
+Telerehabilitación en la actualidad
+En la actualidad, los sistemas de telerehabilitación han evolucionado para integrar tecnologías avanzadas que permiten realizar ejercicios, monitorizar el progreso y recibir atención fisioterapéutica desde el hogar, reduciendo la necesidad de traslados. Estos sistemas se pueden clasificar en diversas categorías según su enfoque tecnológico.
+Sistemas Basados en Inteligencia Artificial y Visión Computacional
+Existen tres principales herramientas:
+	•	TrakPhysio: Una herramienta destacada que utiliza la cámara del dispositivo para guiar al paciente en tiempo real, corrigiendo su postura y monitorizando el rango de movimiento sin necesidad de sensores externos. (6)
+	•	ReHand: Plataforma centrada en la rehabilitación de patologías del miembro superior, que utiliza el reconocimiento de movimiento para guiar ejercicios terapéuticos.
+	•	ReHub: Plataforma de rehabilitación digital que permite a los terapeutas prescribir ejercicios, monitorizar al paciente y obtener datos precisos de su evolución. (2)
+Sistemas de Realidad Virtual y Aumentada
+La integración de realidad virtual y realidad aumentada crea entornos inmersivos que convierten los ejercicios de rehabilitación en actividades interactivas, lo que mejora la adherencia al tratamiento. 
+Dispositivos Wearables y Sensores Inerciales
+Se utilizan dispositivos de medición inercial para evaluar la movilidad y la calidad del movimiento, permitiendo al profesional obtener datos objetivos del paciente en su entorno doméstico. 
+Telemedicina y Teleconsulta
+La forma más directa de telerehabilitación son las plataformas de videoconferencia, donde el profesional guía al paciente en sesiones síncronas o asíncronas.
+También la telemotorización que es el control remoto de parámetros físicos y funcionales del paciente. 
+Principales aplicaciones actuales de la telerehabilitación
+	•	Fisioterapia traumatológica y deportiva: Recuperación de lesiones musculoesqueléticas.
+	•	Rehabilitación neurológica: Ejercicios para pacientes con lesiones cerebrales.(7)
+	•	Rehabilitación cardiopulmonar: Programas a distancia para pacientes con enfermedades crónicas, integrando modelos híbridos.
+	•	Geriatría: Atención especializada para personas mayores, facilitando el acceso a terapias sin salir de casa. 
+ 
+Pros y contras de la telerehabilitación
+La telerehabilitación ofrece mayor accesibilidad, flexibilidad de horarios y ahorro de tiempo/costes al evitar desplazamientos, facilitando la continuidad del tratamiento desde casa. Sus principales contras incluyen la brecha digital, dependencia de internet, falta de contacto físico para evaluaciones manuales y limitaciones técnicas. 
+Aspectos a favor de la telerehabilitación
+	•	Accesibilidad y conveniencia: Permite el acceso a especialistas sin importar la ubicación geográfica, ideal para zonas rurales o personas con movilidad reducida.(5)
+	•	Ahorro de tiempo y dinero: Elimina los costes y el tiempo asociados al traslado a centros de rehabilitación.
+	•	Mayor adherencia: Al realizarse desde el hogar, aumenta la constancia en el seguimiento de los ejercicios.
+	•	Continuidad del cuidado: Evita interrupciones en el tratamiento, manteniendo una supervisión constante.(4)
+	•	Personalización y tecnología: Uso de herramientas digitales (apps, sensores) que permiten monitorizar el progreso en tiempo real. 
+Aspectos en contra de la telerehabilitación
+	•	Limitación en la evaluación física: Los terapeutas no pueden realizar palpaciones, terapia manual o ajustes físicos directos.
+	•	Brecha digital: Dificultades técnicas para personas mayores o sin habilidades tecnológicas.(8)
+	•	Dependencia tecnológica: Requiere una buena conexión a internet y dispositivos adecuados; fallos técnicos pueden interrumpir la sesión.
+	•	Falta de contacto personal: Puede disminuir la empatía y la conexión emocional entre paciente y profesional.
+	•	Seguridad de datos: Riesgos potenciales en la protección de la información del paciente si las plataformas no son seguras.
+	•	No apto para todos los casos: Pacientes con condiciones graves o en etapas iniciales postquirúrgicas pueden necesitar atención presencial.
+Posibilidades de mejora para la telerehabilitación
+Las posibilidades de mejora de la telerehabilitación se centran en aumentar la calidad de la atención a distancia, superando limitaciones técnicas y mejorando la interacción paciente-terapeuta mediante tecnología avanzada. Las áreas clave de mejora incluyen:
+	•	Integración de Inteligencia Artificial: Uso de IA para la evaluación automática de movimientos, corrección de ejercicios en tiempo real y personalización de planes de tratamiento basados en el progreso del paciente.
+	•	Tecnología de Visión Computacional: Plataformas que utilizan la cámara del dispositivo para medir rangos de movimiento sin necesidad de sensores portátiles, facilitando el uso y mejorando la precisión del seguimiento.
+	•	Dispositivos de Realidad Virtual y Aumentada: Implementación de entornos inmersivos para aumentar la motivación del paciente y mejorar la rehabilitación neurológica y motora.
+	•	Gamificación: Incorporación de mecánicas de juego en los ejercicios para mejorar la adherencia al tratamiento, especialmente en rehabilitación a largo plazo.
+	•	Mejora de la Accesibilidad y Usabilidad: Desarrollo de interfaces más intuitivas y sencillas, crucial para pacientes geriátricos o con baja competencia digital, reduciendo la brecha tecnológica.(9)
+	•	Integración con Historias Clínicas Electrónicas: Permitir que los datos de la telerehabilitación se sincronicen automáticamente con el historial médico central del paciente para una atención continua.
+	•	Mayor enfoque en la educación del paciente: Incorporar componentes educativos digitales para mejorar el automanejo de enfermedades crónicas.  
+Estas mejoras buscan no solo replicar la rehabilitación presencial, sino ofrecer una alternativa más flexible, cómoda y, en muchos casos, con un seguimiento de datos más preciso.
+
+Estado del arte : trabajos similares y antecedentes
+La rehabilitación física ha estado intrínsecamente ligado a la presencialidad. La evaluación de afecciones neuromusculares, el seguimiento del desgaste articular y la corrección biomecánica exigían, hasta hace pocos años, la observación directa de un especialista clínico y la utilización de instrumental analógico rudimentario o ecosistemas de captura de movimiento altamente intrusivos e inasumibles económicamente para entornos domésticos. Sin embargo, la reciente saturación de los sistemas sanitarios y el drástico aumento de la demanda de fisioterapia por el envejecimiento poblacional han evidenciado la necesidad urgente de delegar y descentralizar estos procesos hacia la telemedicina.
+En este contexto de emergencia tecnológica, la adopción progresiva de algoritmos de Inteligencia Artificial centrados en la estimación de pose sin marcadores ha experimentado un auge sin precedentes en la literatura clínica. Este enfoque busca democratizar el seguimiento médico extrayendo modelos anatómicos de alta fidelidad sirviéndose única y exclusivamente de cámaras RGB convencionales, erradicando la dependencia de sensores corporales o trajes de telemetría.
+Esta revolución científica ha sido catalizada casi en su totalidad por el lanzamiento de arquitecturas predictivas ligeras como el framework MediaPipe impulsado por Google. Su excepcional rendimiento en dispositivos periféricos ha atraído a un vasto sector de la ingeniería biomédica, originando un robusto estado del arte donde desarrolladores e investigadores intentan trazar puentes entre la biomecánica y el análisis de vídeo en tiempo real.
+A continuación, se exponen los principales pilares de investigación recientes y los prototipos documentados en los que se inspira, apoya y asienta teóricamente el desarrollo tecnológico del presente Trabajo de Fin de Grado:
+
+Validación científica de MediaPipe para el cálculo del rango de movimiento 
+Históricamente, la medición del Rango de Movimiento ha sido el principal pilar para diagnosticar la rigidez articular y evaluar el progreso funcional en un programa de rehabilitación física. Tradicionalmente, este cálculo se ha realizado de forma analógica en consulta mediante el uso de goniómetros universales físicos, o mediante costosos sistemas de captura de movimiento con marcadores reflexivos. Estas metodologías requerían irremediablemente la presencia física del paciente en un entorno de laboratorio altamente controlado, frustrando cualquier iniciativa de telerehabilitación escalable.
+En los últimos tres años, la literatura clínica ha experimentado un punto de inflexión significativo con la irrupción de las redes neuronales de estimación de pose sin marcadores. Dentro de este estado del arte, el framework MediaPipe de Google se ha posicionado como el núcleo predilecto por los investigadores, suscitando un aluvión de validaciones académicas para determinar si la inteligencia artificial podía sustituir a las herramientas médicas físicas en entornos domésticos.
+Investigaciones recientes de biomecánica computacional han centrado sus esfuerzos en evaluar la fiabilidad de este modelo. Estudios exhaustivos han demostrado mediante rigurosos análisis estadísticos que MediaPipe es una herramienta válida y altamente fiable para medir el Rango de Movimiento en pacientes reales sometidos a procesos monitorizados de rehabilitación(21).Al mismo tiempo, su altísimo rendimiento computacional ha permitido a los investigadores diseñar con éxito nuevas interfaces de telemedicina donde el paciente interactúa exclusivamente con la cámara en tiempo real, erradicando el uso de mandos físicos.(22)
+Este sólido precedente bibliográfico es la piedra angular que justifica y sustenta científicamente la arquitectura de este Trabajo de Fin de Grado. Basándose en los esquemas paralelos de investigadores internacionales(23), esta aplicación implementa un colapso matemático nativo de los tensores de MediaPipe y la interfaz interactiva de OpenCV extrayendo directamente el Ángulo Articular tridimensional mediante el producto escalar de sus vectores. De este modo, la fiabilidad biométrica validada en laboratorios internacionales es heredada y trasladada al entorno de escritorio desarrollado en este proyecto, asegurando que las evaluaciones en ejercicios como las sentadillas o las zancadas gocen de total validez médica a un coste de desarrollo asequible.
+
+
+Análisis de la marcha y patologías del tren Inferior 
+A diferencia de los protocolos de rehabilitación del tren superior, que suelen requerir movimientos de un solo eje, el análisis clínico de los miembros inferiores conlleva un grado de complejidad biomecánica superior. Las extremidades inferiores soportan la totalidad del peso corporal y su evaluación implica resolver cálculos de balance y estabilización durante la carga de peso. Durante la última década, la comunidad clínica ha volcado numerosos esfuerzos en intentar diseñar ecosistemas viables de telerehabilitación para pacientes operados de las piernas con el objetivo de reducir el alto coste de visitas presenciales.(24)
+Históricamente, los estudios pioneros demostraron que la telerehabilitación remota de fracturas del tren inferior lograba resultados de satisfacción altamente superiores frente a la rehabilitación tradicional(25). Sin embargo, aquellos prometedores frameworks requerían la utilización de aparatosos sensores corporales y complicaban la logística del paciente en casa.
+Hoy en día, este proyecto recoge el testigo de dichas necesidades médicas apoyándose en las arquitecturas modernas de estimación de pose como MediaPipe. Reemplazando los antiguos y costosos laboratorios sensorizados, aplicaciones de escritorio como la desarrollada en este trabajo permiten extraer parámetros espacio-temporales críticos valiéndose exclusivamente de cámaras RGB convencionales, democratizando el acceso a las conclusiones médicas evidenciadas en estudios anteriores.
+El respaldo empírico de las investigaciones previas sirve como justificación académica y clínica para la implementación de los módulos más complejos del software, específicamente en módulos como el modulo_zancadas.py y el modulo_bulgaras.py.
+Mientras que una gran parte del software moderno se conforma con medir ángulos estáticos genéricos, este proyecto hereda las ambiciones preventivas de la telerehabilitación avanzada: no solo evalúa el grado de flexión de la rodilla y cadera, sino que da un paso superior en la ingeniería de software implementando la detección dinámica de lateralidad diferencial. Al identificar autónomamente en tiempo real cuál es la pierna activa y cuál la estabilizadora, el motor matemático determina desequilibrios críticos del Centro de Gravedad en el torso del paciente, mitigando el riesgo de nuevas lesiones.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Aplicación desarrollada
+Librerías utilizadas
+Mediapipe
+¿Qué es MediaPipe Pose Landmarker?
+MediaPipe, desarrollada por el equipo de Google AI Edge, es un framework multiplataforma de código abierto diseñado para construir pipelines de aprendizaje automático aplicados a datos multimedia como vídeo y audio.
+Dentro de sus soluciones de visión computacional, el proyecto utiliza específicamente el Pose Landmarker. Se trata de una herramienta de inteligencia artificial avanzada capaz de realizar el seguimiento y la estimación de la postura humana extrayendo un esqueleto digital detallado. El modelo es capaz de predecir la ubicación corporal mapeando 33 puntos clave de referencia anatómica en 3 dimensiones (coordenadas x, y, z) a lo largo de todo el cuerpo humano.(10)
+
+
+¿Cómo funciona su tecnología internamente?
+Según la documentación técnica de Google, el funcionamiento interno de MediaPipe Pose Landmarker se divide en una arquitectura de inferencia de dos pasos que garantiza su altísimo rendimiento:
+	•	Detección: En el primer fotograma, la herramienta localiza la región de interés analizando toda la imagen para encontrar al sujeto.
+	•	Seguimiento de puntos: Una vez detectado el cuerpo, el modelo ya no explora toda la imagen de cero en el siguiente fotograma. Se basa en una red neuronal convolucional ultraligera que calcula la posición exacta y la probabilidad de visibilidad de las 33 articulaciones corporales directamente desde el contorno detectado previamente, limitando la carga de procesamiento y aumentando exponencialmente la velocidad.(11)
+
+¿Cómo he implementado Mediapipe en mi aplicación?
+La integración de MediaPipe constituye el motor funcional o núcleo de la inteligencia de la aplicación de telerehabilitación y análisis deportivo. A nivel de arquitectura de software, su implementación sigue este ciclo:
+Utilizo la librería oficial de MediaPipe para Python instanciando el analizador dentro de una arquitectura modular y orientada a objetos.(12)
+A través de la cámara o mediante vídeos pregrabados, se obtiene el flujo de vídeo original que es capturado mediante OpenCV y procesado de forma secuencial, fotograma a fotograma.
+Cada frame empírico es evaluado por la clase Pose de MediaPipe, devolviendo una estructura de datos estandarizada en tres dimensiones espaciales.
+Luego extraigo matemáticamente el grupo específico de nodos anatómicos que me interesa según el movimiento del ejercicio; por ejemplo: hombro, codo y muñeca para el ejercicio de press militar.
+Tomando esa triangulación, la aplicación calcula mediante álgebra vectorial el rango angular que se está formando en tiempo real. Esta extracción es posteriormente comparada contra umbrales clínicos y deportivos preestablecidos para emitir informes y diagnósticos fiables en la interfaz.
+
+¿Por qué he decidido implementar Mediapipe y no otras alternativas?
+La selección de la solución de Google frente a otras redes neuronales radica en varias ventajas estratégicas directamente vinculadas a los objetivos de mi aplicación:
+A diferencia de modelos tradicionales, MediaPipe no requiere superordenadores costosos ni enviar los vídeos biológicos con información sensible del paciente a una API remota en la nube para procesarse. Trabaja de manera óptima y fluida utilizando exclusivamente los recursos de CPU estándares de un ordenador portátil común. Esto democratiza la tecnología y blinda la privacidad de los datos médicos, requisito base de la herramienta.
+Google AI Edge garantiza modelos maduros, estandarizados y muy bien documentados. Aunque el prototipo actual se ha desarrollado nativamente en Python, el ecosistema de MediaPipe ofrece interfaces universales totalmente compatibles con lenguajes de desarrollo móvil.
+Esto supone una ventaja determinante de diseño: certifica que la tecnología anatómica base y la lógica matemática del actual TFG podrán migrar de forma escalable y sin fricciones hacia una aplicación móvil de bolsillo en las fases de comercialización futuras.
+Mientras que otros modelos más ligeros analizan solo 17 puntos, la topología corporal de 33 vértices de MediaPipe permite una profundidad biomecánica insuperable. Esta captura de puntos periféricos resulta crucial en etapas de rehabilitación focalizada o en reevaluaciones funcionales exigentes.(10)
+
+OpenCV
+¿Qué es OpenCV?
+OpenCV es una biblioteca de software de código abierto especializada en visión artificial y aprendizaje automático. Originalmente desarrollada por Intel y respaldada actualmente por una comunidad masiva, se considera el estándar global en la industria para el procesamiento de imágenes digitales en tiempo real.
+La versión utilizada en el proyecto es el empaquetado para el lenguaje Python disponible en el repositorio de PyPI, el cual actúa como un envoltorio muy eficiente.(13) Aunque el código se escribe en Python para mayor legibilidad, las operaciones de OpenCV se ejecutan a bajo nivel en C/C++, lo que le otorga un rendimiento computacional inigualable.(14)
+¿Cómo lo he implementado en mi aplicación?
+Mientras que MediaPipe es el que detecta y calcula la biometría, OpenCV actúa como los ojos de la aplicación. Su implementación técnica en el código de mi proyecto se ha dividido en las siguientes etapas dentro del flujo de trabajo.(15)
+La parte de la captura utilizando la clase cv2.VideoCapture(), el sistema toma control de la cámara web del dispositivo o analiza videos ya pregrabados y decodifica el video fotograma a fotograma para alimentarlo a la inteligencia artificial.
+Preprocesamiento Cromático: Al ser recibidas, las imágenes tienen un formato de color BGR nativo. Implemento la función cv2.cvtColor() para forzar la conversión técnica a RGB, el estándar cromático requerido para no perturbar a las redes neuronales de MediaPipe.
+La interfaz digital es su mayor carga de trabajo. Tras procesar los ángulos del cuerpo implemento funciones primitivas de dibujo como cv2.putText, cv2.line y cv2.circle. Estas sobreescriben la imagen original marcando cajas de color, las líneas del esqueleto digital, alertas visuales y el conteo de repeticiones
+Finalmente, las clases de análisis hacen uso de cv2.VideoWriter para compilar cada fotograma (ya analizado gráficamente por la app) en un nuevo fichero .mp4. Este informe de vídeo en movimiento se vincula y guarda automáticamente en el registro de la Base de Datos del sistema, complementando de manera indivisible a los partes e informes clínicos generados en texto para mantener el historial del paciente unificado y completamente digitalizado.
+
+
+
+ ¿Por qué he utilizado OpenCV y no otras alternativas?
+La justificación de elegir OpenCV por encima de otras librerías de procesamiento de imagen en Python se fundamenta en las siguientes razones técnicas extraídas de su filosofía de diseño.
+OpenCV nació con el propósito explícito de la detección y análisis en tiempo real. Alternativas nativas como Pillow son buenas para el retoque de imágenes fotográficas estáticas, pero sufrirían cuellos de botella enormes al intentar pintar las correcciones biomecánicas y los textos clínicos en pantalla iterando a 30 o 60 fotogramas por segundo. OpenCV maneja los búferes de vídeo entrante con fluidez estructural.(16)
+Gracias a la librería opencv-python, toda imagen capturada se estructura como una matriz numérica multidimensional. Esto elimina por completo el salto y la sobrecarga computacional de tener que traducir tipos de datos constantemente. Permite que simultáneamente MediaPipe, OpenCV y NumPy se comuniquen, mapeando coordenadas espaciales y compartiendo memoria al instante sin lag.
+Al utilizar los binarios precompilados base de OpenCV nos libramos de tener que arrastrar y configurar codificadores de vídeo locales pesados en los ordenadores de las clínicas o de los pacientes. Esto hace que el núcleo matemático de procesamiento de visión sea completamente autocontenido, manteniendo un instalador final de la aplicación rápido, ligero y muy fácil de empaquetar de cara a su futura distribución.
+
+NumPy
+ ¿Qué es NumPy?
+NumPy es la biblioteca de código abierto fundamental para la computación científica en el ecosistema de Python. Según su definición oficial, extiende las capacidades de Python introduciendo el concepto de arrays de alto rendimiento, junto con una vasta colección de funciones matemáticas avanzadas para operar con estas estructuras de datos de manera eficiente.(17)
+Al igual que OpenCV, aunque las sentencias se redacten usando la sintaxis de Python, internamente gran parte de NumPy está precompilada y programada bajo el lenguaje C. Esto es lo que le otorga una velocidad computacional inusualmente alta frente al Python estándar.
+¿Cómo lo he implementado en mi Aplicación?
+Si OpenCV maneja los píxeles visuales y MediaPipe extrae los nodos biológicos, NumPy funciona en la aplicación como la calculadora cinemática y trigonométrica subyacente.
+Cuando el usuario realiza una sentadilla o cualquier ejercicio, MediaPipe extrae las coordenadas espaciales completas de profundidad (x, y, z) de tres puntos articulares en ese caso tobillo, rodilla y cadera. Estas coordenadas biológicas se asimilan en la memoria, convirtiéndolas inmediatamente en el objeto de datos nativo ndarray genérico utilizando np.array().(18)
+En lugar de crear bucles iterativos lentos, la aplicación aplica rutinas puras de álgebra lineal de la biblioteca sobre los vectores generados. Utiliza el producto escalar matricial, el cálculo de las magnitudes vectoriales y funciones trigonométricas directas. Esto arroja instantáneamente y de forma tridimensional el grado exacto de flexión articular del paciente en un instante concreto.
+Actúa como lenguaje común subyacente del sistema. Los fotogramas extraídos y devueltos por cv2 son estrictamente objetos de NumPy. Sin importar qué librería entregue la información al pipeline, en su nivel arquitectónico más bajo, todos los datos confluyen y transitan estructurados como un NumPy array.(18)
+¿Por qué he utilizado NumPy y no otras librerías?
+La justificación de integrar la NumPy frente a utilizar las listas tradicionales integradas por defecto en Python, junto a su módulo estándar genérico math, se sustenta en que:
+Según referencias técnicas estructuradas, y la computación vectorizada ejecutada sobre núcleos C/C++, NumPy puede llegar a ser hasta 50 veces más rápido que las listas clásicas de Python. Para desempaquetar las coordenadas espaciales, vectorizarlas y calcular los ángulos corporales dinámicamente, mientras la pantalla repinta un vídeo HD a 30 fotogramas por segundo sin inducir tirones visuales, las listas convencionales de Python acabarían generando cuellos de botella por sobrecarga de sus punteros; es imperativo contar con esta velocidad matemática.(19)
+Los objetos básicos de Python acumulan información descriptiva y enlazan memoria dispersa. El ecosistema NumPy aloja su vectorización en bloques contiguos monolíticos en la RAM, siendo mejor con los recursos caché de los procesadores convencionales y reduciendo considerablemente el ahogo estructural del ordenador que esté evaluando el ejercicio.
+No existe hoy en día una arquitectura viable real-time donde OpenCV y frameworks de Machine Learning no exijan un flujo constante derivado de NumPy. Prescindir de NumPy obligaría a desarrollar pasarelas de decodificación que enlentecerían drásticamente cualquier proyecto. Por ello, usar algo puramente matemático propio de Python quedaba obsoleto frente a los requisitos de alta exigencia para la manipulación de las matrices biológicas entrantes.(18)
+
+Descripción de la aplicación desarrollada
+El desarrollo del motor de análisis biomecánico se ha fundamentado en una arquitectura de software diseñada para garantizar tres pilares fundamentales: escalabilidad, mantenibilidad y eficiencia computacional. Para lograrlo, el sistema no ha sido programado como un bloque monolítico, sino que adopta el paradigma de la Programación Orientada a Objetos apoyado en un diseño altamente modular.
+Esta estructura separa de forma tajante la capa de interfaz y control de la capa lógica subyacente.(6)
+ El marco de trabajo modular 
+El núcleo algorítmico del proyecto reside en el directorio /módulos/, el cual ha sido construido bajo arquitecturas de polimorfismo y el patrón Estrategia. Esto permite que el sistema alterne dinámicamente el estilo de evaluación sin tener que reescribir el programa principal.
+El pilar de todo el ecosistema lógico es el archivo modulo_base.py. En él se define una clase base abstracta llamada ModuloEjercicio. Esta clase funciona como una interfaz genérica o contrato estricto de programación. Su objetivo primordial es garantizar la mantenibilidad y escalabilidad del proyecto: asegura que cualquier ejercicio físico que se quiera añadir a la plataforma cumpla obligatoriamente con una estructura de datos idéntica, forzando a los submódulos a definir métodos abstractos clave como:
+	•	obtener_landmarks_relevantes(): retorna un listado de los índices corporales de interés médico exclusivo para ese ejercicio, optimizando el renderizado. Por ejemplo, en un ejercicio de press militar quita puntos corporales redundantes como la boca o los ojos.(10)
+	•	evaluar_postura(): exige que cada subclase instancie su propia lógica cinemática espacial. Acepta como inyección las matrices generadas por Mediapipe y el frame del bucle visual, orquestando el conteo de errores, la progresión temporal de repeticiones y emitiendo código de color en forma de feedback superpuesto.
+	•	generar_informe_clinico(): fuerza el cierre seguro de un proceso. Estandariza qué ocurre cuando un fisioterapeuta finaliza el análisis: garantiza que todos los módulos procesen estadísticamente sus matrices espaciales, escriban sus datos tabulares a la Base de Datos SQLite asociándose a la id del paciente e impriman y garanticen físicamente un archivo clínico en texto plano en la ruta de red correspondiente a cada paciente y fecha.(4)
+Además, modulo_base.py centraliza las matemáticas puras, alojando el método calcular_angulo_3d(), el cual implementa álgebra lineal para evitar que los módulos hijos tengan que reescribir fórmulas matemáticas redundantes.
+
+Implementaciones polimórficas
+Extendiendo la clase base, la aplicación aloja archivos hijos individuales e independientes para cada protocolo clínico evaluado. Actualmente la aplicación soporta varios tipos de ejercicios que son submódulos del principal modulo_base.py abarcando desde ejercicios compuestos básicos como una sentadilla o un peso muerto hasta elevaciones isométricas y de movilidad.
+Al heredar de la plantilla maestra, cada uno de estos módulos programa de manera aislada y exclusiva las reglas biomecánicas de su ejercicio. Por ejemplo, el módulo de Press Militar se suscribe únicamente a los nodos de los hombros, codos y muñecas, procesando sus vectores e inyectando alertas en pantalla cuando detecta asimetrías en las fases de empuje.
+La mayor prueba del éxito de esta arquitectura basada en el polimorfismo es su índice de escalabilidad real: durante las fases finales del desarrollo, la incorporación rápida de nuevos bloques clínicos complejos, como el análisis asimétrico de las zancadas o la extensión focalizada del hip thrust, se completó con éxito mediante la adición de sus respectivos archivos aislados, demostrando que el sistema puede crecer ilimitadamente sin necesidad de alterar ni paralizar el motor audiovisual y matemático principal.
+
+ El orquestador principal 
+Actualmente, la ejecución total del programa se concentra y origina en una pantalla principal interactiva actuando como núcleo del sistema. Este núcleo cumple un ciclo de ejecución continuo milisegundo a milisegundo por cada fotograma:
+Escanean el almacenamiento local mediante librerías del sistema operativo para listar los vídeos disponibles en el directorio /videos/ o, en su defecto, toman el control del hardware de vídeo mediante los drivers del sistema para habilitar la captura en tiempo real por la cámara web.(20)
+A través del panel interactivo de usuario visual, el sistema captura la decisión del experto y genera en memoria el objeto de la clase del ensayo clínico seleccionado. A partir de ese exacto instante, el orquestador principal se vuelve absolutamente indiferente al ejercicio que se esté realizando, ya que se limita a iterar ejecutando ciegamente en bucle los métodos genéricos heredados del polimorfismo.
+Utilizan la red neuronal predictiva de Google MediaPipe Pose para escudriñar la imagen y devuelven la estructura abstracta de coordenadas topológicas tridimensionales que son nodos X,Y,Z.
+El gestor pasa esas coordenadas directamente al submódulo del ensayo activo. Este submódulo hijo es quien tiene la potestad matemática de determinar si el rango de movimiento es o no adecuado, obligando finalmente a subir de vuelta dichos datos para que OpenCV redibuje el esqueleto fisiológico y las gráficas pertinentes. Una vez cerrado el panel o acabado el análisis, los resultados finales son depositados automáticamente en la base de datos y transcritos a ficheros de texto plano físicos dentro del directorio /informes/.
+
+Integración funcional de librerías en el software 
+Aunque la justificación teórica y la naturaleza de las bibliotecas empleadas se han detallado en capítulos anteriores a nivel de herramientas, es imperativo definir cómo se entrelazan funcionalmente dentro de la estructura de componentes de la aplicación.
+En lugar de operar de manera aislada, el software está diseñado como un Pipeline de procesamiento secuencial, donde la salida de una librería alimenta directamente la entrada de la siguiente en un ciclo cerrado iterativo de fotogramas.
+OpenCV 
+Funciona como la puerta de entrada y de salida del sistema. No realiza un procesamiento analítico profundo, sino que actúa como el puente de hardware-software. Su objeto cv2.VideoCapture bombea matrices de imágenes al sistema a unos 30 fotogramas por segundo y, en la fase final, su motor de renderizado inyecta los gráficos para construir y repintar la interfaz visual interactiva reflejada en la pantalla.(20)
+
+MediaPipe 
+Ubicada estratégicamente inmediatamente después de la inicialización de OpenCV, esta librería recibe las imágenes en crudo. Su función dentro de la arquitectura de la aplicación actúa como un sofisticado filtro de abstracción. Toma un fotograma en formato RGB estándar y devuelve instantáneamente un objeto serializado con las posiciones anatómicas, descartando eficientemente el resto de ruido visual de la sala o del paciente.(11)
+NumPy
+Es el que actúa de junte entre los objetos espaciales de MediaPipe y nuestras clases hijas personalizadas. Las coordenadas anatómicas extraídas entran al procesador como arrays multidimensionales genéricos, donde el módulo matemático puro aplica álgebra lineal sobre ellos en tiempo récord, derivando los grados físicos exactos.(19)
+Os, glob, time, sqlite3
+Mientras el núcleo visual e inteligente opera en bucle continuo, la integridad del programa se mantiene estable gracias a librerías nativas que administran los tiempos de los bucles y las rutas de carpetas relativas. Esto garantiza que la aplicación gestione historiales clínicos sin corromper la memoria del disco y vuelque los resultados automáticamente y de forma segura en las bases de datos de pacientes y en la ruta estructurada de los /informes/.
+
+Flujo de digitalización, verificación y almacenamiento de datos biomecánicos
+La finalidad central de la aplicación de telerehabilitación no es simplemente reconocer una silueta, sino traducir un movimiento físico continuo en parámetros numéricos estables que puedan ser verificados contra guías médicas estipuladas. Para resolver la incógnita de cómo un ejercicio físico abstracto se transforma en un dato evaluable en nuestra base de datos, la aplicación implementa el siguiente flujo conceptual:
+ Mapeo Físico-Matemático y Telemetría
+El primer nivel de transformación convierte un píxel bidimensional de vídeo en una magnitud espacial real. Empleando los algoritmos de detección visual previamente citados, se aísla la fisiología del usuario y se extraen los vectores 3D correspondientes a las articulaciones relevantes.
+Mediante rutinas de álgebra lineal y matemática trigonométrica, el sistema colapsa estos tres vectores libres en el espacio para calcular un único y fiable ángulo articular 3D. A su vez, para evaluar alineaciones anatómicas críticas y faltas de estabilidad, se calculan las deltas directas entre los ejes unidimensionales. Todo este volumen de grados, tiempos de isometría y magnitudes de asimetría o error pasan a convertirse oficialmente en los datos verificables.(1)
+
+
+Establecimiento de Umbrales Clínicos Computacionales
+Una vez extraídos los ángulos y longitudes espaciales en tiempo real, estos carecen de valor si no se comparan contra un estándar médico. La lógica del sistema se apoya en diccionarios de variables denominados umbrales. De esta forma, en módulos las guías de rehabilitación teóricas se digitalizan, convirtiéndose en constantes numéricas de tolerancia estricta:
+Por ejemplo, con dos funciones: flexion_maxima o extension_minima que fijan el rango de movimiento objetivo en grados obligatorios.
+O la desalineacion_maxima que fija un margen matemático de error posicional estricto, penalizando al paciente si rompe la verticalidad geométrica que podría inducir tendinopatías .
+Máquina de estados finita 
+Un ejercicio físico de rehabilitación es una entidad temporal, no estática; no se puede validar analizando fotogramas de forma aislada, sino entendiendo en qué contexto direccional del movimiento se encuentra el cuerpo. Para solventarlo, el programa implementa un sofisticado patrón lógico de software conocido como máquina de estados finita. La aplicación rige cada protocolo clínico mediante fases cíclicas inmutables como subiendo o bajando.
+Los ángulos calculados en tiempo real se cruzan constantemente con los umbrales clínicos. Solo cuando un vector físico atraviesa y supera el umbral clínico exigido, la máquina permite avanzar a la siguiente fase temporal. Esto impide de raíz los clásicos errores sistémicos, permitiendo aislar algorítmicamente repeticiones de mala calidad frente a repeticiones médicas completas y estandarizadas.
+Exportación y almacenamiento de resultados 
+El objetivo final de todo el procesamiento es ofrecer una conclusión telemétrica accionable al paciente o fisioterapeuta. Sistémicamente no se persigue la rudimentaria idea de guardar listas interminables de coordenadas volátiles, ya que resultaría incomprensible. En su lugar, el módulo inyecta los resultados a la memoria RAM usando acumuladores de métricas como el número total de repeticiones válidas, los picos de mayor extensión articular conseguidos por ciclo y la magnitud de errores de postura experimentados.
+Se genera dinámicamente un sello temporal actual, auto-escribiendo un informe de texto plano estandarizado ordenado dentro de la ruta local /informes/, donde quedan anotados todos los mensajes de corrección a modo de historial clínico inmutable para facilitar auditorías médicas.
+Simultáneamente, el orquestador inyecta esos resultados en una base de datos, unificando los registros bajo el ID único del paciente. Esto cierra formalmente el bucle de transformación del dato, dotando a la interfaz de usuario de la capacidad de desplegar historiales de progresión instantáneos en la propia pantalla del programa.
+
+
+Dificultades sufridas a lo largo del desarrollo de la aplicación
+
+A lo largo del ciclo de vida del desarrollo de la aplicación, la integración entre Visión por Computadora, lógica matemática en tiempo real y arquitectura de software presentó diversos obstáculos técnicos que comprometían el objetivo clínico de la herramienta. A continuación, se detallan los desafíos sustanciales identificados y las estrategias metodológicas adoptadas para solventarlos.
+Mantenibilidad del código al escalar ejercicios
+La dificultad
+Inicialmente, el desarrollo contemplaba gestionar la lógica clínica de manera acoplada dentro del archivo central que maneja el bucle de vídeo. A medida que se añadían más protocolos de rehabilitación. Esto imposibilitaba el mantenimiento del proyecto, donde modificar la tolerancia de un hombro terminaba rompiendo funciones en otros apartados no relacionados del tren superior.
+La resolución
+Se resolvió aplicando estrictos paradigmas de programación orientada a objetos. Se procedió a una reestructuración del back-end creando un sistema basado en abstracción y polimorfismo. El desarrollo migró a un patrón de diseño estrategia donde se instituyó una interfaz superior obligatoria genérica que es el modulo_base.py, que centraliza y aísla por completo las lógicas comunes. Al trasladar la lógica exclusiva de cada protocolo a módulos sub-hijos encapsulados, la aplicación quedó saneada y lista para crecer ilimitadamente sin alterar jamás los intrincados archivos operativos del controlador. Se puede decir la app es totalmente escalable.
+ Dificultad vectorial y falsos positivos por perspectiva planimétrica
+La dificultad
+La mayoría de proyectos de seguimiento biométrico básicos analizan a los pacientes en base a imágenes planimétricas directas Este sistema resultó ser altamente inestable para la herramienta: si un paciente en fase de rehabilitación de un hombro no se alinea de forma milimétricamente perpendicular de perfil  frente a su webcam, la perspectiva de la lente se deforma y el cálculo trigonométrico estándar emitiría falsos positivos, penalizando en el informe repeticiones que biomecánicamente estaban bien ejecutadas.
+La resolución
+La barrera del plano se rompió explotando en profundidad la infraestructura coordinada tridimensional predicha por el motor de inferencia neuronal. Se abandonaron los teoremas trigonométricos triviales de dos ejes y se migró toda la geometría estructural de la aplicación al espacio tridimensional completo. Ahora, la aplicación extrae la coordenada espacial de profundidad calculando el alcance y la perspectiva real de las extremidades en el entorno mediante el cálculo avanzado del arco coseno de vectores matriciales 3D, previniendo errores de paralaje por parte de la cámara.
+Ambigüedad de lateralidad en ejercicios asimétricos unilaterales
+La dificultad
+Al integrar ejercicios avanzados de tren inferior requeridos por la literatura clínica, tales como las zancadas o las sentadillas búlgaras, el sistema genérico de medición de ángulos colapsó. La dificultad radicaba en que el cuerpo trabaja de forma asimétrica. Si el algoritmo leía los sensores estáticos de ambas extremidades, enviaba datos contradictorios a la máquina de estados finita, imposibilitando dictaminar el estado de progresión de la repetición.
+La resolución
+Se diseñó y acopló a los submódulos afectados un sub-algoritmo de detección dinámica de actividad. En lugar de programar qué pierna leer en el código duro, el sistema escanea el diferencial espacial. La extremidad que registra mayor longitud de flexión en crudo es etiquetada dinámicamente como pierna activa, mientras que la pierna atrasada pasa a ser la pierna estabilizadora. Esto nos permitió penalizar automáticamente desalineaciones del torso adaptando las operaciones de error de forma autónoma, sin requerir que el fisioterapeuta intervenga en el software y mejorando radicalmente la experiencia de usuario.
+
+Funcionamiento de mi aplicación
+Explicación general
+	•	Primero tenemos una pantalla de login donde el paciente tendrá que introducir sus datos de acceso. Si no está logeado en la aplicación deberá registrarse y acceder a la aplicación, donde ya tiene unos ejercicios pautados por su entrenador y/o fisioterapeuta.
+	•	Una vez logeado, verá una pantalla principal con una serie de ejercicios pautados por su fisioterapeuta. Al seleccionar un ejercicio le aparecerán tres opciones: ver un vídeo explicativo del ejercicio para poderlo realizarlo correctamente, iniciar la grabación del ejercicio o poder visualizar sus estadísticas en ese ejercicio
+	•	Por último, si se ha pulsado el botón iniciar, tendrá que elegir la dificultad del ejercicio. Que será principiante si estas realizando ese ejercicio sin conocimiento previo y avanzado si ya tu nivel es más profesional, ya admite menos error a la hora de hacer el movimiento esperado. Una vez elegido el nivel de dificultad, la grabación no empezará hasta pasados 5 segundos, ya que así te da tiempo a colocarte correctamente. Cuando pasan esos 5 segundos, la aplicación empieza a y a trackear con análisis biomecánico tus movimientos y los compara con los movimientos esperados. A los 3 errores, te finaliza la grabación y te manda al video explicativo. Una vez finalizada la grabación, ya sea cuando pulsas el botón de finalizar serie o cuando te manda al video explicativo, te genera un informe con tus estadísticas en ese ejercicio y unos consejos informativos para corregir el movimiento.
+
+
+Figura 1: Esquema conceptual de la aplicación 
+Explicación de captura y análisis
+ En el ámbito de la captura del movimiento tenemos varios pasos que sigue la aplicación:
+
+	•	Comparación del movimiento captado con el movimiento esperado
+	•	Conteo de repeticiones correctas o erróneas según los valores de movimiento esperado predefinidos
+	•	Reproducción automática del video explicativo del ejercicio si el número de repeticiones erróneas es igual a 3 
+	•	Cuando el paciente llegue al número de repeticiones pautadas por el fisioterapeuta finaliza la serie pulsando el botón de finalizar
+	•	Se autogenera un informe para el fisioterapeuta con el resumen clínico del ejercicio. Y para el paciente podrá visualizar las estadísticas de ese ejercicio.
+
+
+Bibliografía
+
+1. 	PABLO RODRÍGUEZ SÁNCHEZ-LAULHÉ. Telerehabilitación y Fisioterapia: Guía de Práctica Clínica. https://rehbody.net/telerehabilitacion/. 2024. 
+2. 	DYCARE. Top 5 Tendencias en Telerehabilitación 2023. https://www.dycare.com/tendencias-en-telerehabilitacion-2023#:~:text=En%20resumen,%20la%20telerehabilitaci%C3%B3n%20est%C3%A1%20experimentando%20cambios,creciente%20demanda%20de%20servicios%20de%20salud%20accesibles. 2023. 
+3. 	ALEX ZANUY. ¿Qué es la telerehabilitación? Ejerciciosderehabilitacion.com. 2026. 
+4. 	LEE, Alan C, DEUTSCH, Judith E, HOLDSWORTH, Lesley, KAPLAN, Sandra L, KOSAKOWSKI, Heidi, LATZ, Robert, MCNEARY, Lydia Lennox, O’NEIL, Jennifer, RONZIO, Oscar, SANDERS, Kelly, SIGMUND-GAINES, Michelle, WILEY, Michele and RUSSELL, Trevor. Telerehabilitation in Physical Therapist Practice: A Clinical Practice Guideline From the American Physical Therapy Association. Physical Therapy. 1 May 2024. Vol. 104, no. 5. DOI 10.1093/ptj/pzae045. 
+5. 	DRA. MARICRUZ GUEVARA. Telerehabilitación: recuperarse sin salir de casa. ATAM.es. 24 October 2025. 
+6. 	TRAKPHYSIO. Telerehabilitación: beneficios y aplicaciones. https://www.trakphysio.com/es/blog-de-fisioterapia/ventajas-telerehabilitacion/#:~:text=Una%20mirada%20al%20futuro%20de%20la%20rehabilitaci%C3%B3n&text=Es%20la%20entrega%20de%20servicios,a%20trav%C3%A9s%20de%20medios%20digitales. 2024. 
+7. 	SID-INICO. La telerrehabilitación, una solución a favor de las personas con lesión cerebral. https://sid-inico.usal.es/noticias/la-telerrehabilitacion-una-solucion-a-favor-de-las-personas-con-lesion-cerebral/. 14 June 2022. 
+8. 	DR. FREDERIC LLORDACHS MARQUÉS. ¿Cuáles son las ventajas y desventajas de la telemedicina? https://clinic-cloud.com/blog/cuales-son-las-ventajas-y-desventajas-de-la-telemedicina#:~:text=Seguridad%20online,pueda%20acceder%20a%20estos%20documentos. 25 February 2024. 
+9. 	DYCARE. Telerehabilitación en Pacientes Geriátricos: Beneficios, Retos y Futuro. https://www.dycare.com/telerehabilitacion-en-pacientes-geriatricos-beneficios-retos-y-futuro. 2024. 
+10. 	GOOGLE AI EDGE. Pose landmarker task guide. https://ai.google.dev/edge/mediapipe/solutions/vision/pose_landmarker?hl=es-419. 2024. 
+11. 	GOOGLE AI. MediaPipe Pose Documentation. https://github.com/google-ai-edge/mediapipe/blob/master/docs/solutions/pose.md. 2023. 
+12. 	NPM. @mediapipe/pose versioning. https://www.npmjs.com/package/@mediapipe/pose?activeTab=versions. 2023. 
+13. 	PYPI. opencv-python: Wrapper package for OpenCV. https://pypi.org/project/opencv-python/. 2026. 
+14. 	ASSURED SYSTEMS. What is OpenCV? FAQ. https://www.assured-systems.com/faq/what-is-opencv/. 2024. 
+15. 	GITHUB / OPENCV. OpenCV Repository (Official). https://github.com/opencv/opencv. 2026. 
+16. 	OPENWEBINARS. OpenCV: Introducción y su rol en la visión por computadora. https://openwebinars.net/blog/opencv-introduccion-y-su-rol-en-la-vision-por-computadora/. 2024. 
+17. 	NUMPY TEAM. NumPy: The fundamental package for scientific computing with Python. https://numpy.org/. 2024. 
+18. 	PYPI / PYTHON SOFTWARE FOUNDATION. numpy: Fundamental package for array computing in Python. https://pypi.org/project/numpy/. 2024. 
+19. 	W3SCHOOLS. Introduction to NumPy. https://www.w3schools.com/python/numpy/numpy_intro.asp. 2024. 
+20. 	OPENCV.ORG. Get Started - OpenCV Documentation. https://opencv.org/get-started/. 2024. 
+21. 	LATRECHE, Ameur, KELAIAIA, Ridha, CHEMORI, Ahmed and KERBOUA, Adlen. Reliability and validity analysis of MediaPipe-based measurement system for some human rehabilitation motions. Measurement. June 2023. Vol. 214, p. 112826. DOI 10.1016/j.measurement.2023.112826. 
+22. 	ZHAI, Zhen. Gesture Interaction System Design for Telerehabilitation Based on Mediapipe. In : 2022 IEEE 2nd International Conference on Software Engineering and Artificial Intelligence (SEAI). IEEE, 10 June 2022. p. 279–283. ISBN 978-1-6654-8223-3. DOI 10.1109/SEAI55746.2022.9832111. 
+23. 	GUO, Cai, HONG, Yinghan, LIANG, Sirui, LIN, Peiji, LI, Chunyun, WU, Xiaotong, YANG, Miaoling and HONG, Ke. Design of a Sports Rehabilitation Evaluation Scheme Based on MediaPipe Technology. In : 2024 International Conference on Intelligent Computing and Data Mining (ICDM). IEEE, 20 September 2024. p. 134–138. ISBN 979-8-3315-0626-1. DOI 10.1109/ICDM63232.2024.10762646. 
+24. 	CESARINI, Daniel, BUONOCUNTO, Pasquale, MARINONI, Mauro and BUTTAZZO, Giorgio. A Telerehabilitation Framework for Lower-Limb Functional Recovery. In : Proceedings of the 9th International Conference on Body Area Networks. ICST, 2014. ISBN 978-1-63190-047-1. DOI 10.4108/icst.bodynets.2014.256995. 
+25. 	TSVYAKH, Andriy I. and HOSPODARSKYY, Andriy J. Telerehabilitation of Patients with Injuries of the Lower Extremities. Telemedicine and e-Health. December 2017. Vol. 23, no. 12, p. 1011–1015. DOI 10.1089/tmj.2016.0267. 
+	•	 
+	•	

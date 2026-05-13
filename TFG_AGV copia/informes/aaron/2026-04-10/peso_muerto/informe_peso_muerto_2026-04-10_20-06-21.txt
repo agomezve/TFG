@@ -1,0 +1,10 @@
+==================================================
+📋 INFORME CLÍNICO: PESO MUERTO (Nivel: Principiante)
+Fecha del análisis: 10/04/2026 20:06:21
+==================================================
+
+📊 DATOS CUANTITATIVOS:
+ - Repeticiones totales: 8
+ - Repeticiones válidas completadas: 4
+ - Repeticiones con error (flexión de rodillas/rango): 4
+ - Ángulo de cadera máximo medio: 100.2 grados (Objetivo: < 100.0 grados)

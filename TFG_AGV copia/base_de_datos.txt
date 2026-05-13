@@ -1,6 +1,6 @@
 ==================================================
         REGISTRO GLOBAL DE PACIENTES Y SESIONES
-        Última actualización: 07/05/2026 13:25:16
+        Última actualización: 13/05/2026 11:59:37
 ==================================================
 
 👤 PACIENTE #1: MARTA
@@ -58,6 +58,7 @@
        28. [2026-05-03 12:18:28] Press Militar (Principiante) -> 10 reps (3 errores) | Ext/Flex media: 96.7º | Obs: 
        29. [2026-05-03 12:25:55] Press Militar (Avanzado) -> 9 reps (3 errores) | Ext/Flex media: 101.9º | Obs: 
        30. [2026-05-03 12:33:16] Press Militar (Avanzado) -> 9 reps (3 errores) | Ext/Flex media: 100.9º | Obs: 
+       31. [2026-05-13 11:59:37] Press Militar (Avanzado) -> 4 reps (3 errores) | Ext/Flex media: 36.9º | Obs: 
 
 ------------------------------------------------------------
 

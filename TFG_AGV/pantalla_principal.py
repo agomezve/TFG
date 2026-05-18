@@ -68,50 +68,57 @@ class AppRehabilitacion(ctk.CTk):
             
         self.protocol("WM_DELETE_WINDOW", self.quit)
 
-        frame_login = ctk.CTkFrame(self, width=400, height=500)
+        frame_login = ctk.CTkFrame(self, width=400, height=400)
         frame_login.place(relx=0.5, rely=0.5, anchor=ctk.CENTER)
 
         lbl_titulo = ctk.CTkLabel(frame_login, text="Bienvenido a la Plataforma", font=ctk.CTkFont(size=24, weight="bold"))
         lbl_titulo.pack(pady=(40, 20))
 
-        lbl_selec = ctk.CTkLabel(frame_login, text="Seleccionar paciente existente:", font=ctk.CTkFont(size=14))
-        lbl_selec.pack(pady=(10, 5))
+        lbl_usuario = ctk.CTkLabel(frame_login, text="Usuario:", font=ctk.CTkFont(size=14))
+        lbl_usuario.pack(pady=(10, 5))
 
-        self.pacientes = obtener_pacientes() # Lista de (id, nombre, edad)
-        nombres = [p[1] for p in self.pacientes] if self.pacientes else ["(No hay pacientes)"]
+        self.entry_usuario = ctk.CTkEntry(frame_login, placeholder_text="Nombre de usuario", width=250)
+        self.entry_usuario.pack(pady=5)
+
+        lbl_password = ctk.CTkLabel(frame_login, text="Contraseña:", font=ctk.CTkFont(size=14))
+        lbl_password.pack(pady=(10, 5))
+
+        self.entry_password = ctk.CTkEntry(frame_login, placeholder_text="Contraseña", width=250, show="*")
+        self.entry_password.pack(pady=5)
         
-        self.combo_pacientes = ctk.CTkComboBox(frame_login, values=nombres, width=250)
-        self.combo_pacientes.pack(pady=10)
+        self.lbl_error = ctk.CTkLabel(frame_login, text="", text_color="red")
+        self.lbl_error.pack(pady=5)
 
         btn_login = ctk.CTkButton(frame_login, text="Iniciar Sesión", command=self.login_paciente, width=250)
-        btn_login.pack(pady=10)
-
-        lbl_o = ctk.CTkLabel(frame_login, text="— O —", text_color="gray")
-        lbl_o.pack(pady=10)
-
-        self.entry_nuevo = ctk.CTkEntry(frame_login, placeholder_text="Nombre del nuevo paciente", width=250)
-        self.entry_nuevo.pack(pady=10)
-
-        btn_registro = ctk.CTkButton(frame_login, text="Registrar y Acceder", fg_color="green", hover_color="darkgreen", command=self.registrar_paciente, width=250)
-        btn_registro.pack(pady=(10, 40))
+        btn_login.pack(pady=(20, 40))
+        
+        self.pacientes = obtener_pacientes() # Lista de (id, nombre, edad)
 
     def login_paciente(self):
-        seleccion = self.combo_pacientes.get()
-        if seleccion and seleccion != "(No hay pacientes)":
-            for p in self.pacientes:
-                if p[1] == seleccion:
-                    self.paciente_activo_id = p[0]
-                    self.paciente_activo_nombre = p[1]
-                    break
+        usuario = self.entry_usuario.get().strip()
+        password = self.entry_password.get().strip()
+        
+        if not usuario or not password:
+            self.lbl_error.configure(text="Por favor, rellene todos los campos")
+            return
+            
+        if password != "12345":
+            self.lbl_error.configure(text="Contraseña incorrecta")
+            return
+            
+        usuario_encontrado = False
+        for p in self.pacientes:
+            # Comparamos ignorando mayúsculas/minúsculas para mayor flexibilidad
+            if p[1].lower() == usuario.lower():
+                self.paciente_activo_id = p[0]
+                self.paciente_activo_nombre = p[1]
+                usuario_encontrado = True
+                break
+                
+        if usuario_encontrado:
             self.mostrar_principal()
-
-    def registrar_paciente(self):
-        nombre = self.entry_nuevo.get().strip()
-        if nombre:
-            pid = crear_paciente(nombre=nombre)
-            self.paciente_activo_id = pid
-            self.paciente_activo_nombre = nombre
-            self.mostrar_principal()
+        else:
+            self.lbl_error.configure(text="Usuario no registrado")
 
     def mostrar_principal(self):
         for widget in self.winfo_children():

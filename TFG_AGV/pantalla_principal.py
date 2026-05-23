@@ -71,7 +71,7 @@ class AppRehabilitacion(ctk.CTk):
         frame_login = ctk.CTkFrame(self, width=400, height=400)
         frame_login.place(relx=0.5, rely=0.5, anchor=ctk.CENTER)
 
-        lbl_titulo = ctk.CTkLabel(frame_login, text="Bienvenido a la Plataforma", font=ctk.CTkFont(size=24, weight="bold"))
+        lbl_titulo = ctk.CTkLabel(frame_login, text="Plataforma de Telerehabilitación", font=ctk.CTkFont(size=24, weight="bold"))
         lbl_titulo.pack(pady=(40, 20))
 
         lbl_usuario = ctk.CTkLabel(frame_login, text="Usuario:", font=ctk.CTkFont(size=14))

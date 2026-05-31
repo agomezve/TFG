@@ -195,13 +195,85 @@ class AppRehabilitacion(ctk.CTk):
         historial = obtener_historial_paciente(self.paciente_activo_id)
         historial_filtrado = [s for s in historial if s[1].lower() == nombre_ejercicio.lower()]
         
-        texto_pantalla = self.generar_resumen_estadisticas(historial_filtrado)
-        
-        frame_scroll = ctk.CTkScrollableFrame(self.main_panel, fg_color="white", corner_radius=10)
+        frame_scroll = ctk.CTkScrollableFrame(self.main_panel, fg_color="transparent", corner_radius=10)
         frame_scroll.pack(fill="both", expand=True, pady=10)
         
-        lbl_stats = ctk.CTkLabel(frame_scroll, text=texto_pantalla, font=ctk.CTkFont(size=18), text_color="black", justify="center")
-        lbl_stats.pack(fill="both", expand=True, pady=20)
+        if not historial_filtrado:
+            lbl_vacio = ctk.CTkLabel(frame_scroll, text="Aún no hay datos registrados para mostrar.", font=ctk.CTkFont(size=18))
+            lbl_vacio.pack(pady=40)
+            return
+
+        lbl_titulo = ctk.CTkLabel(frame_scroll, text=f"📊 RESUMEN CLÍNICO: {nombre_ejercicio.upper()}", font=ctk.CTkFont(size=22, weight="bold"))
+        lbl_titulo.pack(pady=(0, 20))
+
+        # Agrupar por fecha
+        stats_por_fecha = {}
+        for s in historial_filtrado:
+            fecha_completa = s[0]
+            fecha_str = fecha_completa[:10]
+            reps = int(s[3]) if s[3] else 0
+            errs = int(s[4]) if s[4] else 0
+            
+            if fecha_str not in stats_por_fecha:
+                stats_por_fecha[fecha_str] = []
+            stats_por_fecha[fecha_str].insert(0, {"reps": reps, "errores": errs})
+            
+        meses = {1:"Enero", 2:"Febrero", 3:"Marzo", 4:"Abril", 5:"Mayo", 6:"Junio", 
+                 7:"Julio", 8:"Agosto", 9:"Septiembre", 10:"Octubre", 11:"Noviembre", 12:"Diciembre"}
+                 
+        for fecha, series_list in sorted(stats_por_fecha.items(), reverse=True):
+            try:
+                dt = datetime.datetime.strptime(fecha, "%Y-%m-%d")
+                dia = str(dt.day)
+                mes_año = f"{meses[dt.month]} {dt.year}"
+            except:
+                dia = "XX"
+                mes_año = fecha
+                
+            # Contenedor principal de la tarjeta del día
+            card = ctk.CTkFrame(frame_scroll, corner_radius=15, fg_color="#2B2B2B")
+            card.pack(fill="x", pady=10, padx=20)
+            
+            # Contenedor izquierdo: Calendario
+            frame_cal = ctk.CTkFrame(card, fg_color="transparent", width=80)
+            frame_cal.pack(side="left", padx=20, pady=15, fill="y")
+            
+            lbl_icono = ctk.CTkLabel(frame_cal, text="🗓️", font=ctk.CTkFont(size=35))
+            lbl_icono.pack()
+            
+            lbl_dia = ctk.CTkLabel(frame_cal, text=dia, font=ctk.CTkFont(size=24, weight="bold"))
+            lbl_dia.pack()
+            
+            lbl_mes = ctk.CTkLabel(frame_cal, text=mes_año, font=ctk.CTkFont(size=14))
+            lbl_mes.pack()
+            
+            # Separador vertical
+            separador = ctk.CTkFrame(card, width=2, fg_color="#444444")
+            separador.pack(side="left", fill="y", pady=15, padx=10)
+            
+            # Contenedor derecho: Estadísticas
+            frame_stats = ctk.CTkFrame(card, fg_color="transparent")
+            frame_stats.pack(side="left", fill="both", expand=True, padx=20, pady=15)
+            
+            lbl_series = ctk.CTkLabel(frame_stats, text=f"Total: {len(series_list)} Series completadas", font=ctk.CTkFont(size=16, weight="bold"))
+            lbl_series.pack(anchor="w", pady=(0, 10))
+            
+            for i, serie in enumerate(series_list):
+                if nombre_ejercicio.lower() == "plancha":
+                    texto_serie = f"Serie {i+1}: {serie['reps']}s totales | {max(0, serie['reps']-serie['errores'])}s correctos | {serie['errores']}s error"
+                elif nombre_ejercicio.lower() == "propiocepcion":
+                    texto_serie = f"Serie {i+1}: {serie['reps']}s aguantados | {serie['errores']} inestabilidades"
+                elif nombre_ejercicio.lower() == "deslizamiento pared":
+                    texto_serie = f"Serie {i+1}: Ángulo máximo {serie['reps']}º"
+                else:
+                    correctas = serie['reps'] - serie['errores']
+                    texto_serie = f"Serie {i+1}: {serie['reps']} reps | {correctas} correctas | {serie['errores']} fallidas"
+                
+                color_texto = "white" if serie['errores'] == 0 else "#FF8A8A"
+                lbl_s = ctk.CTkLabel(frame_stats, text=texto_serie, font=ctk.CTkFont(size=15), text_color=color_texto)
+                lbl_s.pack(anchor="w", pady=2)
+
+
 
     def mostrar_video_explicativo(self, nombre_ejercicio, mensaje_error=None):
         for widget in self.main_panel.winfo_children():
@@ -218,13 +290,11 @@ class AppRehabilitacion(ctk.CTk):
         lbl_titulo.pack(pady=40 if not mensaje_error else 10)
 
     def mostrar_popup_iniciar(self, nombre_ejercicio):
-        # Crear la ventana tLoplevel
         popup = ctk.CTkToplevel(self)
         popup.title(f"Iniciar: {nombre_ejercicio}")
         popup.geometry("350x220")
         popup.attributes("-topmost", True)
         
-        # Orientar la ventana siempre al centro
         popup.update_idletasks()
         x = self.winfo_x() + (self.winfo_width() // 2) - (350 // 2)
         y = self.winfo_y() + (self.winfo_height() // 2) - (220 // 2)
@@ -263,59 +333,8 @@ class AppRehabilitacion(ctk.CTk):
         self.btn_stop = ctk.CTkButton(self.main_panel, text="⏹ Finalizar", fg_color="red", hover_color="darkred", 
                                       command=self.detener_video, state="disabled")
 
-    def generar_resumen_estadisticas(self, historial):
-        if not historial:
-            return "Aún no hay datos registrados para mostrar."
-            
-        stats = {}
-        for s in historial:
-            fecha_completa = s[0]
-            fecha_str = fecha_completa[:10]
-            ejercicio = s[1]
-            reps = int(s[3]) if s[3] else 0
-            errs = int(s[4]) if s[4] else 0
-            
-            if ejercicio not in stats:
-                stats[ejercicio] = {}
-            if fecha_str not in stats[ejercicio]:
-                stats[ejercicio][fecha_str] = []
-                
-            stats[ejercicio][fecha_str].insert(0, {"reps": reps, "errores": errs})
-            
-        texto_pantalla = "📊 RESUMEN CLÍNICO POR EJERCICIO\n" + ("─" * 45) + "\n\n"
-        meses = {1:"enero", 2:"febrero", 3:"marzo", 4:"abril", 5:"mayo", 6:"junio", 
-                 7:"julio", 8:"agosto", 9:"septiembre", 10:"octubre", 11:"noviembre", 12:"diciembre"}
-        dias_sem = {0:"Lunes", 1:"Martes", 2:"Miércoles", 3:"Jueves", 4:"Viernes", 5:"Sábado", 6:"Domingo"}
-        
-        for ej, dias in sorted(stats.items()):
-            texto_pantalla += f"🏋️ EJERCICIO: {ej.upper()}\n"
-            for fecha, series_list in sorted(dias.items(), reverse=True):
-                try:
-                    dt = datetime.datetime.strptime(fecha, "%Y-%m-%d")
-                    fecha_bonita = f"{dias_sem[dt.weekday()]} {dt.day} de {meses[dt.month]} {dt.year}"
-                except:
-                    fecha_bonita = fecha
-                
-                texto_pantalla += f"    📅 {fecha_bonita}\n"
-                texto_pantalla += f"    {len(series_list)} Series\n"
-                
-                for i, serie in enumerate(series_list):
-                    if ej.lower() == "plancha":
-                        texto_pantalla += f"        {i+1}ºserie: {serie['reps']} segundos totales | {max(0, serie['reps']-serie['errores'])}s correctos | {serie['errores']}s con error.\n"
-                    elif ej.lower() == "propiocepcion":
-                        texto_pantalla += f"        {i+1}ºserie: {serie['reps']} segundos aguantados | {serie['errores']} puntos de inestabilidad detectados.\n"
-                    elif ej.lower() == "deslizamiento pared":
-                        texto_pantalla += f"        {i+1}ºserie: Ángulo máximo alcanzado: {serie['reps']}º\n"
-                    else:
-                        correctas = serie['reps'] - serie['errores']
-                        texto_pantalla += f"        {i+1}ºserie: {serie['reps']} repeticiones totales | {correctas} correctas | {serie['errores']} con error.\n"
-                texto_pantalla += "\n"
-                               
-        return texto_pantalla
-
-
-
     def iniciar_motor_ejercicio(self, ejercicio, nivel):
+
         if ejercicio == "Sentadilla":
             self.ejercicio_activo = ModuloSentadilla(nivel=nivel)
         elif ejercicio == "Peso Muerto":

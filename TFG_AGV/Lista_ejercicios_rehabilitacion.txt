@@ -1,0 +1,42 @@
+
+Aquí tienes la explicación detallada de cada uno de los ejercicios que has incluido en tu plataforma de telerehabilitación. Cada uno tiene un propósito biomecánico y clínico muy específico, abarcando desde la recuperación de movilidad hasta la ganancia de fuerza e hipertrofia funcional:
+
+### 1. Sentadilla (Squat)
+*   **¿Qué es?** Es el movimiento básico de flexión y extensión simultánea de cadera, rodillas y tobillos.
+*   **¿Para qué sirve?** Fortalece de manera global el tren inferior (cuádriceps, glúteos e isquiotibiales). Clínicamente, es fundamental para recuperar patrones de movimiento funcionales diarios, como sentarse y levantarse de una silla o subir escaleras, y para dotar de estabilidad a la rodilla.
+
+### 2. Peso Muerto (Deadlift)
+*   **¿Qué es?** Un movimiento de "bisagra de cadera", donde el torso se inclina hacia adelante manteniendo la espalda recta mientras las caderas van hacia atrás, para luego volver a la posición erguida.
+*   **¿Para qué sirve?** Es el ejercicio estrella para fortalecer toda la cadena posterior (isquiotibiales, glúteos y erectores espinales). En fisioterapia es vital para la reeducación postural y la prevención de dolores lumbares, enseñando al paciente a levantar peso usando la cadera y no tirando de la zona lumbar baja.
+
+### 3. Press Militar (Overhead Press)
+*   **¿Qué es?** Consiste en un empuje vertical, elevando los brazos (generalmente con peso) desde la altura de las clavículas/hombros hasta por encima de la cabeza, bloqueando los codos al final.
+*   **¿Para qué sirve?** Refuerza el deltoides, tríceps y trapecios. En rehabilitación, busca recuperar el rango de movilidad completo de la articulación del hombro por encima de los 90 grados y dar estabilidad a la cintura escapular (evitando la dislocación).
+
+### 4. Plancha (Plank)
+*   **¿Qué es?** Un ejercicio isométrico (sin movimiento dinámico) donde el paciente sostiene su cuerpo paralelo al suelo, apoyado sobre los antebrazos y las puntas de los pies, manteniendo el tronco recto como una tabla.
+*   **¿Para qué sirve?** Fortalece profundamente el *core* (transverso del abdomen). A diferencia de los clásicos encogimientos ("crunches"), la plancha genera fuerza sin flexionar la columna, lo que reduce la presión en los discos intervertebrales y es ideal para el tratamiento de hernias discales.
+
+### 5. Propiocepción
+*   **¿Qué es?** La propiocepción es el "sentido" que informa al cerebro sobre la posición de nuestros músculos y articulaciones. En la app, normalmente lo mides mediante equilibrios a una sola pierna (apoyo monopodal).
+*   **¿Para qué sirve?** Es el pilar de la rehabilitación tras esguinces de tobillo o roturas de ligamentos (LCA en rodilla). Mejora el tiempo de reacción neuromuscular del cuerpo ante desequilibrios, previniendo recaídas o torceduras involuntarias.
+
+### 6. Hombros Laterales (Elevaciones laterales)
+*   **¿Qué es?** Un movimiento de abducción, separando los brazos del cuerpo hacia los lados hasta que queden paralelos al suelo.
+*   **¿Para qué sirve?** Aísla de forma muy precisa el deltoides medio y el músculo supraespinoso. Se receta para tratar pinzamientos subacromiales, recuperar roturas del manguito de los rotadores y dar anchura y estabilidad lateral a la articulación glenohumeral.
+
+### 7. Deslizamiento en Pared (Wall Slides)
+*   **¿Qué es?** El paciente apoya la espalda y los brazos (en forma de "W") contra una pared, y desliza los brazos hacia arriba hasta formar una "Y", intentando en todo momento que los hombros, codos y muñecas no se despeguen de la pared.
+*   **¿Para qué sirve?** Es puramente postural y de movilidad escapular. Sirve para combatir posturas muy extendidas en trabajos de oficina (cuello adelantado y hombros caídos o "cifosis"), mejorando la alineación y movilidad torácica.
+
+### 8. Hip Thrust (Empuje de cadera)
+*   **¿Qué es?** Con la parte superior de la espalda apoyada en un banco o suelo, se realiza una extensión pura de cadera elevando la pelvis hacia el techo.
+*   **¿Para qué sirve?** Es el ejercicio que mejor aísla y activa el glúteo mayor sin generar estrés mecánico en las rodillas ni en la espalda baja. Clínicamente cura la "amnesia glútea" (glúteos debilitados por estar sentados todo el día) y estabiliza la pelvis, previniendo rodillas en "valgo" (hacia dentro).
+
+### 9. Zancadas (Lunges)
+*   **¿Qué es?** Partiendo de pie, se da un paso largo hacia delante y se baja la cadera hasta que ambas rodillas formen ángulos de 90 grados.
+*   **¿Para qué sirve?** Es un ejercicio unilateral y muy exigente a nivel de estabilización dinámica. Ayuda a diagnosticar y solucionar asimetrías (ej. la pierna derecha es mucho más débil que la izquierda) y mejora la coordinación para la vuelta a caminar de forma funcional tras una cirugía de tren inferior.
+
+### 10. Búlgaras (Bulgarian Split Squats)
+*   **¿Qué es?** Es una variación mucho más intensa de la zancada. El pie de la pierna retrasada se eleva sobre una silla o banco, por lo que todo el peso del cuerpo recae exclusivamente sobre la pierna delantera durante la bajada.
+*   **¿Para qué sirve?** Es el pináculo de la hipertrofia y fuerza en rehabilitación unilateral. Al anular casi por completo la pierna trasera, se maximiza la tensión en los cuádriceps y glúteos de la pierna activa. Se receta en las fases finales de recuperación clínica, como el retorno deportivo (*return to play*) tras lesiones graves, para equilibrar los picos de fuerza de ambos lados del cuerpo.

@@ -1,9 +1,0 @@
-==================================================
-📋 INFORME CLÍNICO: SENTADILLA (Nivel: Intermedio)
-Fecha del análisis: 06/06/2026 12:19:37
-==================================================
-🔹 Repeticiones completadas: 6 / 10
-🔹 Profundidad media: 62.0º
-🔹 Errores de valgo: 3
-🔹 Velocidad de ejecución media: 1.09 s/repetición
-==================================================

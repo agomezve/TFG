@@ -1,0 +1,14 @@
+==================================================
+📋 INFORME CLÍNICO DE TELEREHABILITACIÓN
+Ejercicio: Press Militar (Nivel: Principiante)
+Fecha del análisis: 24/04/2026 11:06:05
+==================================================
+
+📊 DATOS CUANTITATIVOS:
+ - Repeticiones válidas completadas: 4
+ - Extensión media del codo: 146.1 grados (Objetivo: > 130.0 grados)
+ - Repeticiones con desalineación de antebrazo: 0 (0%)
+
+💡 CONSEJOS Y CORRECCIONES AUTOMÁTICAS:
+ [RANGO] ✅ Excelente. Alcanzaste la extensión óptima en el press.
+ [TÉCNICA] ✅ Alineación perfecta del antebrazo. Sin desviaciones riesgosas.

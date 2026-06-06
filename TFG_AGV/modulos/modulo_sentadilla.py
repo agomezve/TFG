@@ -159,7 +159,7 @@ class ModuloSentadilla(ModuloEjercicio):
         fecha_actual = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         fecha_dia = datetime.datetime.now().strftime("%Y-%m-%d")
         carpeta_base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        carpeta_informes = os.path.join(carpeta_base, "informes", nombre_pac_limpio, fecha_dia, "sentadilla", "informes")
+        carpeta_informes = os.path.join(carpeta_base, "usuarios", nombre_pac_limpio, fecha_dia, "sentadilla", "informes")
         if not os.path.exists(carpeta_informes):
             os.makedirs(carpeta_informes)
         ruta_informe = os.path.join(carpeta_informes, f"informe_sentadilla_{fecha_actual}.txt")

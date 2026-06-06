@@ -1,0 +1,8 @@
+==================================================
+📋 INFORME CLÍNICO: HIP THRUST (Nivel: Principiante)
+Fecha del análisis: 25/04/2026 12:12:46
+==================================================
+🔹 Repeticiones completadas: 7
+🔹 Extensión de cadera media alcanzada: 119.0º
+🔹 Repeticiones sin completar el rango superior: 2
+==================================================

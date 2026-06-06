@@ -1,7 +1,0 @@
-==================================================
-📋 INFORME CLÍNICO: PROPIOCEPCIÓN MONOPODAL (Nivel: Avanzado)
-Fecha del análisis: 05/06/2026 19:20:07
-==================================================
-🔹 Tiempo total de equilibrio: 22 s
-🔹 Puntos de inestabilidad detectados: 6
-==================================================

@@ -519,8 +519,18 @@ class AppRehabilitacion(ctk.CTk):
             
         if hasattr(self, 'video_writer') and self.video_writer is not None:
             self.video_writer.release()
-            self.video_writer = None
             
+            # Renombrar con FPS real
+            if hasattr(self, 'inicio_grabacion_vid') and hasattr(self, 'frames_grabados_vid') and hasattr(self, 'ruta_video_actual'):
+                duracion = time.time() - self.inicio_grabacion_vid
+                if duracion > 0 and self.frames_grabados_vid > 0:
+                    fps_real = self.frames_grabados_vid / duracion
+                    nuevo_nombre = self.ruta_video_actual.replace(".avi", f"_fps{fps_real:.2f}.avi")
+                    try:
+                        os.rename(self.ruta_video_actual, nuevo_nombre)
+                    except: pass
+                    
+            self.video_writer = None
         if self.ejercicio_activo is not None:
             # Generar el informe y guardar en BBDD ANTES de obtener_historial_paciente
             self.ejercicio_activo.generar_informe_clinico()
@@ -538,6 +548,17 @@ class AppRehabilitacion(ctk.CTk):
 
         if hasattr(self, 'video_writer') and self.video_writer is not None:
             self.video_writer.release()
+            
+            # Renombrar con FPS real
+            if hasattr(self, 'inicio_grabacion_vid') and hasattr(self, 'frames_grabados_vid') and hasattr(self, 'ruta_video_actual'):
+                duracion = time.time() - self.inicio_grabacion_vid
+                if duracion > 0 and self.frames_grabados_vid > 0:
+                    fps_real = self.frames_grabados_vid / duracion
+                    nuevo_nombre = self.ruta_video_actual.replace(".avi", f"_fps{fps_real:.2f}.avi")
+                    try:
+                        os.rename(self.ruta_video_actual, nuevo_nombre)
+                    except: pass
+                    
             self.video_writer = None
 
         if self.ejercicio_activo is not None:
@@ -642,7 +663,7 @@ class AppRehabilitacion(ctk.CTk):
                 import os
                 carpeta_base = os.path.dirname(os.path.abspath(__file__))
                 ej_limpio = getattr(self, '_nombre_ejercicio_activo', 'ejercicio').lower().replace(" ", "_")
-                carpeta_videos = os.path.join(carpeta_base, "informes", nombre_pac_limpio, fecha_dia, ej_limpio, "videos")
+                carpeta_videos = os.path.join(carpeta_base, "usuarios", nombre_pac_limpio, fecha_dia, ej_limpio, "videos")
                 if not os.path.exists(carpeta_videos):
                     os.makedirs(carpeta_videos)
                 ruta_video = os.path.join(carpeta_videos, f"video_{ej_limpio}_{fecha_actual}.avi")
@@ -650,6 +671,9 @@ class AppRehabilitacion(ctk.CTk):
                 fourcc = cv2.VideoWriter_fourcc(*'MJPG') 
                 # 12.0 FPS es un buen promedio de la velocidad real de Mediapipe
                 self.video_writer = cv2.VideoWriter(ruta_video, fourcc, 12.0, (int(w_vid), int(h_vid)))
+                self.ruta_video_actual = ruta_video
+                self.frames_grabados_vid = 0
+                self.inicio_grabacion_vid = time.time()
                 print(f"[SISTEMA] Iniciando grabación de vídeo en: {ruta_video} ({w_vid}x{h_vid})")
                 if not self.video_writer.isOpened():
                     print("[SISTEMA] ❌ ERROR CRÍTICO: VideoWriter no pudo abrir el archivo. Revisa permisos o códecs.")
@@ -660,6 +684,7 @@ class AppRehabilitacion(ctk.CTk):
                 else:
                     frame_bgr = cv2.cvtColor(frame_rgb, cv2.COLOR_RGB2BGR)
                 self.video_writer.write(frame_bgr)
+                self.frames_grabados_vid += 1
 
         # Convertir a imagen de Tkinter manteniendo el tamaño del canvas
         img = PIL.Image.fromarray(frame_rgb)
@@ -784,17 +809,17 @@ class AppRehabilitacion(ctk.CTk):
                 lbl_s = ctk.CTkLabel(frame_s, text=texto_s, font=ctk.CTkFont(size=15))
                 lbl_s.pack(side="left")
                 
-                btn_ver = ctk.CTkButton(frame_s, text="Ver Informe y Vídeo", width=140, height=28, command=lambda e=ej, idx=i, p_id=paciente_id, p_nom=nombre, f=fecha: self.mostrar_detalle_serie_fisio(p_id, p_nom, f, e, idx))
+                btn_ver = ctk.CTkButton(frame_s, text="Ver Informe y Vídeo", width=140, height=28, command=lambda e=ej, idx=i, p_id=paciente_id, p_nom=nombre, f=fecha, ts=serie[0]: self.mostrar_detalle_serie_fisio(p_id, p_nom, f, e, idx, ts))
                 btn_ver.pack(side="right")
 
-    def mostrar_detalle_serie_fisio(self, paciente_id, nombre, fecha, ejercicio, serie_idx):
+    def mostrar_detalle_serie_fisio(self, paciente_id, nombre, fecha, ejercicio, serie_idx, db_timestamp_str=None):
         for widget in self.main_panel.winfo_children():
             widget.destroy()
             
         # Buscar el informe y video en la carpeta
         nombre_pac_limpio = "".join([c for c in nombre if c.isalpha() or c.isdigit() or c==' ']).rstrip().replace(" ", "_").lower()
         carpeta_base = os.path.dirname(os.path.abspath(__file__))
-        carpeta_ejercicio = os.path.join(carpeta_base, "informes", nombre_pac_limpio, fecha, ejercicio.lower().replace(" ", "_"))
+        carpeta_ejercicio = os.path.join(carpeta_base, "usuarios", nombre_pac_limpio, fecha, ejercicio.lower().replace(" ", "_"))
         carpeta_txt = os.path.join(carpeta_ejercicio, "informes")
         carpeta_vid = os.path.join(carpeta_ejercicio, "videos")
         
@@ -807,29 +832,46 @@ class AppRehabilitacion(ctk.CTk):
             
         ruta_txt = None
         ruta_mp4 = None
+        t_txt = None
         
-        if serie_idx < len(archivos_txt):
+        import datetime
+        def extraer_dt(filename):
+            try:
+                name = filename.rsplit('.', 1)[0]
+                if "_fps" in name:
+                    name = name.split("_fps")[0]
+                parts = name.split('_')
+                d_str = parts[-2]
+                t_str = parts[-1]
+                return datetime.datetime.strptime(f"{d_str}_{t_str}", "%Y-%m-%d_%H-%M-%S")
+            except:
+                return datetime.datetime.min
+                
+        # 1. Intentar buscar el TXT por el timestamp de la BBDD (super preciso, a prueba de borrados)
+        if db_timestamp_str:
+            try:
+                db_t = datetime.datetime.strptime(db_timestamp_str, "%Y-%m-%d %H:%M:%S")
+                min_diff = 999999
+                for txt in archivos_txt:
+                    t = extraer_dt(txt)
+                    diff = abs((db_t - t).total_seconds())
+                    if diff < min_diff and diff <= 15: # Margen de 15 segundos entre BBDD y guardado de archivo
+                        min_diff = diff
+                        ruta_txt = os.path.join(carpeta_txt, txt)
+                        t_txt = t
+            except:
+                pass
+                
+        # 2. Fallback: buscar por índice si no se encontró por fecha (legacy)
+        if not ruta_txt and serie_idx < len(archivos_txt):
             ruta_txt = os.path.join(carpeta_txt, archivos_txt[serie_idx])
-            
-            # Intentar emparejar el archivo de vídeo por cercanía de timestamp en lugar de por índice directo
-            # Esto evita errores si hay series antiguas sin vídeo
-            import datetime
-            def extraer_dt(filename):
-                try:
-                    parts = filename.split('_')
-                    d_str = parts[-2]
-                    t_str = parts[-1].split('.')[0]
-                    return datetime.datetime.strptime(f"{d_str}_{t_str}", "%Y-%m-%d_%H-%M-%S")
-                except:
-                    return datetime.datetime.min
-
             t_txt = extraer_dt(archivos_txt[serie_idx])
             
+        # 3. Si hay TXT, buscar su vídeo correspondiente
+        if ruta_txt and t_txt:
             video_match = None
             for vid in archivos_mp4:
                 t_vid = extraer_dt(vid)
-                # El vídeo empieza antes que el txt, así que t_vid <= t_txt. 
-                # Cogemos el más cercano que cumpla esto (y que no difiera más de 20 minutos).
                 diff = (t_txt - t_vid).total_seconds()
                 if 0 <= diff <= 1200: 
                     video_match = vid
@@ -865,7 +907,17 @@ class AppRehabilitacion(ctk.CTk):
         if not cap.isOpened():
             return
             
-        fps = cap.get(cv2.CAP_PROP_FPS)
+        fps = 12.0
+        filename = os.path.basename(ruta_mp4)
+        if "_fps" in filename:
+            try:
+                fps_str = filename.split("_fps")[1].split(".")[0]
+                fps = float(fps_str)
+            except:
+                fps = cap.get(cv2.CAP_PROP_FPS)
+        else:
+            fps = cap.get(cv2.CAP_PROP_FPS)
+            
         if fps <= 0 or fps > 60:
             fps = 12.0
             

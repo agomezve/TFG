@@ -23,6 +23,16 @@ class ModuloEjercicio(ABC):
         """Devuelve el número de repeticiones mal hechas. 
         Este valor lo proveerán los submódulos usando sus variables internas."""
         return 0
+
+    def get_errores_consecutivos(self) -> int:
+        """Devuelve el número de errores consecutivos en las últimas repeticiones.
+        Los submódulos con repeticiones deben sobrescribir este método."""
+        return 0
+
+    def get_objetivo_completado(self) -> bool:
+        """Devuelve True cuando el ejercicio ha alcanzado su objetivo (10 reps o 30s).
+        Los submódulos deben sobrescribir este método."""
+        return False
         
     def dibujar_estadisticas_ui(self, frame, nombre_ejercicio, rep_correctas, rep_errores):
         """Dibuja el título estandarizado del ejercicio indicando aciertos y fallos."""
@@ -60,13 +70,13 @@ class ModuloEjercicio(ABC):
         alto = 30
 
         # --- Suavizado (lerp) ---
-        # Factor 0.25 → sube rápido pero sin saltos bruscos.
+        # Factor 0.18 → movimiento más fluido y continuo, sin saltos bruscos.
         # Cuando baja (nueva rep) usamos factor mayor para resetear visualmente rápido.
         porcentaje_objetivo = max(0.0, min(100.0, float(porcentaje)))
         if not hasattr(self, '_porcentaje_visual'):
             self._porcentaje_visual = 0.0
 
-        factor_lerp = 0.30 if porcentaje_objetivo >= self._porcentaje_visual else 0.45
+        factor_lerp = 0.18 if porcentaje_objetivo >= self._porcentaje_visual else 0.30
         self._porcentaje_visual += (porcentaje_objetivo - self._porcentaje_visual) * factor_lerp
 
         # Clamp final por seguridad

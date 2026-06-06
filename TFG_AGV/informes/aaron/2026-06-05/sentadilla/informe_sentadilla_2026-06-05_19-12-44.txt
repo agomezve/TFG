@@ -1,0 +1,8 @@
+==================================================
+📋 INFORME CLÍNICO: SENTADILLA (Nivel: Avanzado)
+Fecha del análisis: 05/06/2026 19:12:44
+==================================================
+🔹 Repeticiones completadas: 3
+🔹 Profundidad media: 99.6º
+🔹 Errores de valgo: 2
+==================================================

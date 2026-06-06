@@ -7,12 +7,15 @@ from modulos.modulo_base import ModuloEjercicio
 class ModuloPropiocepcion(ModuloEjercicio):
     def __init__(self, nivel="principiante"):
         self.nivel = nivel
-        # El umbral determina cuánta distancia (en coordenadas locales de mediapipe) 
-        # consideramos como un "temblor" o pérdida de equilibrio.
         if self.nivel == "avanzado":
             self.umbrales = {"desviacion_maxima": 0.03}
+            self.objetivo_segundos = 60
+        elif self.nivel == "intermedio":
+            self.umbrales = {"desviacion_maxima": 0.04}
+            self.objetivo_segundos = 40
         else:
             self.umbrales = {"desviacion_maxima": 0.05}
+            self.objetivo_segundos = 20
             
         self.tiempo_ultimo_frame = None
         self.centro_x_referencia = None
@@ -24,7 +27,10 @@ class ModuloPropiocepcion(ModuloEjercicio):
         self.color_feedback = (255, 255, 255)
 
     def get_errores_acumulados(self) -> int:
-        return 0 # Es isométrico, permitimos re-equilibrarse
+        return 0  # Es isométrico, no expulsamos por errores consecutivos
+
+    def get_objetivo_completado(self) -> bool:
+        return self.segundos_totales >= self.objetivo_segundos
 
     def obtener_landmarks_relevantes(self) -> list:
         # Cadera(23,24), Rodilla(25,26), Tobillo(27,28)
@@ -35,25 +41,22 @@ class ModuloPropiocepcion(ModuloEjercicio):
         cadera_i = landmarks_2d[23].x
         centro_x_actual = (cadera_d + cadera_i) / 2.0
         
-        # Considerar si está con una pierna levantada mirando la diferencia de Y en los tobillos
         tobillo_y_i = landmarks_2d[27].y
         tobillo_y_d = landmarks_2d[28].y
         diferencia_altura_tobillos = abs(tobillo_y_i - tobillo_y_d)
 
         t_actual = time.time()
         
-        # Si un tobillo está significativamente más alto que el otro, está en monopodal
         if diferencia_altura_tobillos > 0.05:
             if self.tiempo_ultimo_frame is not None:
                 dt = t_actual - self.tiempo_ultimo_frame
                 self.segundos_totales += dt
                 
-                # Evaluar inestabilidad
                 if self.centro_x_referencia is not None:
                     desplazamiento = abs(centro_x_actual - self.centro_x_referencia)
                     if desplazamiento > self.umbrales["desviacion_maxima"]:
                         self.puntos_inestabilidad += 1
-                        self.centro_x_referencia = centro_x_actual  # Actualiza la referencia al caer
+                        self.centro_x_referencia = centro_x_actual
                         self.feedback_actual = "¡Inestabilidad detectada! Rectifica."
                         self.color_feedback = (0, 0, 255)
                     else:
@@ -69,11 +72,11 @@ class ModuloPropiocepcion(ModuloEjercicio):
             self.feedback_actual = "Levanta un pie para empezar."
             self.color_feedback = (255, 255, 255)
 
-        # Barra indica nivel de estabilidad (100 = perfecto)
-        penalizacion = min(100, self.puntos_inestabilidad * 5.0)
-        estabilidad_pct = 100.0 - penalizacion
+        # Barra indica % de tiempo transcurrido hacia el objetivo
+        porcentaje_tiempo = (self.segundos_totales / self.objetivo_segundos) * 100.0
+        porcentaje_tiempo = max(0, min(100, porcentaje_tiempo))
             
-        self.dibujar_barra_progreso(frame, estabilidad_pct)
+        self.dibujar_barra_progreso(frame, porcentaje_tiempo)
         
         if self.color_feedback == (0, 0, 255):
             self.estado_esqueleto = "error"
@@ -81,9 +84,11 @@ class ModuloPropiocepcion(ModuloEjercicio):
             self.estado_esqueleto = "correcto"
         else:
             self.estado_esqueleto = "neutro"
+
+        segundos_restantes = max(0, int(self.objetivo_segundos - self.segundos_totales))
         self.dibujar_estadisticas_ui(frame, "Apoyo Monopodal", f"{int(self.segundos_totales)}s", self.puntos_inestabilidad)
-        
         cv2.putText(frame, self.feedback_actual, (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.7, self.color_feedback, 2)
+        cv2.putText(frame, f"Objetivo: {segundos_restantes}s restantes ({self.objetivo_segundos}s total)", (10, 100), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (200, 200, 200), 1)
 
     def generar_informe_clinico(self):
         import os, datetime
@@ -109,7 +114,7 @@ class ModuloPropiocepcion(ModuloEjercicio):
         nombre_archivo = f"informe_propiocepcion_{fecha_actual}.txt"
         
         carpeta_base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        carpeta_informes = os.path.join(carpeta_base, "informes", nombre_pac_limpio, fecha_dia, "propiocepcion")
+        carpeta_informes = os.path.join(carpeta_base, "informes", nombre_pac_limpio, fecha_dia, "propiocepcion", "informes")
         if not os.path.exists(carpeta_informes):
             os.makedirs(carpeta_informes)
         ruta_informe = os.path.join(carpeta_informes, nombre_archivo)
@@ -119,8 +124,11 @@ class ModuloPropiocepcion(ModuloEjercicio):
         lineas_informe.append(f"📋 INFORME CLÍNICO: PROPIOCEPCIÓN MONOPODAL (Nivel: {self.nivel.capitalize()})")
         lineas_informe.append(f"Fecha del análisis: {datetime.datetime.now().strftime('%d/%m/%Y %H:%M:%S')}")
         lineas_informe.append("=" * 50)
+        lineas_informe.append(f"🔹 Objetivo: {self.objetivo_segundos} segundos")
         lineas_informe.append(f"🔹 Tiempo total de equilibrio: {int(self.segundos_totales)} s")
         lineas_informe.append(f"🔹 Puntos de inestabilidad detectados: {self.puntos_inestabilidad}")
+        objetivo_alcanzado = "✅ SÍ" if self.segundos_totales >= self.objetivo_segundos else "❌ NO"
+        lineas_informe.append(f"🔹 Objetivo alcanzado: {objetivo_alcanzado}")
         lineas_informe.append("=" * 50)
         
         texto_final = "\n".join(lineas_informe)

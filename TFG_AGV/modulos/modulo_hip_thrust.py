@@ -1,29 +1,43 @@
 # Archivo: modulo_hip_thrust.py
 import cv2
+import time
 from modulos.modulo_base import ModuloEjercicio
+
+OBJETIVO_REPS = 10
 
 class ModuloHipThrust(ModuloEjercicio):
     def __init__(self, nivel="principiante"):
         self.nivel = nivel
+        # extension_completa: ángulo de cadera en la parte alta del empuje (~155-165°)
+        # descenso: ángulo de cadera en la posición baja (~100-115°)
         if self.nivel == "avanzado":
-            self.umbrales = {"extension_completa": 175.0, "descenso": 120.0, "tolerancia_extension": 5.0}
-        else: # principiante
-            self.umbrales = {"extension_completa": 165.0, "descenso": 130.0, "tolerancia_extension": 15.0}
+            self.umbrales = {"extension_completa": 158.0, "descenso": 100.0, "tolerancia_extension": 5.0}
+        elif self.nivel == "intermedio":
+            self.umbrales = {"extension_completa": 154.0, "descenso": 105.0, "tolerancia_extension": 8.0}
+        else:  # principiante
+            self.umbrales = {"extension_completa": 130.0, "descenso": 115.0, "tolerancia_extension": 15.0}
             
         self.fase_actual = "ABAJO"
         self.repeticiones = 0
         self.errores = 0
-        
-        # Guardaremos los grados máximos alcanzados en cada repe para hacer estadística
+        self.errores_consecutivos = 0
         self.maximos_alcanzados = []
         self.max_actual = 0.0
         self.hubo_error_actual = False
-        
-        self.feedback_actual = "Preparado. Hombros apoyados, sube la cadera."
+        self.feedback_actual = "Hombros apoyados. Sube la cadera empujando hacia arriba."
         self.color_feedback = (255, 255, 255)
+        # Velocidad de ejecución
+        self.tiempo_inicio_rep = None
+        self.tiempos_repeticion = []
 
     def get_errores_acumulados(self) -> int:
         return self.errores
+
+    def get_errores_consecutivos(self) -> int:
+        return self.errores_consecutivos
+
+    def get_objetivo_completado(self) -> bool:
+        return self.repeticiones >= OBJETIVO_REPS
 
     def obtener_landmarks_relevantes(self) -> list:
         # Hombro(11,12), Cadera(23,24), Rodilla(25,26)
@@ -41,7 +55,6 @@ class ModuloHipThrust(ModuloEjercicio):
         angulo_d = self.calcular_angulo_3d(hombro_d, cadera_d, rodilla_d)
         angulo_i = self.calcular_angulo_3d(hombro_i, cadera_i, rodilla_i)
         
-        # Nos quedamos con el promedio para la extensión de cadera general
         angulo_cadera = (angulo_d + angulo_i) / 2.0
 
         porcentaje = ((angulo_cadera - self.umbrales["descenso"]) / (self.umbrales["extension_completa"] - self.umbrales["descenso"])) * 100.0
@@ -59,8 +72,9 @@ class ModuloHipThrust(ModuloEjercicio):
                 self.max_actual = angulo_cadera
                 self.hubo_error_actual = False
                 self.max_porcentaje_actual = porcentaje
-                self.feedback_actual = "Empujando arriba..."
-                self.color_feedback = (255, 255, 0)
+                self.feedback_actual = ""
+                self.color_feedback = (255, 255, 255)
+                self.tiempo_inicio_rep = time.time()
                 
         elif self.fase_actual == "SUBIENDO":
             self.max_porcentaje_actual = max(self.max_porcentaje_actual, porcentaje)
@@ -71,7 +85,6 @@ class ModuloHipThrust(ModuloEjercicio):
                 self.estado_esqueleto = "correcto"
 
             if angulo_cadera < self.max_actual - 10:
-                # Si empieza a bajar pero no llegó arriba, lo marcamos como error de rango
                 self.hubo_error_actual = True
                 self.estado_esqueleto = "error"
                 self.fase_actual = "BAJANDO"
@@ -79,15 +92,13 @@ class ModuloHipThrust(ModuloEjercicio):
                 self.color_feedback = (0, 0, 255)
             elif angulo_cadera >= self.umbrales["extension_completa"]:
                 self.fase_actual = "ARRIBA"
-                self.feedback_actual = "Extensión completa. Baja controlando."
-                self.color_feedback = (0, 255, 0)
+                self.feedback_actual = ""
                 
         elif self.fase_actual == "ARRIBA":
             self.max_porcentaje_actual = max(self.max_porcentaje_actual, porcentaje)
             if angulo_cadera < self.umbrales["extension_completa"] - 10:
                 self.fase_actual = "BAJANDO"
-                self.feedback_actual = "Bajando cadera..."
-                self.color_feedback = (255, 255, 0)
+                self.feedback_actual = ""
                 
         elif self.fase_actual == "BAJANDO":
             self.max_porcentaje_actual = max(self.max_porcentaje_actual, porcentaje)
@@ -97,22 +108,27 @@ class ModuloHipThrust(ModuloEjercicio):
                 if self.max_porcentaje_actual >= 100:
                     self.repeticiones += 1
                     self.maximos_alcanzados.append(self.max_actual)
+                    if self.tiempo_inicio_rep is not None:
+                        self.tiempos_repeticion.append(time.time() - self.tiempo_inicio_rep)
                     if self.hubo_error_actual:
                         self.errores += 1
+                        self.errores_consecutivos += 1
+                    else:
+                        self.errores_consecutivos = 0
                     self.feedback_actual = "Repetición registrada."
-                elif self.max_porcentaje_actual > 40:
+                elif self.max_porcentaje_actual > 65:  # Movimiento parcial significativo → error
                     self.repeticiones += 1
                     self.errores += 1
+                    self.errores_consecutivos += 1
                     self.estado_esqueleto = "error"
                     self.feedback_actual = "Incompleto. Cuenta error."
                 
                 self.max_porcentaje_actual = 0.0
+                self.tiempo_inicio_rep = None
 
         self.dibujar_barra_progreso(frame, porcentaje)
         reps_correctas = self.repeticiones - self.errores
         self.dibujar_estadisticas_ui(frame, "Hip Thrust", reps_correctas, self.errores)
-        
-        cv2.putText(frame, self.feedback_actual, (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.7, self.color_feedback, 2)
         cv2.putText(frame, self.feedback_actual, (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.7, self.color_feedback, 2)
 
     def generar_informe_clinico(self):
@@ -120,6 +136,7 @@ class ModuloHipThrust(ModuloEjercicio):
         from database import guardar_sesion, obtener_nombre_paciente
         
         media_ext = sum(self.maximos_alcanzados) / self.repeticiones if self.repeticiones > 0 else 0
+        media_vel = sum(self.tiempos_repeticion) / len(self.tiempos_repeticion) if self.tiempos_repeticion else 0
         
         if self.paciente_id is not None:
             guardar_sesion(
@@ -141,7 +158,7 @@ class ModuloHipThrust(ModuloEjercicio):
         nombre_archivo = f"informe_hip_thrust_{fecha_actual}.txt"
         
         carpeta_base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        carpeta_informes = os.path.join(carpeta_base, "informes", nombre_pac_limpio, fecha_dia, "hip_thrust")
+        carpeta_informes = os.path.join(carpeta_base, "informes", nombre_pac_limpio, fecha_dia, "hip_thrust", "informes")
         if not os.path.exists(carpeta_informes):
             os.makedirs(carpeta_informes)
         ruta_informe = os.path.join(carpeta_informes, nombre_archivo)
@@ -151,10 +168,12 @@ class ModuloHipThrust(ModuloEjercicio):
         lineas_informe.append(f"📋 INFORME CLÍNICO: HIP THRUST (Nivel: {self.nivel.capitalize()})")
         lineas_informe.append(f"Fecha del análisis: {datetime.datetime.now().strftime('%d/%m/%Y %H:%M:%S')}")
         lineas_informe.append("=" * 50)
-        lineas_informe.append(f"🔹 Repeticiones completadas: {self.repeticiones}")
+        lineas_informe.append(f"🔹 Repeticiones completadas: {self.repeticiones} / {OBJETIVO_REPS}")
         if self.repeticiones > 0:
             lineas_informe.append(f"🔹 Extensión de cadera media alcanzada: {media_ext:.1f}º")
             lineas_informe.append(f"🔹 Repeticiones sin completar el rango superior: {self.errores}")
+        if media_vel > 0:
+            lineas_informe.append(f"🔹 Velocidad de ejecución media: {media_vel:.2f} s/repetición")
         lineas_informe.append("=" * 50)
         
         texto_final = "\n".join(lineas_informe)

@@ -29,13 +29,19 @@ def generar_esquema():
     dot.node('Comparacion', '¿Movimiento Captado ==\nMovimiento Esperado?', 
              shape='diamond', fillcolor=c_decision, style='filled')
              
-    dot.node('RepCorrecta', 'Repetición Correcta\n(Correctas += 1)', 
+    dot.node('RepCorrecta', 'Repetición Correcta\n(Correctas += 1 |\nConsecutivas Error = 0)', 
              fillcolor=c_correcto)
              
     dot.node('RepErronea', 'Repetición Errónea\n(Erróneas += 1)', 
              fillcolor=c_error)
              
-    dot.node('VerificarErrores', '¿Erróneas == 3?', 
+    dot.node('ConsecutivasError', 'Erróneas Consecutivas += 1',
+             fillcolor=c_error)
+             
+    dot.node('VerificarConsecutivas', '¿Erróneas Consecutivas == 2?',
+             shape='diamond', fillcolor=c_decision, style='filled')
+             
+    dot.node('VerificarErrores', '¿Erróneas Totales == 3?', 
              shape='diamond', fillcolor=c_decision, style='filled')
              
     dot.node('Video', 'Reproducir Vídeo\nExplicativo del Ejercicio', 
@@ -56,7 +62,10 @@ def generar_esquema():
     
     dot.edge('RepCorrecta', 'VerificarFin')
     
-    dot.edge('RepErronea', 'VerificarErrores')
+    dot.edge('RepErronea', 'ConsecutivasError')
+    dot.edge('ConsecutivasError', 'VerificarConsecutivas')
+    dot.edge('VerificarConsecutivas', 'Video', label='  Sí  ', fontcolor='#27AE60', fontname='Helvetica-Bold')
+    dot.edge('VerificarConsecutivas', 'VerificarErrores', label='  No  ', fontcolor='#C0392B', fontname='Helvetica-Bold')
     dot.edge('VerificarErrores', 'Video', label='  Sí  ', fontcolor='#27AE60', fontname='Helvetica-Bold')
     dot.edge('VerificarErrores', 'VerificarFin', label='  No  ', fontcolor='#C0392B', fontname='Helvetica-Bold')
     

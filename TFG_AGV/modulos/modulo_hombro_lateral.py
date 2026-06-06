@@ -1,24 +1,40 @@
 # Archivo: modulo_hombro_lateral.py
 import cv2
+import time
 from modulos.modulo_base import ModuloEjercicio
+
+OBJETIVO_REPS = 10
 
 class ModuloHombroLateral(ModuloEjercicio):
     def __init__(self, nivel="principiante"):
         self.nivel = nivel
+        # Ángulo cadera→hombro→codo: ~0-20° en reposo, ~80-90° con brazos a altura del hombro
         if self.nivel == "avanzado":
-            self.umbrales = {"angulo_max": 85.0, "angulo_min": 25.0, "asimetria_tol": 10.0}
-        else: # principiante
-            self.umbrales = {"angulo_max": 75.0, "angulo_min": 35.0, "asimetria_tol": 20.0}
+            self.umbrales = {"angulo_max": 75.0, "angulo_min": 20.0, "asimetria_tol": 10.0}
+        elif self.nivel == "intermedio":
+            self.umbrales = {"angulo_max": 70.0, "angulo_min": 22.0, "asimetria_tol": 12.0}
+        else:  # principiante
+            self.umbrales = {"angulo_max": 45.0, "angulo_min": 30.0, "asimetria_tol": 25.0}
             
         self.fase_actual = "ABAJO"
         self.repeticiones = 0
         self.errores = 0
+        self.errores_consecutivos = 0
         self.hubo_error_repeticion = False
         self.feedback_actual = "Brazos relajados. Listo para subir."
         self.color_feedback = (255, 255, 255)
+        # Velocidad de ejecución
+        self.tiempo_inicio_rep = None
+        self.tiempos_repeticion = []
 
     def get_errores_acumulados(self) -> int:
         return self.errores
+
+    def get_errores_consecutivos(self) -> int:
+        return self.errores_consecutivos
+
+    def get_objetivo_completado(self) -> bool:
+        return self.repeticiones >= OBJETIVO_REPS
 
     def obtener_landmarks_relevantes(self) -> list:
         # Cadera(23,24), Hombro(11,12), Codo(13,14)
@@ -53,8 +69,9 @@ class ModuloHombroLateral(ModuloEjercicio):
                 self.fase_actual = "SUBIENDO"
                 self.hubo_error_repeticion = False
                 self.max_porcentaje_actual = porcentaje
-                self.feedback_actual = "Subiendo brazos..."
-                self.color_feedback = (255, 255, 0)
+                self.feedback_actual = ""
+                self.color_feedback = (255, 255, 255)
+                self.tiempo_inicio_rep = time.time()
         
         elif self.fase_actual == "SUBIENDO":
             self.max_porcentaje_actual = max(self.max_porcentaje_actual, porcentaje)
@@ -69,19 +86,13 @@ class ModuloHombroLateral(ModuloEjercicio):
                 
             if angulo_medio < (self.max_porcentaje_actual / 100.0) * self.umbrales["angulo_max"] - 10:
                 self.fase_actual = "BAJANDO"
-                self.feedback_actual = "Bajando antes de tiempo..."
-                self.color_feedback = (0, 165, 255)
-            elif angulo_d > self.umbrales["angulo_max"] and angulo_i > self.umbrales["angulo_max"]:
-                self.fase_actual = "ARRIBA"
-                self.feedback_actual = "Punto máximo, ahora baja lento."
-                self.color_feedback = (0, 255, 0)
+                self.feedback_actual = ""
                 
         elif self.fase_actual == "ARRIBA":
             self.max_porcentaje_actual = max(self.max_porcentaje_actual, porcentaje)
             if angulo_medio < self.umbrales["angulo_max"] - 10:
                 self.fase_actual = "BAJANDO"
-                self.feedback_actual = "Bajando controlado..."
-                self.color_feedback = (255, 255, 0)
+                self.feedback_actual = ""
                 
         elif self.fase_actual == "BAJANDO":
             self.max_porcentaje_actual = max(self.max_porcentaje_actual, porcentaje)
@@ -90,27 +101,33 @@ class ModuloHombroLateral(ModuloEjercicio):
                 
                 if self.max_porcentaje_actual >= 100:
                     self.repeticiones += 1
+                    if self.tiempo_inicio_rep is not None:
+                        self.tiempos_repeticion.append(time.time() - self.tiempo_inicio_rep)
                     if self.hubo_error_repeticion:
                         self.errores += 1
+                        self.errores_consecutivos += 1
+                    else:
+                        self.errores_consecutivos = 0
                     self.feedback_actual = "Buena repetición."
-                elif self.max_porcentaje_actual > 40:
+                elif self.max_porcentaje_actual > 65:  # Movimiento parcial significativo → error
                     self.repeticiones += 1
                     self.errores += 1
+                    self.errores_consecutivos += 1
                     self.estado_esqueleto = "error"
                     self.feedback_actual = "Incompleto. Cuenta error."
                 
                 self.max_porcentaje_actual = 0.0
+                self.tiempo_inicio_rep = None
 
         self.dibujar_barra_progreso(frame, porcentaje)
         reps_correctas = self.repeticiones - self.errores
         self.dibujar_estadisticas_ui(frame, "Elev. Lateral", reps_correctas, self.errores)
-        
-        cv2.putText(frame, self.feedback_actual, (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.7, self.color_feedback, 2)
         cv2.putText(frame, self.feedback_actual, (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.7, self.color_feedback, 2)
 
     def generar_informe_clinico(self):
         import os, datetime
         from database import guardar_sesion, obtener_nombre_paciente
+        media_vel = sum(self.tiempos_repeticion) / len(self.tiempos_repeticion) if self.tiempos_repeticion else 0
         if self.paciente_id is not None:
             guardar_sesion(
                 paciente_id=self.paciente_id,
@@ -131,7 +148,7 @@ class ModuloHombroLateral(ModuloEjercicio):
         nombre_archivo = f"informe_hombro_lateral_{fecha_actual}.txt"
         
         carpeta_base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        carpeta_informes = os.path.join(carpeta_base, "informes", nombre_pac_limpio, fecha_dia, "hombro_lateral")
+        carpeta_informes = os.path.join(carpeta_base, "informes", nombre_pac_limpio, fecha_dia, "hombro_lateral", "informes")
         if not os.path.exists(carpeta_informes):
             os.makedirs(carpeta_informes)
         ruta_informe = os.path.join(carpeta_informes, nombre_archivo)
@@ -141,9 +158,11 @@ class ModuloHombroLateral(ModuloEjercicio):
         lineas_informe.append(f"📋 INFORME CLÍNICO: HOMBROS LATERALES (Nivel: {self.nivel.capitalize()})")
         lineas_informe.append(f"Fecha del análisis: {datetime.datetime.now().strftime('%d/%m/%Y %H:%M:%S')}")
         lineas_informe.append("=" * 50)
-        lineas_informe.append(f"🔹 Repeticiones completadas: {self.repeticiones}")
+        lineas_informe.append(f"🔹 Repeticiones completadas: {self.repeticiones} / {OBJETIVO_REPS}")
         if self.repeticiones > 0:
             lineas_informe.append(f"🔹 Errores de asimetría: {self.errores}")
+        if media_vel > 0:
+            lineas_informe.append(f"🔹 Velocidad de ejecución media: {media_vel:.2f} s/repetición")
         lineas_informe.append("=" * 50)
         
         texto_final = "\n".join(lineas_informe)

@@ -1,19 +1,26 @@
 # Archivo: modulo_bulgaras.py
 import cv2
+import time
 from modulos.modulo_base import ModuloEjercicio
+
+OBJETIVO_REPS = 10
 
 class ModuloBulgaras(ModuloEjercicio):
     def __init__(self, nivel="principiante"):
         self.nivel = nivel
+        # Similar a zancadas pero con pie trasero elevado
         if self.nivel == "avanzado":
-            self.umbrales = {"profundidad_maxima": 85.0, "inicio_repeticion": 160.0, "max_desbalance_torso": 0.05}
-        else: # principiante
-            self.umbrales = {"profundidad_maxima": 105.0, "inicio_repeticion": 150.0, "max_desbalance_torso": 0.10}
+            self.umbrales = {"profundidad_maxima": 100.0, "inicio_repeticion": 165.0, "max_desbalance_torso": 0.06}
+        elif self.nivel == "intermedio":
+            self.umbrales = {"profundidad_maxima": 105.0, "inicio_repeticion": 160.0, "max_desbalance_torso": 0.08}
+        else:  # principiante
+            self.umbrales = {"profundidad_maxima": 135.0, "inicio_repeticion": 155.0, "max_desbalance_torso": 0.15}
             
         self.fase_actual = "DE PIE"
         self.repeticiones = 0
         self.errores_profundidad = 0
         self.errores_equilibrio = 0
+        self.errores_consecutivos = 0
         
         self.angulo_min_alcanzado = 180.0
         self.desbalance_max_alcanzado = 0.0
@@ -26,9 +33,18 @@ class ModuloBulgaras(ModuloEjercicio):
         
         self.feedback_actual = "Pie apoyado atrás. Listo para bajar."
         self.color_feedback = (255, 255, 255)
+        # Velocidad de ejecución
+        self.tiempo_inicio_rep = None
+        self.tiempos_repeticion = []
 
     def get_errores_acumulados(self) -> int:
         return self.errores_profundidad + self.errores_equilibrio
+
+    def get_errores_consecutivos(self) -> int:
+        return self.errores_consecutivos
+
+    def get_objetivo_completado(self) -> bool:
+        return self.repeticiones >= OBJETIVO_REPS
 
     def obtener_landmarks_relevantes(self) -> list:
         return [11, 12, 23, 24, 25, 26, 27, 28]
@@ -68,13 +84,12 @@ class ModuloBulgaras(ModuloEjercicio):
                 self.fase_actual = "BAJANDO"
                 self.angulo_min_alcanzado = angulo_activo
                 self.desbalance_max_alcanzado = desbalance_actual
-                
                 self.hubo_error_profundidad_actual = False
                 self.hubo_error_equilibrio_actual = False
-                
                 self.max_porcentaje_actual = porcentaje
                 self.feedback_actual = "Bajando..."
                 self.color_feedback = (255, 255, 0)
+                self.tiempo_inicio_rep = time.time()
                 
         elif self.fase_actual == "BAJANDO":
             self.max_porcentaje_actual = max(self.max_porcentaje_actual, porcentaje)
@@ -113,20 +128,28 @@ class ModuloBulgaras(ModuloEjercicio):
                 if self.max_porcentaje_actual >= 100:
                     self.repeticiones += 1
                     self.profundidades.append(self.angulo_min_alcanzado)
+                    if self.tiempo_inicio_rep is not None:
+                        self.tiempos_repeticion.append(time.time() - self.tiempo_inicio_rep)
                     
+                    hubo_error = self.hubo_error_profundidad_actual or self.hubo_error_equilibrio_actual
                     if self.hubo_error_profundidad_actual:
                         self.errores_profundidad += 1
                     if self.hubo_error_equilibrio_actual:
                         self.errores_equilibrio += 1
-                        
+                    if hubo_error:
+                        self.errores_consecutivos += 1
+                    else:
+                        self.errores_consecutivos = 0
                     self.feedback_actual = "Búlgara registrada."
-                elif self.max_porcentaje_actual > 40:
+                elif self.max_porcentaje_actual > 65:  # Movimiento parcial significativo → error
                     self.repeticiones += 1
                     self.errores_profundidad += 1
+                    self.errores_consecutivos += 1
                     self.estado_esqueleto = "error"
                     self.feedback_actual = "Búlgara incompleta. Cuenta error."
                 
                 self.max_porcentaje_actual = 0.0
+                self.tiempo_inicio_rep = None
         
         self.en_error = self.hubo_error_profundidad_actual or self.hubo_error_equilibrio_actual
         self.dibujar_barra_progreso(frame, porcentaje)
@@ -134,7 +157,6 @@ class ModuloBulgaras(ModuloEjercicio):
         errores_totales = self.errores_profundidad + self.errores_equilibrio
         reps_correctas = self.repeticiones - errores_totales
         self.dibujar_estadisticas_ui(frame, "Bulgaras", reps_correctas, errores_totales)
-        
         cv2.putText(frame, self.feedback_actual, (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.7, self.color_feedback, 2)
 
     def generar_informe_clinico(self):
@@ -143,6 +165,7 @@ class ModuloBulgaras(ModuloEjercicio):
         
         media_prof = sum(self.profundidades) / self.repeticiones if self.repeticiones > 0 else 0
         errores_totales = self.errores_profundidad + self.errores_equilibrio
+        media_vel = sum(self.tiempos_repeticion) / len(self.tiempos_repeticion) if self.tiempos_repeticion else 0
         
         if self.paciente_id is not None:
             guardar_sesion(
@@ -164,7 +187,7 @@ class ModuloBulgaras(ModuloEjercicio):
         nombre_archivo = f"informe_bulgaras_{fecha_actual}.txt"
         
         carpeta_base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        carpeta_informes = os.path.join(carpeta_base, "informes", nombre_pac_limpio, fecha_dia, "bulgaras")
+        carpeta_informes = os.path.join(carpeta_base, "informes", nombre_pac_limpio, fecha_dia, "bulgaras", "informes")
         if not os.path.exists(carpeta_informes):
             os.makedirs(carpeta_informes)
         ruta_informe = os.path.join(carpeta_informes, nombre_archivo)
@@ -174,11 +197,13 @@ class ModuloBulgaras(ModuloEjercicio):
         lineas_informe.append(f"📋 INFORME CLÍNICO: SENTADILLAS BÚLGARAS (Nivel: {self.nivel.capitalize()})")
         lineas_informe.append(f"Fecha del análisis: {datetime.datetime.now().strftime('%d/%m/%Y %H:%M:%S')}")
         lineas_informe.append("=" * 50)
-        lineas_informe.append(f"🔹 Repeticiones completadas: {self.repeticiones}")
+        lineas_informe.append(f"🔹 Repeticiones completadas: {self.repeticiones} / {OBJETIVO_REPS}")
         if self.repeticiones > 0:
             lineas_informe.append(f"🔹 Flexión media alcanzada de rodilla activa: {media_prof:.1f}º")
             lineas_informe.append(f"🔹 Repeticiones con flexión insuficiente: {self.errores_profundidad}")
             lineas_informe.append(f"🔹 Repeticiones perdiendo equilibrio de torso: {self.errores_equilibrio}")
+        if media_vel > 0:
+            lineas_informe.append(f"🔹 Velocidad de ejecución media: {media_vel:.2f} s/repetición")
         lineas_informe.append("=" * 50)
         
         texto_final = "\n".join(lineas_informe)

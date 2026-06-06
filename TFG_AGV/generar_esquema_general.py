@@ -59,9 +59,9 @@ def generar_esquema_general():
         c.node('Preparacion', 'Fase de Calibración', fillcolor=c_core)
         c.node('Captura', 'Captura de Movimiento', fillcolor=c_core)
         c.node('Analisis', 'Análisis Biomecánico', fillcolor=c_core)
-        c.node('Seguridad', '¿Acumula\n3 errores técnicos?', shape='diamond', fillcolor=c_decision, style='filled')
+        c.node('Seguridad', '¿Acumula 3 errores técnicos\no 2 errores consecutivos?', shape='diamond', fillcolor=c_decision, style='filled')
         c.node('Abortar', 'Abortar Serie\npor Seguridad', fillcolor=c_error)
-        c.node('FinSerie', '¿El paciente pulsa\n"Finalizar Serie"?', shape='diamond', fillcolor=c_decision, style='filled')
+        c.node('FinSerie', '¿Repeticiones Totales ==\nRepeticiones Esperadas?', shape='diamond', fillcolor=c_decision, style='filled')
 
     # 4. BLOQUE DE PERSISTENCIA DE DATOS
     with dot.subgraph(name='cluster_datos') as c:

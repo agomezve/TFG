@@ -13,7 +13,7 @@ from modulos.modulo_press_militar import ModuloPressMilitar
 from modulos.modulo_plancha import ModuloPlancha
 from modulos.modulo_propiocepcion import ModuloPropiocepcion
 from modulos.modulo_hombro_lateral import ModuloHombroLateral
-from modulos.modulo_deslizamiento import ModuloDeslizamiento
+from modulos.modulo_press_banca import ModuloPressBanca
 from modulos.modulo_hip_thrust import ModuloHipThrust
 from modulos.modulo_zancadas import ModuloZancadas
 from modulos.modulo_bulgaras import ModuloBulgaras
@@ -102,6 +102,10 @@ class AppRehabilitacion(ctk.CTk):
             self.lbl_error.configure(text="Por favor, rellene todos los campos")
             return
             
+        if usuario.lower() == "fisio" and password == "12345":
+            self.mostrar_dashboard_fisio()
+            return
+            
         if password != "12345":
             self.lbl_error.configure(text="Contraseña incorrecta")
             return
@@ -158,10 +162,10 @@ class AppRehabilitacion(ctk.CTk):
             "Sentadilla",
             "Peso Muerto",
             "Press Militar",
+            "Press Banca",
             "Plancha",
             "Propiocepcion",
             "Hombros Laterales",
-            "Deslizamiento Pared",
             "Hip Thrust",
             "Zancadas",
             "Bulgaras"
@@ -211,12 +215,13 @@ class AppRehabilitacion(ctk.CTk):
         for s in historial_filtrado:
             fecha_completa = s[0]
             fecha_str = fecha_completa[:10]
+            nivel = s[2] if s[2] else "Desconocido"
             reps = int(s[3]) if s[3] else 0
             errs = int(s[4]) if s[4] else 0
             
             if fecha_str not in stats_por_fecha:
                 stats_por_fecha[fecha_str] = []
-            stats_por_fecha[fecha_str].insert(0, {"reps": reps, "errores": errs})
+            stats_por_fecha[fecha_str].insert(0, {"reps": reps, "errores": errs, "nivel": nivel})
             
         meses = {1:"Enero", 2:"Febrero", 3:"Marzo", 4:"Abril", 5:"Mayo", 6:"Junio", 
                  7:"Julio", 8:"Agosto", 9:"Septiembre", 10:"Octubre", 11:"Noviembre", 12:"Diciembre"}
@@ -259,15 +264,16 @@ class AppRehabilitacion(ctk.CTk):
             lbl_series.pack(anchor="w", pady=(0, 10))
             
             for i, serie in enumerate(series_list):
-                if nombre_ejercicio.lower() == "plancha":
-                    texto_serie = f"Serie {i+1}: {serie['reps']}s totales | {max(0, serie['reps']-serie['errores'])}s correctos | {serie['errores']}s error"
-                elif nombre_ejercicio.lower() == "propiocepcion":
-                    texto_serie = f"Serie {i+1}: {serie['reps']}s aguantados | {serie['errores']} inestabilidades"
-                elif nombre_ejercicio.lower() == "deslizamiento pared":
-                    texto_serie = f"Serie {i+1}: Ángulo máximo {serie['reps']}º"
+                nombre_lower = nombre_ejercicio.lower()
+                niv_str = serie.get('nivel', 'Desconocido').capitalize()
+                
+                if nombre_lower == "plancha":
+                    texto_serie = f"Serie {i+1} ({niv_str}): {serie['reps']}s totales | {max(0, serie['reps']-serie['errores'])}s correctos | {serie['errores']}s error"
+                elif nombre_lower == "propiocepcion":
+                    texto_serie = f"Serie {i+1} ({niv_str}): {serie['reps']}s aguantados | {serie['errores']} inestabilidades"
                 else:
                     correctas = serie['reps'] - serie['errores']
-                    texto_serie = f"Serie {i+1}: {serie['reps']} reps | {correctas} correctas | {serie['errores']} fallidas"
+                    texto_serie = f"Serie {i+1} ({niv_str}): {serie['reps']} reps | {correctas} correctas | {serie['errores']} fallidas"
                 
                 color_texto = "white" if serie['errores'] == 0 else "#FF8A8A"
                 lbl_s = ctk.CTkLabel(frame_stats, text=texto_serie, font=ctk.CTkFont(size=15), text_color=color_texto)
@@ -292,12 +298,12 @@ class AppRehabilitacion(ctk.CTk):
     def mostrar_popup_iniciar(self, nombre_ejercicio):
         popup = ctk.CTkToplevel(self)
         popup.title(f"Iniciar: {nombre_ejercicio}")
-        popup.geometry("350x220")
+        popup.geometry("350x280")
         popup.attributes("-topmost", True)
         
         popup.update_idletasks()
         x = self.winfo_x() + (self.winfo_width() // 2) - (350 // 2)
-        y = self.winfo_y() + (self.winfo_height() // 2) - (220 // 2)
+        y = self.winfo_y() + (self.winfo_height() // 2) - (280 // 2)
         popup.geometry(f"+{x}+{y}")
 
         lbl_tit = ctk.CTkLabel(popup, text=nombre_ejercicio.upper(), font=ctk.CTkFont(size=20, weight="bold"))
@@ -312,16 +318,124 @@ class AppRehabilitacion(ctk.CTk):
         frame_radio.pack(pady=10)
         
         r1 = ctk.CTkRadioButton(frame_radio, text="Principiante", variable=var_nivel, value="Principiante")
-        r1.pack(side="left", padx=10)
-        r2 = ctk.CTkRadioButton(frame_radio, text="Avanzado", variable=var_nivel, value="Avanzado")
-        r2.pack(side="left", padx=10)
+        r1.pack(side="left", padx=8)
+        r2 = ctk.CTkRadioButton(frame_radio, text="Intermedio", variable=var_nivel, value="Intermedio")
+        r2.pack(side="left", padx=8)
+        r3 = ctk.CTkRadioButton(frame_radio, text="Avanzado", variable=var_nivel, value="Avanzado")
+        r3.pack(side="left", padx=8)
 
         btn_web = ctk.CTkButton(popup, text="▶ INICIAR ENTRENAMIENTO", fg_color="green", hover_color="darkgreen", text_color="white", command=lambda: self._trigger_inicio(popup, nombre_ejercicio, var_nivel.get()))
-        btn_web.pack(pady=15)
+        btn_web.pack(pady=20)
+
+    # ── Consejos por ejercicio ─────────────────────────────────────────────────
+    CONSEJOS_EJERCICIO = {
+        "Sentadilla": [
+            "📐 Cámara de LADO (lateral), a la altura de tu cadera.",
+            "📏 Sépate al menos 2 m para que se vea el cuerpo entero.",
+            "🦵 Asegúrate de que ambas piernas son visibles en todo momento.",
+            "🔦 Buena iluminación frontal, sin sombras en las piernas.",
+            "👕 Ropa que contraste con el fondo.",
+        ],
+        "Peso Muerto": [
+            "📐 Cámara de LADO (lateral), a la altura de tu cadera.",
+            "📏 Sépate al menos 2 m para que se vean pies, rodillas, caderas y hombros.",
+            "🎯 Oriéntate perpendicular a la cámara (perfil puro, no en diagonal).",
+            "🔦 Iluminación lateral para que el contorno del cuerpo sea nítido.",
+            "🦴 Evita ropa muy holgada que oculte la posición de la cadera.",
+        ],
+        "Press Militar": [
+            "📐 Cámara DE FRENTE (frontal), a la altura de tu pecho.",
+            "📏 Sépate al menos 1.5 m para ver los brazos completamente extendidos.",
+            "💪 Asegúrate de que codos y muñecas son visibles en todo el recorrido.",
+            "🔦 Iluminación uniforme sin sombras sobre los brazos.",
+            "🧍 Manténte centrado en el encuadre durante todo el ejercicio.",
+        ],
+        "Press Banca": [
+            "📐 Cámara de LADO (lateral), a la altura del banco o del suelo.",
+            "📏 Sépate al menos 2 m para ver todo tu cuerpo horizontal.",
+            "🛏️ Asegúrate de que la cámara captura desde la cabeza hasta los pies.",
+            "💪 Los codos y muñecas deben ser visibles en todo el recorrido.",
+            "🔦 Buena iluminación para distinguir brazos y torso del fondo.",
+        ],
+        "Plancha": [
+            "📐 Cámara de LADO (lateral), cerca del suelo o a poca altura.",
+            "📏 Sépate al menos 2 m para ver hombros, cadera y tobillos.",
+            "🎯 Oriéntate perpendicular a la cámara (perfil puro).",
+            "🔦 Iluminación lateral para ver bien la línea del cuerpo.",
+            "🧘 Quédate quieto en el mismo sitio durante todo el ejercicio.",
+        ],
+        "Propiocepcion": [
+            "📐 Cámara DE FRENTE (frontal), a la altura de tu pecho.",
+            "📏 Sépate al menos 2 m para ver el cuerpo entero de cabeza a pies.",
+            "🦵 Fondo despejado y sin movimiento para mejorar la detección.",
+            "👟 Empieza con los dos pies en el suelo y levanta uno al iniciar.",
+            "🔦 Iluminación uniforme sin sombras en el suelo.",
+        ],
+        "Hombros Laterales": [
+            "📐 Cámara DE FRENTE (frontal), a la altura de tu cintura.",
+            "📏 Sépate al menos 1.5 m para ver ambos brazos elevados.",
+            "💪 Asegúrate de que codos y muñecas son visibles al elevar.",
+            "🔦 Iluminación frontal sin sombras sobre los brazos.",
+            "🧍 Manténte centrado en el encuadre durante todo el ejercicio.",
+        ],
+        "Hip Thrust": [
+            "📐 Cámara de LADO (lateral), a la altura del banco o suelo.",
+            "📏 Sépate al menos 2 m para ver hombros, cadera y rodillas.",
+            "🎯 Oriéntate perpendicular a la cámara (perfil puro, no en diagonal).",
+            "🔦 Iluminación lateral para detectar bien la extensión de cadera.",
+        ],
+        "Zancadas": [
+            "📐 Cámara de LADO (lateral), a la altura de tu cadera.",
+            "📏 Sépate al menos 2.5 m para ver ambas piernas en la zancada.",
+            "🦵 Realiza las zancadas en línea recta, no en diagonal.",
+            "🔦 Iluminación lateral para ver bien ambas rodillas.",
+            "👕 Evita ropa similar al fondo, especialmente en las piernas.",
+        ],
+        "Bulgaras": [
+            "📐 Cámara de LADO (lateral), a la altura de tu cadera.",
+            "📏 Sépate al menos 2.5 m para ver ambas piernas.",
+            "🦵 El pie trasero elevado debe ser visible — no debe taparse.",
+            "🎯 Oriéntate perpendicular a la cámara (perfil puro).",
+            "🔦 Buena iluminación lateral para distinguir ambas piernas.",
+        ],
+    }
 
     def _trigger_inicio(self, popup, ejercicio, nivel):
         popup.destroy()
-        self.iniciar_webcam(ejercicio, nivel.lower())
+        consejos = self.CONSEJOS_EJERCICIO.get(ejercicio, [])
+        if not consejos:
+            self.iniciar_webcam(ejercicio, nivel.lower())
+            return
+        self._mostrar_popup_consejos(ejercicio, nivel, consejos)
+
+    def _mostrar_popup_consejos(self, ejercicio, nivel, consejos):
+        w, h = 460, 400
+        tips = ctk.CTkToplevel(self)
+        tips.title(f"Consejos: {ejercicio}")
+        tips.geometry(f"{w}x{h}")
+        tips.attributes("-topmost", True)
+        tips.update_idletasks()
+        x = self.winfo_x() + (self.winfo_width() // 2) - (w // 2)
+        y = self.winfo_y() + (self.winfo_height() // 2) - (h // 2)
+        tips.geometry(f"+{x}+{y}")
+
+        ctk.CTkLabel(tips, text=f"⚠️  Antes de empezar", font=ctk.CTkFont(size=18, weight="bold"),
+                     text_color="#F39C12").pack(pady=(18, 4))
+        ctk.CTkLabel(tips, text=f"{ejercicio.upper()} — Nivel {nivel}",
+                     font=ctk.CTkFont(size=13)).pack(pady=(0, 10))
+
+        frame_scroll = ctk.CTkScrollableFrame(tips, height=220)
+        frame_scroll.pack(fill="both", expand=True, padx=18, pady=4)
+        for consejo in consejos:
+            ctk.CTkLabel(frame_scroll, text=consejo, wraplength=390,
+                         justify="left", anchor="w",
+                         font=ctk.CTkFont(size=13)).pack(anchor="w", pady=4)
+
+        ctk.CTkButton(tips, text="✅  Entendido, ¡comenzar!", fg_color="#27AE60",
+                      hover_color="#1E8449", text_color="white",
+                      font=ctk.CTkFont(size=14, weight="bold"),
+                      command=lambda: [tips.destroy(), self.iniciar_webcam(ejercicio, nivel.lower())]
+                      ).pack(pady=14)
 
     def preparar_vista_video(self, texto_pantalla=""):
         for widget in self.main_panel.winfo_children():
@@ -341,14 +455,14 @@ class AppRehabilitacion(ctk.CTk):
             self.ejercicio_activo = ModuloPesoMuerto(nivel=nivel)
         elif ejercicio == "Press Militar":
             self.ejercicio_activo = ModuloPressMilitar(nivel=nivel)
+        elif ejercicio == "Press Banca":
+            self.ejercicio_activo = ModuloPressBanca(nivel=nivel)
         elif ejercicio == "Plancha":
             self.ejercicio_activo = ModuloPlancha(nivel=nivel)
         elif ejercicio == "Propiocepcion":
             self.ejercicio_activo = ModuloPropiocepcion(nivel=nivel)
         elif ejercicio == "Hombros Laterales":
             self.ejercicio_activo = ModuloHombroLateral(nivel=nivel)
-        elif ejercicio == "Deslizamiento Pared":
-            self.ejercicio_activo = ModuloDeslizamiento(nivel=nivel)
         elif ejercicio == "Hip Thrust":
             self.ejercicio_activo = ModuloHipThrust(nivel=nivel)
         elif ejercicio == "Zancadas":
@@ -369,6 +483,8 @@ class AppRehabilitacion(ctk.CTk):
         self.procesando_video = True
         self.hora_inicio_analisis = time.time()
         self.tiempo_preparacion_fin = time.time() + 5.0
+        self._nombre_ejercicio_activo = ejercicio
+        self.video_writer = None # Se inicializará con el primer frame
         
         self.preparar_vista_video("")
         self.btn_stop.configure(state="normal")
@@ -388,6 +504,7 @@ class AppRehabilitacion(ctk.CTk):
         self.procesando_video = True
         self.hora_inicio_analisis = time.time()
         self.tiempo_preparacion_fin = time.time() + 5.0
+        self._nombre_ejercicio_activo = ejercicio
         
         self.preparar_vista_video("")
         self.btn_stop.configure(state="normal")
@@ -400,6 +517,10 @@ class AppRehabilitacion(ctk.CTk):
             self.cap.release()
             self.cap = None
             
+        if hasattr(self, 'video_writer') and self.video_writer is not None:
+            self.video_writer.release()
+            self.video_writer = None
+            
         if self.ejercicio_activo is not None:
             # Generar el informe y guardar en BBDD ANTES de obtener_historial_paciente
             self.ejercicio_activo.generar_informe_clinico()
@@ -407,6 +528,31 @@ class AppRehabilitacion(ctk.CTk):
                 
         # Volver al Dashboard al detener el vídeo
         self.mostrar_dashboard()
+
+    def _disparar_fin_serie(self, nombre_ejercicio):
+        """Finaliza la sesión automáticamente al completar el objetivo y muestra mensaje de éxito."""
+        self.procesando_video = False
+        if self.cap:
+            self.cap.release()
+            self.cap = None
+
+        if hasattr(self, 'video_writer') and self.video_writer is not None:
+            self.video_writer.release()
+            self.video_writer = None
+
+        if self.ejercicio_activo is not None:
+            self.ejercicio_activo.generar_informe_clinico()
+            self.ejercicio_activo = None
+
+        # Mostrar pantalla de éxito brevemente antes de volver al dashboard
+        for widget in self.main_panel.winfo_children():
+            widget.destroy()
+        lbl_ok = ctk.CTkLabel(self.main_panel,
+                               text=f"✅ ¡Serie completada!\n{nombre_ejercicio}",
+                               font=ctk.CTkFont(size=32, weight="bold"),
+                               text_color="#00FFAA")
+        lbl_ok.pack(expand=True)
+        self.after(2500, self.mostrar_dashboard)
 
     def actualizar_frame(self):
         # Prevenir errores al cerrar pestaña o si el canvas_video fue destruido
@@ -417,7 +563,7 @@ class AppRehabilitacion(ctk.CTk):
 
         exito, frame = self.cap.read()
         if not exito:
-            self.detener_video() # Fin del video
+            self.detener_video()  # Fin del video
             return
 
         # Procesamiento Mediapipe
@@ -433,11 +579,11 @@ class AppRehabilitacion(ctk.CTk):
             # Color condicional Tricolor: Azul(neutro), Verde(correcto), Rojo(error)
             estado = getattr(self.ejercicio_activo, 'estado_esqueleto', 'neutro')
             if estado == "error":
-                color_esqueleto = (255, 0, 0) # RGB para Rojo
+                color_esqueleto = (255, 0, 0)   # RGB para Rojo
             elif estado == "correcto":
-                color_esqueleto = (0, 255, 0) # RGB para Verde
+                color_esqueleto = (0, 255, 0)   # RGB para Verde
             else:
-                color_esqueleto = (0, 0, 255) # RGB para Azul
+                color_esqueleto = (0, 0, 255)   # RGB para Azul
             
             dibujar_landmarks_filtrados(frame_rgb, resultados.pose_landmarks, indices, conexiones, color=color_esqueleto)
             
@@ -445,7 +591,6 @@ class AppRehabilitacion(ctk.CTk):
             if tiempo_actual < getattr(self, 'tiempo_preparacion_fin', 0):
                 segundos_restantes = int(getattr(self, 'tiempo_preparacion_fin', 0) - tiempo_actual) + 1
                 h, w, _ = frame_rgb.shape
-                # Texto grande centrado
                 texto_prep = f"PREPARACION: {segundos_restantes}"
                 (tw, th), _ = cv2.getTextSize(texto_prep, cv2.FONT_HERSHEY_SIMPLEX, 1.5, 3)
                 cv2.putText(frame_rgb, texto_prep, (int((w-tw)/2), int(h/2)), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (255, 165, 0), 3, cv2.LINE_AA)
@@ -457,17 +602,26 @@ class AppRehabilitacion(ctk.CTk):
                     frame_rgb
                 )
                 
-                # Cortafuegos de seguridad: Auto-finalizar a los 3 errores
-                errores = getattr(self.ejercicio_activo, 'get_errores_acumulados', lambda: 0)()
-                if errores >= 3:
-                    nombre = self.ejercicio_activo.__class__.__name__.replace("Modulo", "")
+                # --- CORTAFUEGOS DE SEGURIDAD ---
+                # Condición 1: 3 errores totales acumulados
+                errores_totales = getattr(self.ejercicio_activo, 'get_errores_acumulados', lambda: 0)()
+                # Condición 2: 2 errores consecutivos
+                errores_consec = getattr(self.ejercicio_activo, 'get_errores_consecutivos', lambda: 0)()
+
+                if errores_totales >= 3 or errores_consec >= 2:
+                    nombre = getattr(self, '_nombre_ejercicio_activo', '')
                     self.detener_video()
                     self.mostrar_video_explicativo(
-                        nombre, 
+                        nombre,
                         mensaje_error="Vuelve a ver el vídeo explicativo para mejorar la técnica en el ejercicio."
                     )
                     return
 
+                # --- OBJETIVO COMPLETADO (10 reps o 30s) ---
+                if self.ejercicio_activo.get_objetivo_completado():
+                    nombre = getattr(self, '_nombre_ejercicio_activo', '')
+                    self._disparar_fin_serie(nombre)
+                    return
 
         # Redimensionar y convertir a CTkImage para evitar errores de pyimage en CustomTkinter
         w_main = self.main_panel.winfo_width()
@@ -477,13 +631,255 @@ class AppRehabilitacion(ctk.CTk):
         if w_main < 50 or h_main < 50:
             w_main, h_main = 640, 480
             
+        # Grabación de vídeo
+        if getattr(self, 'procesando_video', False):
+            if not hasattr(self, 'video_writer') or self.video_writer is None:
+                h_vid, w_vid, _ = frame_rgb.shape
+                nombre_pac_limpio = "".join([c for c in getattr(self, 'paciente_activo_nombre', 'paciente') if c.isalpha() or c.isdigit() or c==' ']).rstrip().replace(" ", "_").lower()
+                import datetime
+                fecha_actual = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+                fecha_dia = datetime.datetime.now().strftime("%Y-%m-%d")
+                import os
+                carpeta_base = os.path.dirname(os.path.abspath(__file__))
+                ej_limpio = getattr(self, '_nombre_ejercicio_activo', 'ejercicio').lower().replace(" ", "_")
+                carpeta_videos = os.path.join(carpeta_base, "informes", nombre_pac_limpio, fecha_dia, ej_limpio, "videos")
+                if not os.path.exists(carpeta_videos):
+                    os.makedirs(carpeta_videos)
+                ruta_video = os.path.join(carpeta_videos, f"video_{ej_limpio}_{fecha_actual}.avi")
+                # MJPG es casi nativo en todas las plataformas
+                fourcc = cv2.VideoWriter_fourcc(*'MJPG') 
+                # 12.0 FPS es un buen promedio de la velocidad real de Mediapipe
+                self.video_writer = cv2.VideoWriter(ruta_video, fourcc, 12.0, (int(w_vid), int(h_vid)))
+                print(f"[SISTEMA] Iniciando grabación de vídeo en: {ruta_video} ({w_vid}x{h_vid})")
+                if not self.video_writer.isOpened():
+                    print("[SISTEMA] ❌ ERROR CRÍTICO: VideoWriter no pudo abrir el archivo. Revisa permisos o códecs.")
+                
+            if self.video_writer is not None and self.video_writer.isOpened():
+                if frame_rgb.shape[2] == 4:
+                    frame_bgr = cv2.cvtColor(frame_rgb, cv2.COLOR_RGBA2BGR)
+                else:
+                    frame_bgr = cv2.cvtColor(frame_rgb, cv2.COLOR_RGB2BGR)
+                self.video_writer.write(frame_bgr)
+
+        # Convertir a imagen de Tkinter manteniendo el tamaño del canvas
         img = PIL.Image.fromarray(frame_rgb)
         ctk_img = ctk.CTkImage(light_image=img, size=(w_main, h_main))
         
         self.canvas_video.configure(image=ctk_img, text="", fg_color="transparent")
+        
+        self.after(10, self.actualizar_frame)
 
-        # Llamar a actualizar_frame después de 15ms
-        self.after(15, self.actualizar_frame)
+    def mostrar_dashboard_fisio(self):
+        for widget in self.winfo_children():
+            widget.destroy()
+            
+        self.protocol("WM_DELETE_WINDOW", self.procesar_cierre)
+        
+        self.header_frame = ctk.CTkFrame(self, height=40, corner_radius=0, fg_color="transparent")
+        self.header_frame.pack(side="top", fill="x", padx=20, pady=(10, 0))
+
+        btn_logout = ctk.CTkButton(self.header_frame, text="Cerrar Sesión", fg_color="red", hover_color="darkred",
+                                   text_color="white", command=self.mostrar_login, width=120)
+        btn_logout.pack(side="right", padx=(20, 0))
+
+        lbl_paciente = ctk.CTkLabel(self.header_frame, text="Panel de Fisioterapeuta", 
+                                    font=ctk.CTkFont(size=20, weight="bold"), text_color="#00FFAA")
+        lbl_paciente.pack(side="left", padx=0)
+        
+        self.main_panel = ctk.CTkFrame(self, fg_color="transparent")
+        self.main_panel.pack(fill="both", expand=True, padx=20, pady=20)
+        
+        lbl_titulo = ctk.CTkLabel(self.main_panel, text="Seleccione un Paciente", font=ctk.CTkFont(size=24, weight="bold"))
+        lbl_titulo.pack(pady=(0, 20))
+        
+        frame_grid = ctk.CTkScrollableFrame(self.main_panel, fg_color="transparent")
+        frame_grid.pack(fill="both", expand=True)
+        
+        for i, p in enumerate(self.pacientes):
+            paciente_id, nombre, edad = p
+            card = ctk.CTkFrame(frame_grid, width=200, height=150, corner_radius=15, fg_color="#2B2B2B")
+            card.grid(row=i//4, column=i%4, padx=15, pady=15)
+            card.pack_propagate(False)
+            
+            lbl_img = ctk.CTkLabel(card, text="👤", font=ctk.CTkFont(size=50))
+            lbl_img.pack(pady=(10, 5))
+            
+            lbl_nom = ctk.CTkLabel(card, text=nombre, font=ctk.CTkFont(size=16, weight="bold"))
+            lbl_nom.pack()
+            
+            btn_ver = ctk.CTkButton(card, text="Ver Entrenos", command=lambda pid=paciente_id, n=nombre: self.mostrar_calendario_paciente_fisio(pid, n))
+            btn_ver.pack(pady=10)
+
+    def mostrar_calendario_paciente_fisio(self, paciente_id, nombre):
+        for widget in self.main_panel.winfo_children():
+            widget.destroy()
+            
+        btn_volver = ctk.CTkButton(self.main_panel, text="⬅ Volver", command=self.mostrar_dashboard_fisio, fg_color="gray", hover_color="darkgray")
+        btn_volver.pack(anchor="nw", pady=10)
+        
+        lbl_titulo = ctk.CTkLabel(self.main_panel, text=f"Entrenamientos de {nombre}", font=ctk.CTkFont(size=24, weight="bold"))
+        lbl_titulo.pack(pady=(0, 20))
+        
+        historial = obtener_historial_paciente(paciente_id)
+        
+        if not historial:
+            ctk.CTkLabel(self.main_panel, text="El paciente no tiene entrenamientos registrados.", font=ctk.CTkFont(size=16)).pack(pady=40)
+            return
+            
+        dias_entreno = {}
+        for s in historial:
+            fecha_str = s[0][:10]
+            if fecha_str not in dias_entreno:
+                dias_entreno[fecha_str] = []
+            dias_entreno[fecha_str].append(s)
+            
+        frame_scroll = ctk.CTkScrollableFrame(self.main_panel, fg_color="transparent")
+        frame_scroll.pack(fill="both", expand=True)
+        
+        for fecha in sorted(dias_entreno.keys(), reverse=True):
+            card = ctk.CTkFrame(frame_scroll, corner_radius=10, fg_color="#2B2B2B")
+            card.pack(fill="x", pady=5, padx=20)
+            
+            lbl_f = ctk.CTkLabel(card, text=f"📅 {fecha}", font=ctk.CTkFont(size=18, weight="bold"))
+            lbl_f.pack(side="left", padx=20, pady=15)
+            
+            btn_ver = ctk.CTkButton(card, text="Ver Detalle del Día", command=lambda p=paciente_id, n=nombre, f=fecha, h=dias_entreno[fecha]: self.mostrar_ejercicios_dia_fisio(p, n, f, h))
+            btn_ver.pack(side="right", padx=20, pady=15)
+
+    def mostrar_ejercicios_dia_fisio(self, paciente_id, nombre, fecha, historial_dia):
+        for widget in self.main_panel.winfo_children():
+            widget.destroy()
+            
+        btn_volver = ctk.CTkButton(self.main_panel, text="⬅ Volver", command=lambda: self.mostrar_calendario_paciente_fisio(paciente_id, nombre), fg_color="gray", hover_color="darkgray")
+        btn_volver.pack(anchor="nw", pady=10)
+        
+        lbl_titulo = ctk.CTkLabel(self.main_panel, text=f"Resumen del {fecha} - {nombre}", font=ctk.CTkFont(size=22, weight="bold"))
+        lbl_titulo.pack(pady=(0, 20))
+        
+        # Agrupar por ejercicio
+        ejercicios = {}
+        for s in historial_dia:
+            ej = s[1]
+            if ej not in ejercicios:
+                ejercicios[ej] = []
+            ejercicios[ej].insert(0, s) # Reverse insert to keep chronological if query is DESC
+            
+        frame_scroll = ctk.CTkScrollableFrame(self.main_panel, fg_color="transparent")
+        frame_scroll.pack(fill="both", expand=True)
+        
+        for ej, series in ejercicios.items():
+            card = ctk.CTkFrame(frame_scroll, corner_radius=10, fg_color="#333333")
+            card.pack(fill="x", pady=10, padx=20)
+            
+            lbl_e = ctk.CTkLabel(card, text=f"{ej.upper()}", font=ctk.CTkFont(size=18, weight="bold"))
+            lbl_e.pack(anchor="w", padx=20, pady=(10, 5))
+            
+            for i, serie in enumerate(series):
+                frame_s = ctk.CTkFrame(card, fg_color="transparent")
+                frame_s.pack(fill="x", padx=40, pady=2)
+                
+                niv_str = serie[2].capitalize() if serie[2] else "Desconocido"
+                
+                texto_s = f"Serie {i+1} ({niv_str}): {serie[3]} reps | {serie[4]} fallos"
+                lbl_s = ctk.CTkLabel(frame_s, text=texto_s, font=ctk.CTkFont(size=15))
+                lbl_s.pack(side="left")
+                
+                btn_ver = ctk.CTkButton(frame_s, text="Ver Informe y Vídeo", width=140, height=28, command=lambda e=ej, idx=i, p_id=paciente_id, p_nom=nombre, f=fecha: self.mostrar_detalle_serie_fisio(p_id, p_nom, f, e, idx))
+                btn_ver.pack(side="right")
+
+    def mostrar_detalle_serie_fisio(self, paciente_id, nombre, fecha, ejercicio, serie_idx):
+        for widget in self.main_panel.winfo_children():
+            widget.destroy()
+            
+        # Buscar el informe y video en la carpeta
+        nombre_pac_limpio = "".join([c for c in nombre if c.isalpha() or c.isdigit() or c==' ']).rstrip().replace(" ", "_").lower()
+        carpeta_base = os.path.dirname(os.path.abspath(__file__))
+        carpeta_ejercicio = os.path.join(carpeta_base, "informes", nombre_pac_limpio, fecha, ejercicio.lower().replace(" ", "_"))
+        carpeta_txt = os.path.join(carpeta_ejercicio, "informes")
+        carpeta_vid = os.path.join(carpeta_ejercicio, "videos")
+        
+        archivos_txt = []
+        archivos_mp4 = []
+        if os.path.exists(carpeta_txt):
+            archivos_txt = sorted([f for f in os.listdir(carpeta_txt) if f.endswith(".txt")])
+        if os.path.exists(carpeta_vid):
+            archivos_mp4 = sorted([f for f in os.listdir(carpeta_vid) if f.endswith(".mp4") or f.endswith(".avi")])
+            
+        ruta_txt = None
+        ruta_mp4 = None
+        
+        if serie_idx < len(archivos_txt):
+            ruta_txt = os.path.join(carpeta_txt, archivos_txt[serie_idx])
+            
+            # Intentar emparejar el archivo de vídeo por cercanía de timestamp en lugar de por índice directo
+            # Esto evita errores si hay series antiguas sin vídeo
+            import datetime
+            def extraer_dt(filename):
+                try:
+                    parts = filename.split('_')
+                    d_str = parts[-2]
+                    t_str = parts[-1].split('.')[0]
+                    return datetime.datetime.strptime(f"{d_str}_{t_str}", "%Y-%m-%d_%H-%M-%S")
+                except:
+                    return datetime.datetime.min
+
+            t_txt = extraer_dt(archivos_txt[serie_idx])
+            
+            video_match = None
+            for vid in archivos_mp4:
+                t_vid = extraer_dt(vid)
+                # El vídeo empieza antes que el txt, así que t_vid <= t_txt. 
+                # Cogemos el más cercano que cumpla esto (y que no difiera más de 20 minutos).
+                diff = (t_txt - t_vid).total_seconds()
+                if 0 <= diff <= 1200: 
+                    video_match = vid
+                    
+            if video_match:
+                ruta_mp4 = os.path.join(carpeta_vid, video_match)
+            
+        btn_volver = ctk.CTkButton(self.main_panel, text="⬅ Cerrar Detalle", command=lambda: self.mostrar_calendario_paciente_fisio(paciente_id, nombre), fg_color="gray", hover_color="darkgray")
+        btn_volver.pack(anchor="nw", pady=10)
+        
+        lbl_titulo = ctk.CTkLabel(self.main_panel, text=f"Detalle: {ejercicio.upper()} - Serie {serie_idx+1}", font=ctk.CTkFont(size=22, weight="bold"))
+        lbl_titulo.pack(pady=10)
+        
+        if ruta_mp4:
+            btn_video = ctk.CTkButton(self.main_panel, text="▶ Reproducir Vídeo de la Serie", fg_color="#00FFAA", text_color="black", font=ctk.CTkFont(weight="bold"), command=lambda: self.reproducir_video_fisio(ruta_mp4))
+            btn_video.pack(pady=10)
+        else:
+            ctk.CTkLabel(self.main_panel, text="No hay vídeo disponible para esta serie.", text_color="orange").pack(pady=10)
+            
+        texto_informe = "No se encontró el informe en texto para esta serie."
+        if ruta_txt and os.path.exists(ruta_txt):
+            with open(ruta_txt, "r", encoding="utf-8") as f:
+                texto_informe = f.read()
+                
+        textbox = ctk.CTkTextbox(self.main_panel, width=700, height=400, font=ctk.CTkFont(family="Consolas", size=14))
+        textbox.pack(pady=10)
+        textbox.insert("1.0", texto_informe)
+        textbox.configure(state="disabled")
+
+    def reproducir_video_fisio(self, ruta_mp4):
+        # Usar un popup o ventana de OpenCV simple para mostrar el video
+        cap = cv2.VideoCapture(ruta_mp4)
+        if not cap.isOpened():
+            return
+            
+        fps = cap.get(cv2.CAP_PROP_FPS)
+        if fps <= 0 or fps > 60:
+            fps = 12.0
+            
+        delay_ms = int(1000 / fps)
+        
+        cv2.namedWindow("Reproductor Fisio", cv2.WINDOW_NORMAL)
+        while cap.isOpened():
+            ret, frame = cap.read()
+            if not ret: break
+            cv2.imshow("Reproductor Fisio", frame)
+            if cv2.waitKey(delay_ms) & 0xFF == 27: # Esc para salir
+                break
+        cap.release()
+        cv2.destroyWindow("Reproductor Fisio")
 
 if __name__ == "__main__":
     app = AppRehabilitacion()

@@ -1,14 +1,20 @@
 # Archivo: modulo_peso_muerto.py
 import cv2
+import time
 from modulos.modulo_base import ModuloEjercicio
+
+OBJETIVO_REPS = 10
 
 class ModuloPesoMuerto(ModuloEjercicio):
     def __init__(self, nivel="principiante"):
         self.nivel = nivel
+        # Rango real: de pie ~165-175° → bottom hinge ~90-115°
         if self.nivel == "avanzado":
-            self.umbrales = {"profundidad_maxima": 80.0, "inicio_repeticion": 165.0, "rodilla_error": 115.0} # Más exigente con la rodilla y más profundo
-        else: # principiante
-            self.umbrales = {"profundidad_maxima": 100.0, "inicio_repeticion": 150.0, "rodilla_error": 100.0}
+            self.umbrales = {"profundidad_maxima": 95.0, "inicio_repeticion": 165.0, "rodilla_error": 110.0}
+        elif self.nivel == "intermedio":
+            self.umbrales = {"profundidad_maxima": 100.0, "inicio_repeticion": 160.0, "rodilla_error": 105.0}
+        else:  # principiante
+            self.umbrales = {"profundidad_maxima": 135.0, "inicio_repeticion": 155.0, "rodilla_error": 95.0}
             
         self.fase_actual = "DE PIE"
         self.angulo_minimo_actual = 180.0
@@ -16,9 +22,21 @@ class ModuloPesoMuerto(ModuloEjercicio):
         self.stats_repeticiones_totales = 0
         self.stats_registro_profundidades = []
         self.stats_repeticiones_con_error = 0
+        self.errores_consecutivos = 0
+        self.feedback_actual = "Espalda recta. Inclina la cadera hacia atrás."
+        self.color_feedback = (255, 255, 255)
+        # Velocidad de ejecución
+        self.tiempo_inicio_rep = None
+        self.tiempos_repeticion = []
 
     def get_errores_acumulados(self) -> int:
         return self.stats_repeticiones_con_error
+
+    def get_errores_consecutivos(self) -> int:
+        return self.errores_consecutivos
+
+    def get_objetivo_completado(self) -> bool:
+        return self.stats_repeticiones_totales >= OBJETIVO_REPS
 
     def obtener_landmarks_relevantes(self) -> list:
         # Hombro(11,12), Cadera(23,24), Rodilla(25,26), Tobillo(27,28)
@@ -41,10 +59,9 @@ class ModuloPesoMuerto(ModuloEjercicio):
         angulo_rodilla_d = self.calcular_angulo_3d(cadera_d, rodilla_d, tobillo_d)
         angulo_rodilla_i = self.calcular_angulo_3d(cadera_i, rodilla_i, tobillo_i)
 
-        angulo_cadera = min(angulo_cadera_d, angulo_cadera_i) # Evaluamos el más profundo
-        angulo_rodilla = min(angulo_rodilla_d, angulo_rodilla_i) # Evaluamos el que más se dobla
+        angulo_cadera = (angulo_cadera_d + angulo_cadera_i) / 2.0
+        angulo_rodilla = (angulo_rodilla_d + angulo_rodilla_i) / 2.0
 
-        # Calcular porcentaje
         rango = self.umbrales["inicio_repeticion"] - self.umbrales["profundidad_maxima"]
         progreso_grados = self.umbrales["inicio_repeticion"] - angulo_cadera
         porcentaje = (progreso_grados / rango) * 100.0 if rango > 0 else 0
@@ -59,9 +76,10 @@ class ModuloPesoMuerto(ModuloEjercicio):
         # Máquina de estados
         if angulo_cadera < self.umbrales["inicio_repeticion"] and self.fase_actual == "DE PIE":
             self.fase_actual = "BAJANDO"
-            self.angulo_minimo_actual = angulo_cadera 
+            self.angulo_minimo_actual = angulo_cadera
             self.hubo_error_rodilla = False
             self.max_porcentaje_actual = porcentaje
+            self.tiempo_inicio_rep = time.time()
             
         elif self.fase_actual == "BAJANDO":
             self.max_porcentaje_actual = max(self.max_porcentaje_actual, porcentaje)
@@ -71,11 +89,13 @@ class ModuloPesoMuerto(ModuloEjercicio):
             if angulo_rodilla < self.umbrales["rodilla_error"]:
                 self.hubo_error_rodilla = True
                 self.estado_esqueleto = "error"
+                self.feedback_actual = "¡Rodilla doblándose demasiado!"
+                self.color_feedback = (0, 0, 255)
                 
             if porcentaje == 100 and not self.hubo_error_rodilla:
                 self.estado_esqueleto = "correcto"
                 
-            if angulo_cadera > self.angulo_minimo_actual + 5: 
+            if angulo_cadera > self.angulo_minimo_actual + 5:
                 self.fase_actual = "SUBIENDO"
                     
         elif self.fase_actual == "SUBIENDO":
@@ -86,26 +106,35 @@ class ModuloPesoMuerto(ModuloEjercicio):
                 
                 if self.max_porcentaje_actual >= 100:
                     self.stats_repeticiones_totales += 1
+                    if self.tiempo_inicio_rep is not None:
+                        self.tiempos_repeticion.append(time.time() - self.tiempo_inicio_rep)
                     if self.hubo_error_rodilla:
                         self.stats_repeticiones_con_error += 1
+                        self.errores_consecutivos += 1
+                    else:
+                        self.errores_consecutivos = 0
                     self.stats_registro_profundidades.append(self.angulo_minimo_actual)
-                elif self.max_porcentaje_actual > 40:
+                elif self.max_porcentaje_actual > 65:  # Movimiento parcial significativo → error
                     self.stats_repeticiones_totales += 1
                     self.stats_repeticiones_con_error += 1
+                    self.errores_consecutivos += 1
                     self.estado_esqueleto = "error"
+                    self.feedback_actual = "Incompleto. Cuenta error."
                     
                 self.max_porcentaje_actual = 0.0
+                self.tiempo_inicio_rep = None
 
         self.dibujar_barra_progreso(frame, porcentaje)
         reps_correctas = self.stats_repeticiones_totales - self.stats_repeticiones_con_error
         self.dibujar_estadisticas_ui(frame, "Peso Muerto", reps_correctas, self.stats_repeticiones_con_error)
+        cv2.putText(frame, self.feedback_actual, (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.7, self.color_feedback, 2)
 
     def generar_informe_clinico(self):
         import os
         import datetime
         from database import guardar_sesion, obtener_nombre_paciente
         
-        # Guardado en base de datos si hay paciente
+        media_vel = sum(self.tiempos_repeticion) / len(self.tiempos_repeticion) if self.tiempos_repeticion else 0
         if self.paciente_id is not None:
             profundidad_media = sum(self.stats_registro_profundidades) / len(self.stats_registro_profundidades) if self.stats_registro_profundidades else 0.0
             guardar_sesion(
@@ -127,9 +156,8 @@ class ModuloPesoMuerto(ModuloEjercicio):
         fecha_dia = datetime.datetime.now().strftime("%Y-%m-%d")
         nombre_archivo = f"informe_peso_muerto_{fecha_actual}.txt"
         
-        # Crear carpeta estructurada si no existe
         carpeta_base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        carpeta_informes = os.path.join(carpeta_base, "informes", nombre_pac_limpio, fecha_dia, "peso_muerto")
+        carpeta_informes = os.path.join(carpeta_base, "informes", nombre_pac_limpio, fecha_dia, "peso_muerto", "informes")
         if not os.path.exists(carpeta_informes):
             os.makedirs(carpeta_informes)
         ruta_informe = os.path.join(carpeta_informes, nombre_archivo)
@@ -141,15 +169,16 @@ class ModuloPesoMuerto(ModuloEjercicio):
         lineas_informe.append(f"📋 INFORME CLÍNICO: PESO MUERTO (Nivel: {self.nivel.capitalize()})")
         lineas_informe.append(f"Fecha del análisis: {datetime.datetime.now().strftime('%d/%m/%Y %H:%M:%S')}")
         lineas_informe.append("=" * 50)
-        
-        lineas_informe.append("\n📊 DATOS CUANTITATIVOS:")
-        lineas_informe.append(f" - Repeticiones totales: {self.stats_repeticiones_totales}")
+        lineas_informe.append(f"\n📊 DATOS CUANTITATIVOS:")
+        lineas_informe.append(f" - Repeticiones totales: {self.stats_repeticiones_totales} / {OBJETIVO_REPS}")
         lineas_informe.append(f" - Repeticiones válidas completadas: {reps_correctas}")
         lineas_informe.append(f" - Repeticiones con error (flexión de rodillas/rango): {self.stats_repeticiones_con_error}")
         
         if self.stats_registro_profundidades:
             prof_media = sum(self.stats_registro_profundidades) / len(self.stats_registro_profundidades)
             lineas_informe.append(f" - Ángulo de cadera máximo medio: {prof_media:.1f} grados (Objetivo: < {self.umbrales['profundidad_maxima']} grados)")
+        if media_vel > 0:
+            lineas_informe.append(f" - Velocidad de ejecución media: {media_vel:.2f} s/repetición")
         
         texto_final = "\n".join(lineas_informe)
         

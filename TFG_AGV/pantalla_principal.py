@@ -295,6 +295,20 @@ class AppRehabilitacion(ctk.CTk):
         lbl_titulo = ctk.CTkLabel(self.main_panel, text=f"Vídeo Explicativo: {nombre_ejercicio}", font=ctk.CTkFont(size=24, weight="bold"))
         lbl_titulo.pack(pady=40 if not mensaje_error else 10)
 
+        # Cargar y mostrar la imagen falsa (placeholder)
+        try:
+            ruta_img = os.path.join(os.path.dirname(os.path.abspath(__file__)), "video_placeholder.png")
+            if os.path.exists(ruta_img):
+                img = PIL.Image.open(ruta_img)
+                ctk_img = ctk.CTkImage(light_image=img, dark_image=img, size=(600, 337)) # Proporción 16:9
+                lbl_img = ctk.CTkLabel(self.main_panel, image=ctk_img, text="")
+                lbl_img.pack(pady=20)
+            else:
+                lbl_placeholder = ctk.CTkLabel(self.main_panel, text="[ESPACIO PARA VÍDEO EXPLICATIVO]", font=ctk.CTkFont(size=18), width=600, height=337, fg_color="#2B2B2B", corner_radius=10)
+                lbl_placeholder.pack(pady=20)
+        except Exception as e:
+            print(f"Error cargando placeholder: {e}")
+
     def mostrar_popup_iniciar(self, nombre_ejercicio):
         popup = ctk.CTkToplevel(self)
         popup.title(f"Iniciar: {nombre_ejercicio}")

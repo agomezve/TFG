@@ -6,6 +6,7 @@ import os
 import time
 import mediapipe as mp
 import datetime
+import subprocess
 from database import obtener_pacientes, crear_paciente, obtener_historial_paciente
 from modulos.modulo_sentadilla import ModuloSentadilla
 from modulos.modulo_peso_muerto import ModuloPesoMuerto
@@ -281,43 +282,123 @@ class AppRehabilitacion(ctk.CTk):
 
 
 
+    # Mapeo ejercicio -> archivo de vídeo explicativo (MP4 con audio)
+    VIDEOS_EXPLICATIVOS = {
+        "Press Militar":     "v_e_press_militar.mp4",
+        "Peso Muerto":       "v_e_peso_muerto.mp4",
+        "Zancadas":          "v_e_zancadas.mp4",
+        "Hombros Laterales": "v_e_elevaciones_laterales.mp4",
+    }
+
     def mostrar_video_explicativo(self, nombre_ejercicio, mensaje_error=None):
         for widget in self.main_panel.winfo_children():
             widget.destroy()
-            
+
         btn_volver = ctk.CTkButton(self.main_panel, text="⬅ Volver ", command=self.mostrar_dashboard, fg_color="gray", hover_color="darkgray")
         btn_volver.pack(anchor="nw", pady=10)
-        
+
         if mensaje_error:
             lbl_error = ctk.CTkLabel(self.main_panel, text=mensaje_error, font=ctk.CTkFont(size=22, weight="bold"), text_color="red")
             lbl_error.pack(pady=(30, 10))
-        
-        lbl_titulo = ctk.CTkLabel(self.main_panel, text=f"Vídeo Explicativo: {nombre_ejercicio}", font=ctk.CTkFont(size=24, weight="bold"))
-        lbl_titulo.pack(pady=40 if not mensaje_error else 10)
 
-        # Cargar y mostrar la imagen falsa (placeholder)
-        try:
-            ruta_img = os.path.join(os.path.dirname(os.path.abspath(__file__)), "video_placeholder.png")
-            if os.path.exists(ruta_img):
-                img = PIL.Image.open(ruta_img)
-                ctk_img = ctk.CTkImage(light_image=img, dark_image=img, size=(600, 337)) # Proporción 16:9
-                lbl_img = ctk.CTkLabel(self.main_panel, image=ctk_img, text="")
-                lbl_img.pack(pady=20)
-            else:
-                lbl_placeholder = ctk.CTkLabel(self.main_panel, text="[ESPACIO PARA VÍDEO EXPLICATIVO]", font=ctk.CTkFont(size=18), width=600, height=337, fg_color="#2B2B2B", corner_radius=10)
-                lbl_placeholder.pack(pady=20)
-        except Exception as e:
-            print(f"Error cargando placeholder: {e}")
+        lbl_titulo = ctk.CTkLabel(self.main_panel, text=f"Vídeo Explicativo: {nombre_ejercicio}", font=ctk.CTkFont(size=24, weight="bold"))
+        lbl_titulo.pack(pady=30 if not mensaje_error else 10)
+
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        nombre_archivo = self.VIDEOS_EXPLICATIVOS.get(nombre_ejercicio)
+        ruta_video = os.path.join(base_dir, "videos_explicativos", nombre_archivo) if nombre_archivo else None
+
+        if ruta_video and os.path.exists(ruta_video):
+            # --- Miniatura del vídeo (centrada y sin deformar) ---
+            try:
+                cap_thumb = cv2.VideoCapture(ruta_video)
+                exito, frame = cap_thumb.read()
+                cap_thumb.release()
+                if exito:
+                    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                    img_thumb = PIL.Image.fromarray(frame_rgb)
+                    
+                    # El espacio reservado en la UI es 600x337
+                    target_w, target_h = 600, 337
+                    
+                    # Redimensionar manteniendo la proporción original
+                    img_thumb.thumbnail((target_w, target_h), PIL.Image.Resampling.LANCZOS)
+                    
+                    # Crear fondo oscuro que llene el espacio
+                    background = PIL.Image.new("RGB", (target_w, target_h), (43, 43, 43))
+                    
+                    # Pegar el frame en el centro
+                    offset_x = (target_w - img_thumb.width) // 2
+                    offset_y = (target_h - img_thumb.height) // 2
+                    background.paste(img_thumb, (offset_x, offset_y))
+                    
+                    ctk_thumb = ctk.CTkImage(light_image=background, dark_image=background, size=(target_w, target_h))
+                    lbl_thumb = ctk.CTkLabel(self.main_panel, image=ctk_thumb, text="")
+                    lbl_thumb.pack(pady=(0, 10))
+                else:
+                    ruta_img = os.path.join(base_dir, "video_placeholder.png")
+                    if os.path.exists(ruta_img):
+                        img = PIL.Image.open(ruta_img)
+                        ctk_img = ctk.CTkImage(light_image=img, dark_image=img, size=(600, 337))
+                        lbl_img = ctk.CTkLabel(self.main_panel, image=ctk_img, text="")
+                        lbl_img.pack(pady=(0, 10))
+            except Exception as e:
+                print(f"Error generando miniatura: {e}")
+
+            # --- Info de duración ---
+            try:
+                cap_info = cv2.VideoCapture(ruta_video)
+                fps_v = cap_info.get(cv2.CAP_PROP_FPS) or 30
+                frames_v = cap_info.get(cv2.CAP_PROP_FRAME_COUNT)
+                cap_info.release()
+                dur_seg = int(frames_v / fps_v)
+                lbl_dur = ctk.CTkLabel(self.main_panel, text=f"🎬 Vídeo explicativo",
+                                       font=ctk.CTkFont(size=14), text_color="#AAAAAA")
+                lbl_dur.pack(pady=(0, 10))
+            except Exception:
+                pass
+
+            # --- Botón de reproducción ---
+            def abrir_video(ruta=ruta_video):
+                subprocess.Popen(["open", ruta])
+
+            btn_play = ctk.CTkButton(
+                self.main_panel,
+                text="▶  Reproducir Vídeo Explicativo",
+                font=ctk.CTkFont(size=18, weight="bold"),
+                fg_color="#F2A900", hover_color="#C78A00",
+                text_color="black", height=50, width=320,
+                command=abrir_video
+            )
+            btn_play.pack(pady=10)
+
+
+        else:
+            # Sin vídeo disponible → placeholder
+            try:
+                ruta_img = os.path.join(base_dir, "video_placeholder.png")
+                if os.path.exists(ruta_img):
+                    img = PIL.Image.open(ruta_img)
+                    ctk_img = ctk.CTkImage(light_image=img, dark_image=img, size=(600, 337))
+                    lbl_img = ctk.CTkLabel(self.main_panel, image=ctk_img, text="")
+                    lbl_img.pack(pady=20)
+                else:
+                    lbl_placeholder = ctk.CTkLabel(self.main_panel, text="[VÍDEO EXPLICATIVO PRÓXIMAMENTE]",
+                                                   font=ctk.CTkFont(size=18), width=600, height=337,
+                                                   fg_color="#2B2B2B", corner_radius=10)
+                    lbl_placeholder.pack(pady=20)
+            except Exception as e:
+                print(f"Error cargando placeholder: {e}")
 
     def mostrar_popup_iniciar(self, nombre_ejercicio):
         popup = ctk.CTkToplevel(self)
         popup.title(f"Iniciar: {nombre_ejercicio}")
-        popup.geometry("350x280")
+        popup.geometry("350x330")
         popup.attributes("-topmost", True)
         
         popup.update_idletasks()
         x = self.winfo_x() + (self.winfo_width() // 2) - (350 // 2)
-        y = self.winfo_y() + (self.winfo_height() // 2) - (280 // 2)
+        y = self.winfo_y() + (self.winfo_height() // 2) - (330 // 2)
         popup.geometry(f"+{x}+{y}")
 
         lbl_tit = ctk.CTkLabel(popup, text=nombre_ejercicio.upper(), font=ctk.CTkFont(size=20, weight="bold"))
@@ -338,8 +419,17 @@ class AppRehabilitacion(ctk.CTk):
         r3 = ctk.CTkRadioButton(frame_radio, text="Avanzado", variable=var_nivel, value="Avanzado")
         r3.pack(side="left", padx=8)
 
-        btn_web = ctk.CTkButton(popup, text="▶ INICIAR ENTRENAMIENTO", fg_color="green", hover_color="darkgreen", text_color="white", command=lambda: self._trigger_inicio(popup, nombre_ejercicio, var_nivel.get()))
-        btn_web.pack(pady=20)
+        camara_var = ctk.StringVar(value="📸 Cámara Principal (0)")
+        opciones_camara = ["📸 Cámara Principal (0)", "📱 iPhone / Secundaria (1)"]
+        combo_camara = ctk.CTkOptionMenu(popup, values=opciones_camara, variable=camara_var, width=220)
+        combo_camara.pack(pady=10)
+
+        def proceed():
+            idx = 1 if "1" in camara_var.get() else 0
+            self._trigger_inicio(popup, nombre_ejercicio, var_nivel.get(), idx)
+
+        btn_web = ctk.CTkButton(popup, text="▶ INICIAR ENTRENAMIENTO", fg_color="green", hover_color="darkgreen", text_color="white", command=proceed)
+        btn_web.pack(pady=15)
 
     # ── Consejos por ejercicio ─────────────────────────────────────────────────
     CONSEJOS_EJERCICIO = {
@@ -414,15 +504,15 @@ class AppRehabilitacion(ctk.CTk):
         ],
     }
 
-    def _trigger_inicio(self, popup, ejercicio, nivel):
+    def _trigger_inicio(self, popup, ejercicio, nivel, cam_index=0):
         popup.destroy()
         consejos = self.CONSEJOS_EJERCICIO.get(ejercicio, [])
         if not consejos:
-            self.iniciar_webcam(ejercicio, nivel.lower())
+            self.iniciar_webcam(ejercicio, nivel.lower(), cam_index)
             return
-        self._mostrar_popup_consejos(ejercicio, nivel, consejos)
+        self._mostrar_popup_consejos(ejercicio, nivel, consejos, cam_index)
 
-    def _mostrar_popup_consejos(self, ejercicio, nivel, consejos):
+    def _mostrar_popup_consejos(self, ejercicio, nivel, consejos, cam_index=0):
         w, h = 460, 400
         tips = ctk.CTkToplevel(self)
         tips.title(f"Consejos: {ejercicio}")
@@ -448,8 +538,8 @@ class AppRehabilitacion(ctk.CTk):
         ctk.CTkButton(tips, text="✅  Entendido, ¡comenzar!", fg_color="#27AE60",
                       hover_color="#1E8449", text_color="white",
                       font=ctk.CTkFont(size=14, weight="bold"),
-                      command=lambda: [tips.destroy(), self.iniciar_webcam(ejercicio, nivel.lower())]
-                      ).pack(pady=14)
+                      command=lambda: [tips.destroy(), self.iniciar_webcam(ejercicio, nivel.lower(), cam_index)]
+                      ).pack(pady=(15, 14))
 
     def preparar_vista_video(self, texto_pantalla=""):
         for widget in self.main_panel.winfo_children():
@@ -486,11 +576,11 @@ class AppRehabilitacion(ctk.CTk):
             
         self.ejercicio_activo.set_paciente(self.paciente_activo_id)
 
-    def iniciar_webcam(self, ejercicio, nivel):
+    def iniciar_webcam(self, ejercicio, nivel, cam_index=0):
         if self.procesando_video:
             self.detener_video()
         self.iniciar_motor_ejercicio(ejercicio, nivel)
-        self.cap = cv2.VideoCapture(0)
+        self.cap = cv2.VideoCapture(cam_index)
         if not self.cap.isOpened():
             self.preparar_vista_video("❌ Error: No se puede acceder a la webcam.")
             return
@@ -916,36 +1006,10 @@ class AppRehabilitacion(ctk.CTk):
         textbox.configure(state="disabled")
 
     def reproducir_video_fisio(self, ruta_mp4):
-        # Usar un popup o ventana de OpenCV simple para mostrar el video
-        cap = cv2.VideoCapture(ruta_mp4)
-        if not cap.isOpened():
-            return
-            
-        fps = 12.0
-        filename = os.path.basename(ruta_mp4)
-        if "_fps" in filename:
-            try:
-                fps_str = filename.split("_fps")[1].split(".")[0]
-                fps = float(fps_str)
-            except:
-                fps = cap.get(cv2.CAP_PROP_FPS)
-        else:
-            fps = cap.get(cv2.CAP_PROP_FPS)
-            
-        if fps <= 0 or fps > 60:
-            fps = 12.0
-            
-        delay_ms = int(1000 / fps)
-        
-        cv2.namedWindow("Reproductor Fisio", cv2.WINDOW_NORMAL)
-        while cap.isOpened():
-            ret, frame = cap.read()
-            if not ret: break
-            cv2.imshow("Reproductor Fisio", frame)
-            if cv2.waitKey(delay_ms) & 0xFF == 27: # Esc para salir
-                break
-        cap.release()
-        cv2.destroyWindow("Reproductor Fisio")
+        """Abre el vídeo de la serie en el reproductor del sistema (no bloqueante).
+        Usar cv2.imshow en un bucle bloqueaba el hilo de tkinter impidiendo
+        que los botones 'Volver' y 'Cerrar Sesión' respondieran."""
+        subprocess.Popen(["open", ruta_mp4])
 
 if __name__ == "__main__":
     app = AppRehabilitacion()

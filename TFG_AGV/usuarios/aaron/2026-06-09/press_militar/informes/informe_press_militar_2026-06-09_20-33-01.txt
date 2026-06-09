@@ -1,0 +1,16 @@
+==================================================
+📋 INFORME CLÍNICO DE TELEREHABILITACIÓN
+Ejercicio: Press Militar (Nivel: Intermedio)
+Fecha del análisis: 09/06/2026 20:33:01
+==================================================
+
+📊 DATOS CUANTITATIVOS:
+ - Repeticiones válidas completadas: 7 / 10
+ - Extensión media del codo: 126.2 grados (Objetivo: > 138.0 grados)
+ - Repeticiones con desalineación de antebrazo: 2 (29%)
+ - Velocidad de ejecución media: 2.44 s/repetición
+
+💡 CONSEJOS Y CORRECCIONES AUTOMÁTICAS:
+ [RANGO] ⚠️ Limitación en la extensión. Intenta estirar el brazo un poco más arriba al finalizar el empuje.
+ [TÉCNICA] 🚨 ALERTA: Has perdido la verticalidad del antebrazo durante el recorrido.
+             -> Corrección: Mantén la muñeca alineada justo por encima del codo para evitar tensión en el manguito rotador.

@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <title>02 — ¿Qué es la Telerehabilitación?</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css"/>
+  <style>
+    body { position:relative; display:flex; flex-direction:column; padding:34px 60px 28px; }
+
+    .layout {
+      flex:1; display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 48px; align-items: center;
+      margin-top: 16px;
+    }
+
+    /* IZQUIERDA — Definición */
+    .definition-box {
+      background: rgba(59,130,246,0.07);
+      border: 1px solid rgba(59,130,246,0.25);
+      border-left: 4px solid var(--blue);
+      border-radius: 0 14px 14px 0;
+      padding: 18px 22px; margin-bottom: 22px;
+    }
+    .def-label {
+      font-size: 0.6rem; font-weight: 800; letter-spacing: 0.18em;
+      text-transform: uppercase; color: var(--blue); margin-bottom: 8px;
+    }
+    .def-text {
+      font-size: 0.9rem; color: var(--text);
+      line-height: 1.7; font-style: italic;
+    }
+
+    /* Aspectos clave */
+    .key-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+    }
+    .key-item {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px; padding: 13px 15px;
+      display: flex; align-items: flex-start; gap: 10px;
+    }
+    .key-icon { font-size: 1.2rem; flex-shrink:0; }
+    .key-title { font-size: 0.76rem; font-weight: 700; margin-bottom: 3px; }
+    .key-body  { font-size: 0.7rem; color: var(--muted); line-height: 1.45; }
+
+    /* DERECHA — Proceso */
+    .section-eyebrow {
+      font-size: 0.62rem; font-weight: 800; letter-spacing: 0.18em;
+      text-transform: uppercase; color: var(--cyan);
+      display: flex; align-items: center; gap: 8px; margin-bottom: 18px;
+    }
+    .section-eyebrow::before { content:''; width:22px; height:2px; background:var(--cyan); border-radius:2px; }
+
+    .steps { display:flex; flex-direction:column; gap: 0; }
+    .step {
+      display: flex; align-items: stretch; gap: 0;
+      position: relative;
+    }
+
+    /* Línea vertical conectora */
+    .step-left {
+      display: flex; flex-direction: column; align-items: center;
+      width: 40px; flex-shrink: 0;
+    }
+    .step-num {
+      width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+      background: linear-gradient(135deg, var(--blue), var(--cyan));
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 0.75rem; color: #fff;
+      position: relative; z-index:1;
+    }
+    .step-line {
+      width: 2px; flex:1; min-height: 16px;
+      background: linear-gradient(180deg, rgba(59,130,246,0.4), rgba(6,182,212,0.1));
+      margin: 4px 0;
+    }
+    .step:last-child .step-line { display:none; }
+
+    .step-content {
+      flex:1; padding: 4px 0 20px 14px;
+    }
+    .step-title { font-size: 0.85rem; font-weight: 700; margin-bottom: 4px; }
+    .step-body  { font-size: 0.76rem; color: var(--muted); line-height: 1.55; }
+    .step-tag {
+      display: inline-block; margin-top: 6px;
+      font-size: 0.63rem; font-weight: 700;
+      background: rgba(6,182,212,0.1); border:1px solid rgba(6,182,212,0.25);
+      color: var(--cyan); border-radius: 99px; padding: 2px 9px;
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-glow"></div>
+  <div class="dot-grid"></div>
+  <div class="corner corner-tl"></div><div class="corner corner-tr"></div>
+  <div class="corner corner-bl"></div><div class="corner corner-br"></div>
+
+  <div class="slide-label">02 &nbsp;·&nbsp; Marco Teórico</div>
+
+  <div class="layout">
+
+    <!-- IZQUIERDA -->
+    <div>
+      <h2 class="slide-title" style="margin-bottom:16px;">
+        ¿Qué es la<br/><span class="hl">Telerehabilitación?</span>
+      </h2>
+
+      <div class="definition-box">
+        <div class="def-label">Definición</div>
+        <div class="def-text">
+          Prestación de servicios de rehabilitación a distancia mediante tecnologías de la información y comunicación que permite realizar ejercicios terapéuticos y seguimiento profesional desde casa, mejorando el acceso, la comodidad y la adherencia al tratamiento.
+        </div>
+      </div>
+
+      <div class="key-grid">
+        <div class="key-item">
+          <div class="key-icon">🏠</div>
+          <div>
+            <div class="key-title">Entorno domiciliario</div>
+            <div class="key-body">El paciente realiza su rehabilitación en casa sin desplazamientos.</div>
+          </div>
+        </div>
+        <div class="key-item">
+          <div class="key-icon">📡</div>
+          <div>
+            <div class="key-title">Supervisión remota</div>
+            <div class="key-body">El fisioterapeuta controla el progreso a distancia en tiempo real.</div>
+          </div>
+        </div>
+        <div class="key-item">
+          <div class="key-icon">📊</div>
+          <div>
+            <div class="key-title">Datos objetivos</div>
+            <div class="key-body">Métricas de movimiento y reportes automáticos de cada sesión.</div>
+          </div>
+        </div>
+        <div class="key-item">
+          <div class="key-icon">🔒</div>
+          <div>
+            <div class="key-title">Seguridad clínica</div>
+            <div class="key-body">Plataformas específicas que protegen los datos del paciente.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DERECHA -->
+    <div>
+      <div class="section-eyebrow">Cómo funciona el proceso</div>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-left">
+            <div class="step-num">1</div>
+            <div class="step-line"></div>
+          </div>
+          <div class="step-content">
+            <div class="step-title">Evaluación inicial virtual</div>
+            <div class="step-body">El profesional valora al paciente de forma remota y diseña un plan terapéutico personalizado adaptado a su lesión, nivel y entorno domiciliario.</div>
+            <span class="step-tag">Videollamada · Anamnesis digital</span>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-left">
+            <div class="step-num">2</div>
+            <div class="step-line"></div>
+          </div>
+          <div class="step-content">
+            <div class="step-title">Plan de ejercicios digital</div>
+            <div class="step-body">Se envían pautas a través de la plataforma: vídeos explicativos y ejercicios interactivos guiados con los que el paciente trabaja de forma autónoma.</div>
+            <span class="step-tag">App · Vídeos · Ejercicios interactivos</span>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-left">
+            <div class="step-num">3</div>
+            <div class="step-line"></div>
+          </div>
+          <div class="step-content">
+            <div class="step-title">Análisis biomecánico en tiempo real</div>
+            <div class="step-body">El sistema evalúa la postura y la técnica del paciente frame a frame, emitiendo feedback correctivo inmediato ante cualquier desviación postural.</div>
+            <span class="step-tag">Visión por computador · IA · Landmarks 3D</span>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-left">
+            <div class="step-num">4</div>
+            <div class="step-line"></div>
+          </div>
+          <div class="step-content">
+            <div class="step-title">Supervisión y ajuste del profesional</div>
+            <div class="step-body">El especialista revisa métricas objetivas —repeticiones, errores, profundidad— y ajusta el tratamiento según la evolución real del paciente.</div>
+            <span class="step-tag">Reportes automáticos · Historial clínico</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="slide-num">02 / 05</div>
+</body>
+</html>

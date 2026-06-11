@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <title>02 — Introducción y Problema</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css"/>
+  <style>
+    body {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      padding: 36px 56px 28px;
+    }
+
+    /* ── Layout: izquierda texto | derecha imagen ── */
+    .layout {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 44px;
+      align-items: center;
+      margin-top: 12px;
+    }
+
+    /* ── COLUMNA IZQUIERDA ── */
+    .col-left {}
+
+    .header-block { margin-bottom: 20px; }
+
+    /* Problema item */
+    .prob-item {
+      display: flex; align-items: flex-start; gap: 13px;
+      padding: 12px 15px; margin-bottom: 9px;
+      background: rgba(239,68,68,0.07);
+      border: 1px solid rgba(239,68,68,0.2);
+      border-left: 3px solid rgba(239,68,68,0.5);
+      border-radius: 0 10px 10px 0;
+      transition: background 0.2s;
+    }
+    .prob-item:hover { background: rgba(239,68,68,0.11); }
+    .prob-icon { font-size: 1.2rem; flex-shrink: 0; margin-top: 1px; }
+    .prob-title { font-size: 0.8rem; font-weight: 700; color: #fca5a5; margin-bottom: 2px; }
+    .prob-body  { font-size: 0.73rem; color: var(--muted); line-height: 1.5; }
+
+    /* ── COLUMNA DERECHA ── */
+    .col-right {
+      display: flex; flex-direction: column; gap: 12px;
+      align-items: center;
+    }
+
+    /* Imagen principal del problema */
+    .problem-img-wrap {
+      position: relative; width: 100%;
+      border-radius: 14px; overflow: hidden;
+      border: 1px solid rgba(239,68,68,0.25);
+      box-shadow: 0 0 32px rgba(239,68,68,0.12);
+    }
+    .problem-img {
+      width: 100%; height: 260px;
+      object-fit: cover; object-position: center;
+      display: block;
+    }
+    /* Overlay oscuro + texto encima */
+    .img-overlay {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      background: linear-gradient(0deg, rgba(5,11,20,0.92) 0%, transparent 100%);
+      padding: 20px 16px 14px;
+    }
+    .img-caption {
+      font-size: 0.72rem; color: #fca5a5; font-weight: 600;
+      letter-spacing: 0.05em;
+    }
+    .img-caption-sub {
+      font-size: 0.67rem; color: var(--muted); margin-top: 2px;
+    }
+
+    /* Etiqueta "PROBLEMA ACTUAL" sobre la imagen */
+    .img-badge {
+      position: absolute; top: 12px; left: 12px;
+      background: rgba(239,68,68,0.85); backdrop-filter: blur(8px);
+      color: white; font-size: 0.62rem; font-weight: 800;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      padding: 4px 10px; border-radius: 6px;
+    }
+
+    /* Solución propuesta */
+    .solution-block {
+      width: 100%;
+      background: rgba(16,185,129,0.07);
+      border: 1px solid rgba(16,185,129,0.25);
+      border-radius: 12px;
+      padding: 14px 18px;
+    }
+    .sol-header {
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 10px;
+    }
+    .sol-header-icon { font-size: 1rem; }
+    .sol-header-title {
+      font-size: 0.8rem; font-weight: 800;
+      color: #34d399; letter-spacing: 0.02em;
+    }
+    .sol-items { display: flex; flex-direction: column; gap: 6px; }
+    .sol-item {
+      display: flex; align-items: flex-start; gap: 10px;
+      font-size: 0.74rem; color: var(--muted); line-height: 1.5;
+    }
+    .sol-check { color: #34d399; font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+  </style>
+</head>
+<body>
+  <div class="bg-glow"></div>
+  <div class="dot-grid"></div>
+  <div class="corner corner-tl"></div>
+  <div class="corner corner-tr"></div>
+  <div class="corner corner-bl"></div>
+  <div class="corner corner-br"></div>
+
+  <!-- LABEL -->
+  <div class="slide-label">02 &nbsp;·&nbsp; Introducción y Motivación</div>
+
+  <!-- LAYOUT -->
+  <div class="layout">
+
+    <!-- IZQUIERDA: Problemas -->
+    <div class="col-left">
+      <div class="header-block">
+        <h2 class="slide-title">El problema de la<br/><span class="hl">telerehabilitación</span> actual</h2>
+        <p class="slide-subtitle">
+          Millones de pacientes realizan rehabilitación en casa sin supervisión clínica real. El modelo actual presenta limitaciones críticas.
+        </p>
+      </div>
+
+      <div class="prob-item">
+        <div class="prob-icon">📍</div>
+        <div>
+          <div class="prob-title">Barrera geográfica y de acceso</div>
+          <div class="prob-body">Pacientes en zonas rurales o con movilidad reducida no pueden acudir regularmente a sesiones presenciales.</div>
+        </div>
+      </div>
+
+      <div class="prob-item">
+        <div class="prob-icon">❌</div>
+        <div>
+          <div class="prob-title">Sin control biomecánico en casa</div>
+          <div class="prob-body">El paciente ejecuta ejercicios sin feedback en tiempo real. Una mala técnica puede agravar la lesión sin que nadie lo detecte.</div>
+        </div>
+      </div>
+
+      <div class="prob-item">
+        <div class="prob-icon">📊</div>
+        <div>
+          <div class="prob-title">Sin datos objetivos para el fisioterapeuta</div>
+          <div class="prob-body">El clínico no dispone de métricas entre consultas. Solo cuenta con la autoevaluación subjetiva del paciente.</div>
+        </div>
+      </div>
+
+      <div class="prob-item">
+        <div class="prob-icon">💸</div>
+        <div>
+          <div class="prob-title">Hardware especializado inaccesible</div>
+          <div class="prob-body">Las soluciones actuales exigen sensores inerciales, trajes de captura de movimiento o equipos de realidad virtual de alto coste.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DERECHA: Imagen problema + solución -->
+    <div class="col-right">
+
+      <!-- Imagen del problema (hardware caro) -->
+      <div class="problem-img-wrap">
+        <div class="img-badge">⚠ Problema actual</div>
+        <img
+          src="problema_hardware.jpg"
+          alt="Hardware caro en telerehabilitación"
+          class="problem-img"
+        />
+        <div class="img-overlay">
+          <div class="img-caption">Hardware especializado de alto coste</div>
+          <div class="img-caption-sub">Sensores inerciales · Trajes de captura · Equipos de RV</div>
+        </div>
+      </div>
+
+      <!-- Propuesta de solución -->
+      <div class="solution-block">
+        <div class="sol-header">
+          <div class="sol-header-icon">✅</div>
+          <div class="sol-header-title">Nuestra propuesta: solo una webcam estándar</div>
+        </div>
+        <div class="sol-items">
+          <div class="sol-item">
+            <span class="sol-check">→</span>
+            <span><strong style="color:var(--text)">MediaPipe Pose</strong> detecta 33 landmarks corporales en 3D en tiempo real sin ningún sensor físico.</span>
+          </div>
+          <div class="sol-item">
+            <span class="sol-check">→</span>
+            <span><strong style="color:var(--text)">Feedback inmediato</strong> sobre la técnica del ejercicio con retroalimentación visual correctora frame a frame.</span>
+          </div>
+          <div class="sol-item">
+            <span class="sol-check">→</span>
+            <span><strong style="color:var(--text)">Informes clínicos automáticos</strong> y vídeos grabados por sesión para el fisioterapeuta.</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="slide-num">02 / 08</div>
+</body>
+</html>

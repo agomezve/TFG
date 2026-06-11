@@ -288,6 +288,12 @@ class AppRehabilitacion(ctk.CTk):
         "Peso Muerto":       "v_e_peso_muerto.mp4",
         "Zancadas":          "v_e_zancadas.mp4",
         "Hombros Laterales": "v_e_elevaciones_laterales.mp4",
+        "Sentadilla":        "v_e_sentadilla.mp4",
+        "Press Banca":       "v_e_press_banca.mp4",
+        "Plancha":           "v_e_plancha.mp4",
+        "Propiocepcion":     "v_e_propiocepcion.mp4",
+        "Hip Thrust":        "v_e_hip_trust.mp4",
+        "Bulgaras":          "v_e_bulgaras.mp4",
     }
 
     def mostrar_video_explicativo(self, nombre_ejercicio, mensaje_error=None):
@@ -629,10 +635,21 @@ class AppRehabilitacion(ctk.CTk):
                 duracion = time.time() - self.inicio_grabacion_vid
                 if duracion > 0 and self.frames_grabados_vid > 0:
                     fps_real = self.frames_grabados_vid / duracion
-                    nuevo_nombre = self.ruta_video_actual.replace(".avi", f"_fps{fps_real:.2f}.avi")
+                    nuevo_nombre_mp4 = self.ruta_video_actual.replace(".avi", ".mp4")
                     try:
-                        os.rename(self.ruta_video_actual, nuevo_nombre)
-                    except: pass
+                        import subprocess
+                        subprocess.run([
+                            "ffmpeg", "-y", "-r", str(fps_real), 
+                            "-i", self.ruta_video_actual, 
+                            "-c:v", "libx264", "-preset", "ultrafast", 
+                            "-pix_fmt", "yuv420p", nuevo_nombre_mp4
+                        ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                        os.remove(self.ruta_video_actual)
+                    except:
+                        nuevo_nombre = self.ruta_video_actual.replace(".avi", f"_fps{fps_real:.2f}.avi")
+                        try:
+                            os.rename(self.ruta_video_actual, nuevo_nombre)
+                        except: pass
                     
             self.video_writer = None
         if self.ejercicio_activo is not None:
@@ -658,10 +675,21 @@ class AppRehabilitacion(ctk.CTk):
                 duracion = time.time() - self.inicio_grabacion_vid
                 if duracion > 0 and self.frames_grabados_vid > 0:
                     fps_real = self.frames_grabados_vid / duracion
-                    nuevo_nombre = self.ruta_video_actual.replace(".avi", f"_fps{fps_real:.2f}.avi")
+                    nuevo_nombre_mp4 = self.ruta_video_actual.replace(".avi", ".mp4")
                     try:
-                        os.rename(self.ruta_video_actual, nuevo_nombre)
-                    except: pass
+                        import subprocess
+                        subprocess.run([
+                            "ffmpeg", "-y", "-r", str(fps_real), 
+                            "-i", self.ruta_video_actual, 
+                            "-c:v", "libx264", "-preset", "ultrafast", 
+                            "-pix_fmt", "yuv420p", nuevo_nombre_mp4
+                        ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                        os.remove(self.ruta_video_actual)
+                    except:
+                        nuevo_nombre = self.ruta_video_actual.replace(".avi", f"_fps{fps_real:.2f}.avi")
+                        try:
+                            os.rename(self.ruta_video_actual, nuevo_nombre)
+                        except: pass
                     
             self.video_writer = None
 
@@ -773,8 +801,10 @@ class AppRehabilitacion(ctk.CTk):
                 ruta_video = os.path.join(carpeta_videos, f"video_{ej_limpio}_{fecha_actual}.avi")
                 # MJPG es casi nativo en todas las plataformas
                 fourcc = cv2.VideoWriter_fourcc(*'MJPG') 
-                # 12.0 FPS es un buen promedio de la velocidad real de Mediapipe
-                self.video_writer = cv2.VideoWriter(ruta_video, fourcc, 12.0, (int(w_vid), int(h_vid)))
+                fps_camara = self.cap.get(cv2.CAP_PROP_FPS) if hasattr(self, 'cap') else 30.0
+                if not fps_camara or fps_camara < 1:
+                    fps_camara = 30.0
+                self.video_writer = cv2.VideoWriter(ruta_video, fourcc, fps_camara, (int(w_vid), int(h_vid)))
                 self.ruta_video_actual = ruta_video
                 self.frames_grabados_vid = 0
                 self.inicio_grabacion_vid = time.time()

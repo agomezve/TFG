@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <title>05 — Solución Propuesta</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css"/>
+  <style>
+    body { position:relative; display:flex; flex-direction:column; padding:34px 60px 28px; }
+
+    .layout {
+      flex:1; display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 44px; align-items: center;
+      margin-top: 16px;
+    }
+
+    /* IZQUIERDA — Propuesta */
+    .sol-card {
+      display:flex; align-items:flex-start; gap:14px;
+      background: rgba(16,185,129,0.06);
+      border:1px solid rgba(16,185,129,0.22);
+      border-left: 3px solid var(--green);
+      border-radius: 0 12px 12px 0;
+      padding: 14px 18px;
+      margin-bottom: 10px;
+    }
+    .sol-icon  { font-size:1.3rem; flex-shrink:0; margin-top:1px; }
+    .sol-title { font-size:0.82rem; font-weight:700; color:#6ee7b7; margin-bottom:4px; }
+    .sol-body  { font-size:0.75rem; color:var(--muted); line-height:1.5; }
+
+    /* DERECHA — Stack tecnológico + pipeline */
+    .section-eyebrow {
+      font-size:0.62rem; font-weight:800; letter-spacing:0.18em;
+      text-transform:uppercase; color:var(--cyan);
+      display:flex; align-items:center; gap:8px; margin-bottom:16px;
+    }
+    .section-eyebrow::before { content:''; width:22px; height:2px; background:var(--cyan); border-radius:2px; }
+
+    /* Tech pills */
+    .tech-grid { display:grid; grid-template-columns:1fr 1fr; gap:9px; margin-bottom:18px; }
+    .tech-pill {
+      display:flex; align-items:center; gap:10px;
+      background:var(--bg-card); border:1px solid var(--border);
+      border-radius:12px; padding:12px 14px;
+    }
+    .tech-emoji { font-size:1.3rem; flex-shrink:0; }
+    .tech-name  { font-size:0.8rem; font-weight:700; margin-bottom:2px; }
+    .tech-desc  { font-size:0.67rem; color:var(--muted); }
+
+    /* Pipeline visual */
+    .pipeline {
+      display:flex; align-items:center; gap:0;
+      background:var(--bg-card); border:1px solid var(--border);
+      border-radius:12px; overflow:hidden;
+    }
+    .pipe-step {
+      flex:1; text-align:center; padding:11px 8px;
+      border-right:1px solid var(--border); position:relative;
+    }
+    .pipe-step:last-child { border-right:none; }
+    .pipe-step::after {
+      content:'→'; position:absolute; right:-8px; top:50%; transform:translateY(-50%);
+      color:var(--cyan); font-weight:800; font-size:0.75rem; z-index:2;
+    }
+    .pipe-step:last-child::after { display:none; }
+    .pipe-icon { font-size:1.1rem; margin-bottom:4px; }
+    .pipe-label { font-size:0.65rem; font-weight:700; color:var(--text); }
+    .pipe-sub   { font-size:0.6rem; color:var(--muted); margin-top:2px; }
+
+    /* Comparativa sin/con */
+    .compare {
+      display:grid; grid-template-columns:1fr 1fr; gap:10px;
+      margin-top:14px;
+    }
+    .cmp-box { border-radius:10px; padding:12px 14px; }
+    .cmp-sin { background:rgba(239,68,68,0.06);  border:1px solid rgba(239,68,68,0.2); }
+    .cmp-con { background:rgba(16,185,129,0.06); border:1px solid rgba(16,185,129,0.22); }
+    .cmp-label { font-size:0.6rem; font-weight:800; letter-spacing:0.15em;
+      text-transform:uppercase; margin-bottom:7px; }
+    .cmp-sin .cmp-label { color:#f87171; }
+    .cmp-con .cmp-label { color:#34d399; }
+    .cmp-list { list-style:none; display:flex; flex-direction:column; gap:4px; }
+    .cmp-list li { font-size:0.72rem; color:var(--muted); display:flex; gap:6px; }
+    .cmp-sin .cmp-list li::before { content:'✗'; color:#f87171; font-weight:800; }
+    .cmp-con .cmp-list li::before { content:'✓'; color:#34d399; font-weight:800; }
+  </style>
+</head>
+<body>
+  <div class="bg-glow"></div>
+  <div class="dot-grid"></div>
+  <div class="corner corner-tl"></div><div class="corner corner-tr"></div>
+  <div class="corner corner-bl"></div><div class="corner corner-br"></div>
+
+  <div class="slide-label">05 &nbsp;·&nbsp; Solución Propuesta</div>
+
+  <div class="layout">
+
+    <!-- IZQUIERDA -->
+    <div>
+      <h2 class="slide-title" style="margin-bottom:16px;">
+        Nuestra <span class="hl">solución</span>:<br/>solo una webcam
+      </h2>
+
+      <div class="sol-card">
+        <div class="sol-icon">🎥</div>
+        <div>
+          <div class="sol-title">Sin hardware adicional</div>
+          <div class="sol-body">La plataforma funciona con cualquier cámara web convencional. Sin sensores, sin trajes, sin coste extra para el paciente.</div>
+        </div>
+      </div>
+
+      <div class="sol-card">
+        <div class="sol-icon">🤖</div>
+        <div>
+          <div class="sol-title">IA embebida — MediaPipe Pose</div>
+          <div class="sol-body">Detecta 33 landmarks corporales en 3D y calcula ángulos articulares frame a frame mediante un núcleo trigonométrico basado en NumPy.</div>
+        </div>
+      </div>
+
+      <div class="sol-card">
+        <div class="sol-icon">🔄</div>
+        <div>
+          <div class="sol-title">Máquina de estados finita</div>
+          <div class="sol-body">Audita dinámicamente las fases mecánicas de cada ejercicio, filtrando falsos positivos y abortando la sesión ante errores críticos acumulados.</div>
+        </div>
+      </div>
+
+      <div class="sol-card">
+        <div class="sol-icon">🩺</div>
+        <div>
+          <div class="sol-title">Trazabilidad clínica completa</div>
+          <div class="sol-body">Genera informes automáticos en texto y graba vídeo de cada serie. El fisioterapeuta accede al historial completo de progresión del paciente.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DERECHA -->
+    <div>
+      <div class="section-eyebrow">Stack tecnológico</div>
+
+      <div class="tech-grid">
+        <div class="tech-pill">
+          <div class="tech-emoji">🧠</div>
+          <div>
+            <div class="tech-name">MediaPipe</div>
+            <div class="tech-desc">Pose estimation · 33 landmarks 3D</div>
+          </div>
+        </div>
+        <div class="tech-pill">
+          <div class="tech-emoji">📷</div>
+          <div>
+            <div class="tech-name">OpenCV</div>
+            <div class="tech-desc">Captura · Procesado · Grabación</div>
+          </div>
+        </div>
+        <div class="tech-pill">
+          <div class="tech-emoji">📐</div>
+          <div>
+            <div class="tech-name">NumPy</div>
+            <div class="tech-desc">Cálculo trigonométrico de ángulos</div>
+          </div>
+        </div>
+        <div class="tech-pill">
+          <div class="tech-emoji">🗄</div>
+          <div>
+            <div class="tech-name">SQLite3</div>
+            <div class="tech-desc">Historial clínico · Persistencia</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pipeline -->
+      <div class="section-eyebrow">Pipeline de datos</div>
+      <div class="pipeline">
+        <div class="pipe-step">
+          <div class="pipe-icon">📷</div>
+          <div class="pipe-label">Webcam</div>
+          <div class="pipe-sub">Frame RGB</div>
+        </div>
+        <div class="pipe-step">
+          <div class="pipe-icon">🧠</div>
+          <div class="pipe-label">MediaPipe</div>
+          <div class="pipe-sub">Landmarks 3D</div>
+        </div>
+        <div class="pipe-step">
+          <div class="pipe-icon">📐</div>
+          <div class="pipe-label">NumPy</div>
+          <div class="pipe-sub">Ángulos</div>
+        </div>
+        <div class="pipe-step">
+          <div class="pipe-icon">🔄</div>
+          <div class="pipe-label">FSM</div>
+          <div class="pipe-sub">Validación</div>
+        </div>
+        <div class="pipe-step">
+          <div class="pipe-icon">🗄</div>
+          <div class="pipe-label">SQLite</div>
+          <div class="pipe-sub">Historial</div>
+        </div>
+      </div>
+
+      <!-- Comparativa -->
+      <div class="compare">
+        <div class="cmp-box cmp-sin">
+          <div class="cmp-label">Soluciones actuales</div>
+          <ul class="cmp-list">
+            <li>Sensores inerciales costosos</li>
+            <li>Trajes de captura complejos</li>
+            <li>Sin feedback en tiempo real</li>
+          </ul>
+        </div>
+        <div class="cmp-box cmp-con">
+          <div class="cmp-label">Nuestra plataforma</div>
+          <ul class="cmp-list">
+            <li>Solo webcam estándar</li>
+            <li>Feedback visual inmediato</li>
+            <li>Informes clínicos automáticos</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="slide-num">05 / 05</div>
+</body>
+</html>

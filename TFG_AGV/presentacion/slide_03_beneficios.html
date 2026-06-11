@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <title>03 — Beneficios de la Telerehabilitación</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css"/>
+  <style>
+    body { position:relative; display:flex; flex-direction:column; padding:34px 60px 28px; }
+
+    .layout {
+      flex:1; display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 44px; align-items: start;
+      margin-top: 16px;
+    }
+
+    /* Benefit card */
+    .benefit-card {
+      display: flex; align-items: flex-start; gap: 16px;
+      background: var(--bg-card);
+      border: 1px solid rgba(16,185,129,0.2);
+      border-radius: 14px; padding: 18px 20px;
+      margin-bottom: 12px;
+      position: relative; overflow: hidden;
+    }
+    .benefit-card::before {
+      content:''; position:absolute; top:0; left:0; bottom:0; width:3px;
+      background: linear-gradient(180deg, var(--green), var(--cyan));
+    }
+    .benefit-icon-wrap {
+      width: 42px; height: 42px; border-radius: 12px; flex-shrink:0;
+      background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.25);
+      display:flex; align-items:center; justify-content:center;
+      font-size: 1.3rem;
+    }
+    .benefit-title { font-size: 0.88rem; font-weight: 800; margin-bottom: 5px; }
+    .benefit-body  { font-size: 0.76rem; color: var(--muted); line-height: 1.55; }
+
+    /* Patologías */
+    .section-eyebrow {
+      font-size: 0.62rem; font-weight: 800; letter-spacing: 0.18em;
+      text-transform: uppercase; color: var(--purple);
+      display: flex; align-items: center; gap: 8px; margin-bottom: 14px;
+    }
+    .section-eyebrow::before { content:''; width:22px; height:2px; background:var(--purple); border-radius:2px; }
+
+    .pato-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom: 20px; }
+    .pato-item {
+      display:flex; align-items:center; gap:10px;
+      background: rgba(139,92,246,0.07);
+      border: 1px solid rgba(139,92,246,0.2);
+      border-radius: 10px; padding: 10px 13px;
+    }
+    .pato-dot { width:8px; height:8px; border-radius:50%; background:var(--purple); flex-shrink:0; }
+    .pato-text { font-size:0.75rem; font-weight:600; }
+
+    /* Stat strip */
+    .stat-strip {
+      display: grid; grid-template-columns: repeat(3,1fr); gap:10px;
+      margin-top: 4px;
+    }
+    .stat-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px; padding: 14px;
+      text-align: center;
+    }
+    .stat-num {
+      font-size: 2rem; font-weight: 900;
+      background: linear-gradient(135deg, var(--green), var(--cyan));
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+      background-clip:text;
+    }
+    .stat-lbl { font-size:0.65rem; color:var(--muted); margin-top:3px; }
+
+    /* Pros/Contras */
+    .pc-block {
+      border-radius: 12px; padding: 13px 16px;
+    }
+    .pros { background:rgba(16,185,129,0.06); border:1px solid rgba(16,185,129,0.2); margin-bottom:10px; }
+    .cons { background:rgba(239,68,68,0.06); border:1px solid rgba(239,68,68,0.2); }
+    .pc-label { font-size:0.62rem; font-weight:800; letter-spacing:0.15em; text-transform:uppercase; margin-bottom:8px; }
+    .pros .pc-label { color:#34d399; }
+    .cons .pc-label { color:#f87171; }
+    .pc-list { list-style:none; display:flex; flex-direction:column; gap:5px; }
+    .pc-list li { font-size:0.74rem; color:var(--muted); display:flex; gap:8px; align-items:flex-start; }
+    .pc-list li::before { flex-shrink:0; margin-top:1px; }
+    .pros .pc-list li::before { content:'✓'; color:#34d399; font-weight:800; }
+    .cons .pc-list li::before { content:'✗'; color:#f87171; font-weight:800; }
+  </style>
+</head>
+<body>
+  <div class="bg-glow"></div>
+  <div class="dot-grid"></div>
+  <div class="corner corner-tl"></div><div class="corner corner-tr"></div>
+  <div class="corner corner-bl"></div><div class="corner corner-br"></div>
+
+  <div class="slide-label">03 &nbsp;·&nbsp; Marco Teórico</div>
+
+  <div class="layout">
+
+    <!-- IZQUIERDA — Beneficios -->
+    <div>
+      <h2 class="slide-title" style="margin-bottom:16px;">
+        Beneficios de la<br/><span class="hl">Telerehabilitación</span>
+      </h2>
+
+      <div class="benefit-card">
+        <div class="benefit-icon-wrap">🌍</div>
+        <div>
+          <div class="benefit-title">Democratización y accesibilidad</div>
+          <div class="benefit-body">Elimina barreras geográficas y económicas. Pacientes en zonas rurales o con movilidad reducida acceden al mismo nivel de cuidado clínico que en centros especializados.</div>
+        </div>
+      </div>
+
+      <div class="benefit-card">
+        <div class="benefit-icon-wrap">📈</div>
+        <div>
+          <div class="benefit-title">Mayor adherencia al tratamiento</div>
+          <div class="benefit-body">La flexibilidad horaria y la comodidad del hogar aumentan significativamente la constancia del paciente, reduciendo el abandono terapéutico.</div>
+        </div>
+      </div>
+
+      <div class="benefit-card">
+        <div class="benefit-icon-wrap">💪</div>
+        <div>
+          <div class="benefit-title">Empoderamiento y prevención de recaídas</div>
+          <div class="benefit-body">El paciente toma un rol activo con feedback inmediato, previniendo la ejecución incorrecta de ejercicios y los malos hábitos posturales en casa.</div>
+        </div>
+      </div>
+
+      <div class="benefit-card">
+        <div class="benefit-icon-wrap">⏱</div>
+        <div>
+          <div class="benefit-title">Optimización del tiempo clínico</div>
+          <div class="benefit-body">El fisioterapeuta revisa métricas objetivas de múltiples sesiones en minutos, sin depender de la memoria o autoevaluación subjetiva del paciente.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DERECHA — Patologías + Pros/Cons -->
+    <div>
+      <div class="section-eyebrow">Patologías habitualmente tratadas</div>
+
+      <div class="pato-grid">
+        <div class="pato-item"><div class="pato-dot"></div><span class="pato-text">Tendinitis y lesiones tendinosas</span></div>
+        <div class="pato-item"><div class="pato-dot"></div><span class="pato-text">Rehabilitación postquirúrgica</span></div>
+        <div class="pato-item"><div class="pato-dot"></div><span class="pato-text">Lesiones musculoesqueléticas</span></div>
+        <div class="pato-item"><div class="pato-dot"></div><span class="pato-text">Patologías del tren inferior</span></div>
+        <div class="pato-item"><div class="pato-dot"></div><span class="pato-text">Rehabilitación cardíaca</span></div>
+        <div class="pato-item"><div class="pato-dot"></div><span class="pato-text">Rehab. neurológica</span></div>
+      </div>
+
+      <!-- Pros y contras -->
+      <div class="pc-block pros">
+        <div class="pc-label">A favor</div>
+        <ul class="pc-list">
+          <li>Reduce costes de desplazamiento y tiempo de espera</li>
+          <li>Permite monitorización continua entre consultas</li>
+          <li>Genera datos objetivos y cuantificables del progreso</li>
+        </ul>
+      </div>
+      <div class="pc-block cons">
+        <div class="pc-label">Limitaciones actuales</div>
+        <ul class="pc-list">
+          <li>Hardware especializado de alto coste (sensores, trajes inerciales)</li>
+          <li>Sin feedback biomecánico real en soluciones domésticas básicas</li>
+          <li>Baja adherencia sin supervisión activa o corrección automática</li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="slide-num">03 / 05</div>
+</body>
+</html>

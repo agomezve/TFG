@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <title>02 — ¿Qué es la Telerehabilitación?</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css"/>
+  <style>
+    body {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      padding: 34px 56px 26px;
+    }
+
+    .layout {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 40px;
+      align-items: start;
+      margin-top: 14px;
+    }
+
+    /* ── IZQUIERDA ── */
+
+    /* Definición destacada */
+    .definition-box {
+      background: rgba(59,130,246,0.07);
+      border: 1px solid rgba(59,130,246,0.25);
+      border-left: 3px solid var(--blue);
+      border-radius: 0 12px 12px 0;
+      padding: 14px 18px;
+      margin-bottom: 18px;
+    }
+    .definition-label {
+      font-size: 0.6rem; font-weight: 800;
+      letter-spacing: 0.18em; text-transform: uppercase;
+      color: var(--blue); margin-bottom: 7px;
+    }
+    .definition-text {
+      font-size: 0.82rem; color: var(--text);
+      line-height: 1.65; font-style: italic;
+    }
+
+    /* Proceso en pasos */
+    .steps-title {
+      font-size: 0.67rem; font-weight: 800;
+      letter-spacing: 0.18em; text-transform: uppercase;
+      color: var(--cyan); margin-bottom: 12px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .steps-title::before { content:''; width:20px; height:2px; background:var(--cyan); border-radius:2px; }
+
+    .steps { display: flex; flex-direction: column; gap: 8px; }
+    .step {
+      display: flex; align-items: flex-start; gap: 12px;
+      background: rgba(13,26,43,0.8);
+      border: 1px solid var(--border);
+      border-radius: 10px; padding: 11px 14px;
+    }
+    .step-num {
+      width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
+      background: linear-gradient(135deg, var(--blue), var(--cyan));
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 0.7rem; color: #fff;
+    }
+    .step-title { font-size: 0.78rem; font-weight: 700; margin-bottom: 2px; }
+    .step-body  { font-size: 0.72rem; color: var(--muted); line-height: 1.45; }
+
+    /* ── DERECHA ── */
+
+    /* Beneficios */
+    .benefits-title {
+      font-size: 0.67rem; font-weight: 800;
+      letter-spacing: 0.18em; text-transform: uppercase;
+      color: var(--green); margin-bottom: 12px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .benefits-title::before { content:''; width:20px; height:2px; background:var(--green); border-radius:2px; }
+
+    .benefit-item {
+      display: flex; align-items: flex-start; gap: 12px;
+      padding: 10px 14px; margin-bottom: 7px;
+      background: rgba(16,185,129,0.06);
+      border: 1px solid rgba(16,185,129,0.18);
+      border-radius: 10px;
+    }
+    .benefit-icon { font-size: 1.1rem; flex-shrink: 0; }
+    .benefit-title { font-size: 0.78rem; font-weight: 700; color: #6ee7b7; margin-bottom: 2px; }
+    .benefit-body  { font-size: 0.71rem; color: var(--muted); line-height: 1.45; }
+
+    /* Patologías tratadas */
+    .pato-block {
+      margin-top: 14px;
+      background: rgba(139,92,246,0.07);
+      border: 1px solid rgba(139,92,246,0.22);
+      border-radius: 12px; padding: 13px 16px;
+    }
+    .pato-label {
+      font-size: 0.62rem; font-weight: 800;
+      letter-spacing: 0.15em; text-transform: uppercase;
+      color: #a78bfa; margin-bottom: 9px;
+    }
+    .pato-tags { display: flex; flex-wrap: wrap; gap: 7px; }
+    .pato-tag {
+      font-size: 0.7rem; font-weight: 600;
+      background: rgba(139,92,246,0.12);
+      border: 1px solid rgba(139,92,246,0.25);
+      color: #c4b5fd; border-radius: 99px;
+      padding: 3px 11px;
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-glow"></div>
+  <div class="dot-grid"></div>
+  <div class="corner corner-tl"></div>
+  <div class="corner corner-tr"></div>
+  <div class="corner corner-bl"></div>
+  <div class="corner corner-br"></div>
+
+  <div class="slide-label">02 &nbsp;·&nbsp; Marco Teórico</div>
+
+  <div class="layout">
+
+    <!-- IZQUIERDA -->
+    <div>
+      <h2 class="slide-title" style="margin-bottom:12px;">
+        ¿Qué es la <span class="hl">Telerehabilitación?</span>
+      </h2>
+
+      <!-- Definición -->
+      <div class="definition-box">
+        <div class="definition-label">Definición</div>
+        <div class="definition-text">
+          Prestación de servicios de rehabilitación a distancia utilizando tecnologías
+          de la información y comunicación —aplicaciones, vídeos y videollamadas—
+          que permite realizar ejercicios terapéuticos y seguimiento profesional desde casa,
+          mejorando el acceso, la comodidad y la adherencia al tratamiento.
+        </div>
+      </div>
+
+      <!-- Proceso -->
+      <div class="steps-title">Cómo funciona el proceso</div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div>
+            <div class="step-title">Evaluación inicial</div>
+            <div class="step-body">El profesional valora al paciente de forma virtual y diseña un plan personalizado adaptado a su lesión y nivel.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div>
+            <div class="step-title">Plan de ejercicios digital</div>
+            <div class="step-body">Se envían pautas a través de la plataforma: vídeos explicativos y ejercicios interactivos con los que el paciente trabaja desde casa.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div>
+            <div class="step-title">Supervisión y ajuste remoto</div>
+            <div class="step-body">El especialista monitoriza los avances mediante reportes automáticos, sensores de movimiento y videollamadas, ajustando el tratamiento según la evolución.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DERECHA -->
+    <div>
+      <div class="benefits-title">Beneficios clave</div>
+
+      <div class="benefit-item">
+        <div class="benefit-icon">🌍</div>
+        <div>
+          <div class="benefit-title">Democratización y accesibilidad</div>
+          <div class="benefit-body">Elimina barreras geográficas: pacientes rurales o con movilidad reducida acceden al mismo nivel de cuidado clínico.</div>
+        </div>
+      </div>
+
+      <div class="benefit-item">
+        <div class="benefit-icon">📈</div>
+        <div>
+          <div class="benefit-title">Mejora de la adherencia al tratamiento</div>
+          <div class="benefit-body">La flexibilidad horaria y la comodidad del hogar aumentan significativamente la constancia del paciente en su recuperación.</div>
+        </div>
+      </div>
+
+      <div class="benefit-item">
+        <div class="benefit-icon">💪</div>
+        <div>
+          <div class="benefit-title">Empoderamiento del paciente</div>
+          <div class="benefit-body">El paciente toma un rol activo en su recuperación con feedback inmediato, previniendo recaídas y malos hábitos posturales.</div>
+        </div>
+      </div>
+
+      <div class="benefit-item">
+        <div class="benefit-icon">⏱</div>
+        <div>
+          <div class="benefit-title">Optimización del tiempo clínico</div>
+          <div class="benefit-body">El fisioterapeuta revisa métricas objetivas de varias sesiones en minutos, sin depender de la autoevaluación subjetiva del paciente.</div>
+        </div>
+      </div>
+
+      <!-- Patologías -->
+      <div class="pato-block">
+        <div class="pato-label">Patologías más tratadas</div>
+        <div class="pato-tags">
+          <span class="pato-tag">Tendinitis</span>
+          <span class="pato-tag">Rehab. postquirúrgica</span>
+          <span class="pato-tag">Lesiones musculoesqueléticas</span>
+          <span class="pato-tag">Rehabilitación cardíaca</span>
+          <span class="pato-tag">Patologías del tren inferior</span>
+          <span class="pato-tag">Rehab. neurológica</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="slide-num">02 / 09</div>
+</body>
+</html>

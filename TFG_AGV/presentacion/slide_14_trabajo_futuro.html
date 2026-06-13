@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <title>14 — Trabajo Futuro</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css"/>
+  <style>
+    body { padding: 40px 60px; overflow: hidden; display: flex; flex-direction: column; }
+    
+    .header-section { margin-bottom: 30px; text-align: center; }
+
+    .main-content {
+      flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%;
+    }
+
+    /* Grid horizontal para el futuro */
+    .future-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 25px;
+      justify-content: center;
+      max-width: 1200px;
+    }
+
+    .future-card {
+      background: rgba(13,26,43,0.4);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 20px;
+      padding: 30px 25px;
+      width: calc(33.333% - 17px); /* 3 in a row */
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 15px;
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+
+    .future-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 15px 30px rgba(0,0,0,0.4);
+      border-color: rgba(6,182,212,0.3);
+      background: rgba(13,26,43,0.8);
+    }
+
+    /* Las dos últimas cartas centradas abajo */
+    .future-card:nth-child(4) { margin-left: 16.666%; }
+
+    .fut-icon-box {
+      width: 60px; height: 60px; border-radius: 16px;
+      background: rgba(6,182,212,0.1);
+      border: 1px solid rgba(6,182,212,0.3);
+      color: #22d3ee;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2rem;
+    }
+
+    .fut-title {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: white;
+      line-height: 1.3;
+    }
+
+    .fut-desc {
+      font-size: 0.9rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+  </style>
+</head>
+<body>
+  <div class="bg-glow"></div>
+  <div class="dot-grid"></div>
+  <div class="corner corner-tl"></div><div class="corner corner-tr"></div>
+  <div class="corner corner-bl"></div><div class="corner corner-br"></div>
+
+  <div class="slide-label">14 &nbsp;·&nbsp; Trabajo Futuro</div>
+
+  <div class="header-section">
+    <h2 class="slide-title" style="font-size: 2.5rem; margin-bottom: 10px;">
+      Trabajo Futuro
+    </h2>
+  </div>
+
+  <div class="main-content">
+    <div class="future-grid">
+      
+      <div class="future-card">
+        <div class="fut-icon-box" style="color: #60a5fa; border-color: rgba(59,130,246,0.3); background: rgba(59,130,246,0.1);">📱</div>
+        <div class="fut-title">Migración a Sistemas Móviles</div>
+        <div class="fut-desc">Adaptación del núcleo a Android e iOS para que el paciente rehabilite usando solo su teléfono en cualquier lugar.</div>
+      </div>
+
+      <div class="future-card">
+        <div class="fut-icon-box" style="color: #34d399; border-color: rgba(16,185,129,0.3); background: rgba(16,185,129,0.1);">☁️</div>
+        <div class="fut-title">Sincronización en la Nube</div>
+        <div class="fut-desc">Portal web clínico donde el fisioterapeuta recibe la biometría y progresos de sus pacientes en tiempo real.</div>
+      </div>
+
+      <div class="future-card">
+        <div class="fut-icon-box" style="color: #fbbf24; border-color: rgba(245,158,11,0.3); background: rgba(245,158,11,0.1);">🎮</div>
+        <div class="fut-title">Gamificación y Realidad Aumentada</div>
+        <div class="fut-desc">Recompensas dinámicas y superposiciones interactivas en pantalla para mantener alta la motivación del paciente.</div>
+      </div>
+
+      <div class="future-card">
+        <div class="fut-icon-box" style="color: #c084fc; border-color: rgba(192,132,252,0.3); background: rgba(192,132,252,0.1);">🧠</div>
+        <div class="fut-title">Modelos de IA Personalizados</div>
+        <div class="fut-desc">Entrenamiento de modelos de Machine Learning especializados en malformaciones y patologías neurológicas severas.</div>
+      </div>
+
+      <div class="future-card">
+        <div class="fut-icon-box" style="color: #f87171; border-color: rgba(239,68,68,0.3); background: rgba(239,68,68,0.1);">🗣️</div>
+        <div class="fut-title">Interacción por Comandos de Voz</div>
+        <div class="fut-desc">Integración de PNL para iniciar, pausar y consultar dudas sin tocar teclado o ratón (vital en movilidad reducida).</div>
+      </div>
+
+    </div>
+  </div>
+
+</body>
+</html>

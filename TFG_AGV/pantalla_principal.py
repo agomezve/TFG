@@ -425,13 +425,13 @@ class AppRehabilitacion(ctk.CTk):
         r3 = ctk.CTkRadioButton(frame_radio, text="Avanzado", variable=var_nivel, value="Avanzado")
         r3.pack(side="left", padx=8)
 
-        camara_var = ctk.StringVar(value="📸 Cámara Principal (0)")
-        opciones_camara = ["📸 Cámara Principal (0)", "📱 iPhone / Secundaria (1)"]
+        camara_var = ctk.StringVar(value="📸 Webcam del Mac")
+        opciones_camara = ["📸 Webcam del Mac", "📱 Cámara iPhone"]
         combo_camara = ctk.CTkOptionMenu(popup, values=opciones_camara, variable=camara_var, width=220)
         combo_camara.pack(pady=10)
 
         def proceed():
-            idx = 1 if "1" in camara_var.get() else 0
+            idx = 1 if "iPhone" in camara_var.get() else 0
             self._trigger_inicio(popup, nombre_ejercicio, var_nivel.get(), idx)
 
         btn_web = ctk.CTkButton(popup, text="▶ INICIAR ENTRENAMIENTO", fg_color="green", hover_color="darkgreen", text_color="white", command=proceed)
@@ -586,10 +586,32 @@ class AppRehabilitacion(ctk.CTk):
         if self.procesando_video:
             self.detener_video()
         self.iniciar_motor_ejercicio(ejercicio, nivel)
-        self.cap = cv2.VideoCapture(cam_index)
-        if not self.cap.isOpened():
-            self.preparar_vista_video("❌ Error: No se puede acceder a la webcam.")
-            return
+        
+        self.cap = None
+        
+        if cam_index == 1:
+            # Si el usuario eligió el iPhone, intentamos los índices comunes (1, 2, 3) 
+            # por si macOS lo ha reasignado al conectar algo.
+            for idx in [1, 2, 3]:
+                temp_cap = cv2.VideoCapture(idx)
+                if temp_cap.isOpened():
+                    ret, _ = temp_cap.read()
+                    if ret:
+                        self.cap = temp_cap
+                        break
+                temp_cap.release()
+            
+            # Si no ha encontrado ninguna cámara en 1, 2 o 3, fallamos.
+            if self.cap is None or not self.cap.isOpened():
+                self.preparar_vista_video("❌ Error: No se encuentra el iPhone. Asegúrate de que está bloqueado y en la misma WiFi.")
+                return
+        else:
+            # Cámara del Mac (0)
+            self.cap = cv2.VideoCapture(0)
+            if not self.cap.isOpened():
+                self.preparar_vista_video("❌ Error: No se puede acceder a la webcam del Mac.")
+                return
+
         self.procesando_video = True
         self.hora_inicio_analisis = time.time()
         self.tiempo_preparacion_fin = time.time() + 5.0

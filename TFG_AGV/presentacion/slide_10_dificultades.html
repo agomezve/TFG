@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <title>10 — Dificultades</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css"/>
+  <style>
+    body { padding: 40px 60px; overflow: hidden; display: flex; flex-direction: column; }
+    
+    .header-section { margin-bottom: 30px; text-align: center; }
+    
+    .infographic-container {
+      display: flex; gap: 30px; justify-content: center; align-items: stretch; max-width: 1200px; margin: 0 auto; width: 100%; height: 100%;
+    }
+
+    /* Columnas Principales (Las "cajitas") */
+    .diff-box {
+      flex: 1; display: flex; flex-direction: column; gap: 20px;
+      background: rgba(13,26,43,0.6);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 16px; padding: 25px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      position: relative; overflow: hidden;
+    }
+    
+    .box-1::before { content: ''; position: absolute; top:0; left:0; width:100%; height:4px; background: linear-gradient(90deg, #3b82f6, #8b5cf6); }
+    .box-2::before { content: ''; position: absolute; top:0; left:0; width:100%; height:4px; background: linear-gradient(90deg, #f59e0b, #ef4444); }
+    .box-3::before { content: ''; position: absolute; top:0; left:0; width:100%; height:4px; background: linear-gradient(90deg, #10b981, #3b82f6); }
+
+    .main-title { font-size: 1.25rem; font-weight: 800; color: white; line-height: 1.3; text-align: center; margin-bottom: 5px; min-height: 3.5rem; display: flex; align-items: center; justify-content: center;}
+
+    .section-title {
+      font-size: 0.85rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;
+    }
+    .title-prob { color: #f87171; border-bottom: 1px solid rgba(239,68,68,0.2); padding-bottom: 5px; }
+    .title-sol { color: #4ade80; border-bottom: 1px solid rgba(16,185,129,0.2); padding-bottom: 5px; }
+
+    .card-desc { font-size: 0.95rem; color: var(--muted); line-height: 1.5; margin: 0; }
+    
+    .content-block {
+      background: rgba(0,0,0,0.2); border-radius: 12px; padding: 15px; flex: 1; display: flex; flex-direction: column;
+    }
+
+  </style>
+</head>
+<body>
+  <div class="bg-glow"></div>
+  <div class="dot-grid"></div>
+  <div class="corner corner-tl"></div><div class="corner corner-tr"></div>
+  <div class="corner corner-bl"></div><div class="corner corner-br"></div>
+
+  <div class="slide-label">10 &nbsp;·&nbsp; Retos Técnicos</div>
+
+  <div class="header-section">
+    <h2 class="slide-title" style="font-size: 2.2rem; margin-bottom: 10px;">
+      Principales <span class="hl">Dificultades</span> y <span class="hl" style="color:#10b981;">Soluciones</span>
+    </h2>
+  </div>
+
+  <div class="infographic-container">
+    
+    <!-- CAJITA 1: Escalabilidad -->
+    <div class="diff-box box-1">
+      <div class="main-title">🧩 Mantenibilidad al escalar ejercicios</div>
+      
+      <div class="content-block" style="margin-bottom: 10px;">
+        <div class="section-title title-prob">Problema</div>
+        <p class="card-desc">Lógica clínica acoplada. Al añadir nuevos protocolos, <strong>el código se volvía frágil y rompía el resto de funciones</strong> de la aplicación.</p>
+      </div>
+
+      <div class="content-block">
+        <div class="section-title title-sol">Solución</div>
+        <p class="card-desc">Refactorización <strong>Orientada a Objetos mediante Patrón Estrategia</strong>. La lógica se aisló en módulos independientes, haciendo la app totalmente escalable sin alterar el controlador central.</p>
+      </div>
+    </div>
+
+    <!-- CAJITA 2: Perspectiva 3D -->
+    <div class="diff-box box-2">
+      <div class="main-title">📐 Falsos positivos por perspectiva planimétrica</div>
+
+      <div class="content-block" style="margin-bottom: 10px;">
+        <div class="section-title title-prob">Problema</div>
+        <p class="card-desc">Inestabilidad en análisis 2D. Si el paciente no se alineaba exactamente de perfil, <strong>la lente deformaba el ángulo y generaba errores de paralaje</strong> que anulaban el diagnóstico.</p>
+      </div>
+
+      <div class="content-block">
+        <div class="section-title title-sol">Solución</div>
+        <p class="card-desc">Salto a la geometría tridimensional profunda. Implementación matemática avanzada mediante el <strong>cálculo del arco coseno de vectores matriciales 3D</strong>, previniendo errores de perspectiva.</p>
+      </div>
+    </div>
+
+    <!-- CAJITA 3: Lateralidad -->
+    <div class="diff-box box-3">
+      <div class="main-title">⚖️ Ambigüedad en ejercicios asimétricos</div>
+
+      <div class="content-block" style="margin-bottom: 10px;">
+        <div class="section-title title-prob">Problema</div>
+        <p class="card-desc">En el tren inferior asimétrico, la lectura genérica de ambas extremidades a la vez generaba <strong>datos contradictorios que colapsaban la máquina de estados finita</strong>.</p>
+      </div>
+
+      <div class="content-block">
+        <div class="section-title title-sol">Solución</div>
+        <p class="card-desc">Implementación de <strong>detección dinámica de lateralidad diferencial</strong>. El motor identifica autónomamente cuál es la pierna activa y cuál la estabilizadora en tiempo real.</p>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>

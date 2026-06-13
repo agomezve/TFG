@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <title>08 — Descripción Técnica</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css"/>
+  <style>
+    body { position:relative; display:flex; flex-direction:column; padding:34px 60px 28px; }
+
+    .layout {
+      flex:1; display:flex; flex-direction:column;
+      justify-content: center; align-items: center;
+      margin-top: 10px;
+    }
+
+    /* 3 Pillars Grid */
+    .tech-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
+      max-width: 1000px; width: 100%;
+    }
+
+    .tech-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 24px;
+      position: relative;
+      display: flex; flex-direction: column;
+    }
+    
+    /* Decorative top lines for each card */
+    .tech-card:nth-child(1) { border-top: 4px solid #8b5cf6; } /* Purple */
+    .tech-card:nth-child(2) { border-top: 4px solid #3b82f6; } /* Blue */
+    .tech-card:nth-child(3) { border-top: 4px solid #10b981; } /* Green */
+
+    .tech-icon {
+      font-size: 2rem; margin-bottom: 16px;
+    }
+
+    .tech-title {
+      font-size: 1.1rem; font-weight: 800; margin-bottom: 12px;
+      color: var(--text);
+    }
+
+    .tech-body {
+      font-size: 0.82rem; color: var(--muted); line-height: 1.5;
+      flex: 1;
+    }
+
+    .tech-list {
+      margin-top: 14px; list-style: none; padding-left: 0;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .tech-list li {
+      font-size: 0.78rem; color: var(--text);
+      display: flex; gap: 8px; align-items: flex-start;
+    }
+    .tech-list li::before {
+      content: '▸'; color: #3b82f6; font-weight: bold;
+    }
+
+    /* Hierarchy Arrow between 2 and 3 */
+    .arrow-container {
+      position: absolute; right: -20px; top: 50%; transform: translateY(-50%);
+      font-size: 1.5rem; color: var(--border); z-index: 10;
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-glow"></div>
+  <div class="dot-grid"></div>
+  <div class="corner corner-tl"></div><div class="corner corner-tr"></div>
+  <div class="corner corner-bl"></div><div class="corner corner-br"></div>
+
+  <div class="slide-label">06 &nbsp;·&nbsp; Arquitectura del Software</div>
+
+  <div class="layout">
+    <div style="width: 100%; max-width: 1000px;">
+      <h2 class="slide-title" style="margin-bottom:34px; text-align: center;">
+        Descripción de la<br/><span class="hl">Aplicación Desarrollada</span>
+      </h2>
+
+      <div class="tech-grid">
+        
+        <!-- Tarjeta 1: POO -->
+        <div class="tech-card">
+          <div class="tech-icon">🏗️</div>
+          <div class="tech-title">Patrón Estrategia y POO</div>
+          <div class="tech-body">
+            Diseño no monolítico basado en <strong>Programación Orientada a Objetos</strong>. Separa tajantemente la capa de interfaz visual de la capa lógica.
+            <ul class="tech-list">
+              <li>Alta escalabilidad</li>
+              <li>Mantenibilidad de código</li>
+              <li>Eficiencia computacional</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Tarjeta 2: Módulo Base -->
+        <div class="tech-card">
+          <div class="arrow-container">➜</div>
+          <div class="tech-icon">⚙️</div>
+          <div class="tech-title">Clase ModuloEjercicio</div>
+          <div class="tech-body">
+            Clase abstracta que actúa como <strong>interfaz genérica</strong> para todos los ejercicios. Centraliza las matemáticas 3D.
+            <ul class="tech-list">
+              <li>Filtra <i>landmarks</i> corporales</li>
+              <li>Estandariza evaluación postural</li>
+              <li>Fuerza guardado seguro de sesión</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Tarjeta 3: Submódulos -->
+        <div class="tech-card">
+          <div class="tech-icon">🧬</div>
+          <div class="tech-title">Archivos Polimórficos</div>
+          <div class="tech-body">
+            Cada protocolo clínico se instancia como una subclase independiente que hereda la matemática del módulo base.
+            <ul class="tech-list">
+              <li>Sentadilla (Squat)</li>
+              <li>Peso Muerto</li>
+              <li>Ejercicios Isométricos</li>
+            </ul>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

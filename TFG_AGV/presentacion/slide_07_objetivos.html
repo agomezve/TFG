@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <title>07 — Objetivos</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css"/>
+  <style>
+    body { position:relative; display:flex; flex-direction:column; padding:34px 60px 28px; }
+
+    .layout {
+      flex:1; display:flex; flex-direction:column;
+      justify-content: center; align-items: center;
+      margin-top: 16px;
+    }
+
+    /* Objetivo General */
+    .obj-general {
+      background: rgba(59,130,246,0.08);
+      border: 1px solid rgba(59,130,246,0.3);
+      border-radius: 16px;
+      padding: 30px 40px;
+      margin-bottom: 40px;
+      text-align: center;
+      max-width: 900px; width: 100%;
+      position: relative; overflow: hidden;
+    }
+    .obj-general::before {
+      content:''; position:absolute; top:0; left:0; right:0; height:4px;
+      background: linear-gradient(90deg, #3b82f6, #06b6d4);
+    }
+    .general-label {
+      font-size: 0.7rem; font-weight: 800; letter-spacing: 0.2em;
+      text-transform: uppercase; color: #60a5fa; margin-bottom: 12px;
+    }
+    .general-text {
+      font-size: 1.25rem; font-weight: 600; color: var(--text);
+      line-height: 1.5;
+    }
+
+    /* Objetivos Específicos Grid */
+    .specific-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
+      max-width: 900px; width: 100%;
+    }
+    .spec-item {
+      display: flex; align-items: flex-start; gap: 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px; padding: 20px 24px;
+    }
+    .spec-icon {
+      width: 44px; height: 44px; border-radius: 10px; flex-shrink: 0;
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem;
+    }
+    .spec-title { font-size: 0.95rem; font-weight: 800; margin-bottom: 6px; }
+    .spec-body  { font-size: 0.8rem; color: var(--muted); line-height: 1.5; }
+  </style>
+</head>
+<body>
+  <div class="bg-glow"></div>
+  <div class="dot-grid"></div>
+  <div class="corner corner-tl"></div><div class="corner corner-tr"></div>
+  <div class="corner corner-bl"></div><div class="corner corner-br"></div>
+
+  <div class="slide-label">04 &nbsp;·&nbsp; Objetivos</div>
+
+  <div class="layout">
+    <div style="width: 100%; max-width: 900px;">
+      <h2 class="slide-title" style="margin-bottom:28px; text-align: center;">
+        <span class="hl">Objetivos</span>
+      </h2>
+
+      <div class="obj-general">
+        <div class="general-label">🎯 Objetivo General</div>
+        <div class="general-text">
+          Crear y validar una aplicación interactiva, modular y robusta para la supervisión analítica de ejercicios físicos a distancia utilizando Inteligencia Artificial.
+        </div>
+      </div>
+
+      <div class="specific-grid">
+        <div class="spec-item">
+          <div class="spec-icon">🧩</div>
+          <div>
+            <div class="spec-title">Arquitectura Modular</div>
+            <div class="spec-body">Diseñar un sistema escalable orientado a objetos que permita incorporar fácilmente nuevos ejercicios fisioterapéuticos en el futuro.</div>
+          </div>
+        </div>
+
+        <div class="spec-item">
+          <div class="spec-icon">📐</div>
+          <div>
+            <div class="spec-title">Precisión Geométrica</div>
+            <div class="spec-body">Desarrollar una máquina de estados finita con NumPy para calcular y auditar en tiempo real los rangos articulares correctos del paciente.</div>
+          </div>
+        </div>
+
+        <div class="spec-item">
+          <div class="spec-icon">📁</div>
+          <div>
+            <div class="spec-title">Gestión de Historiales</div>
+            <div class="spec-body">Implementar un sistema de bases de datos relacionales seguro y eficiente para almacenar el historial de los pacientes.</div>
+          </div>
+        </div>
+
+        <div class="spec-item">
+          <div class="spec-icon">👥</div>
+          <div>
+            <div class="spec-title">Interfaces Adaptadas</div>
+            <div class="spec-body">Proporcionar una interfaz gráfica dual optimizada: una para que el fisioterapeuta analice datos y otra sencilla e intuitiva para el paciente.</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</body>
+</html>

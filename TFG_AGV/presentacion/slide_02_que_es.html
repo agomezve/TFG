@@ -9,9 +9,9 @@
     body { position:relative; display:flex; flex-direction:column; padding:34px 60px 28px; }
 
     .layout {
-      flex:1; display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 48px; align-items: center;
+      flex:1; display:flex;
+      flex-direction: column;
+      justify-content: center; align-items: center;
       margin-top: 16px;
     }
 
@@ -103,100 +103,45 @@
   <div class="layout">
 
     <!-- IZQUIERDA -->
-    <div>
-      <h2 class="slide-title" style="margin-bottom:16px;">
-        ¿Qué es la<br/><span class="hl">Telerehabilitación?</span>
+    <div style="max-width: 800px; margin: 0 auto;">
+      <h2 class="slide-title" style="margin-bottom:24px; text-align: center;">
+        Telerehabilitación:<br/><span class="hl">¿Qué es?</span>
       </h2>
 
-      <div class="definition-box">
+      <div class="definition-box" style="margin-bottom: 32px; font-size: 1.1rem; padding: 24px 30px;">
         <div class="def-label">Definición</div>
-        <div class="def-text">
+        <div class="def-text" style="font-size: 1.05rem;">
           Prestación de servicios de rehabilitación a distancia mediante tecnologías de la información y comunicación que permite realizar ejercicios terapéuticos y seguimiento profesional desde casa, mejorando el acceso, la comodidad y la adherencia al tratamiento.
         </div>
       </div>
 
-      <div class="key-grid">
-        <div class="key-item">
-          <div class="key-icon">🏠</div>
+      <div class="key-grid" style="gap: 20px;">
+        <div class="key-item" style="padding: 20px;">
+          <div class="key-icon" style="font-size: 1.8rem;">🏠</div>
           <div>
-            <div class="key-title">Entorno domiciliario</div>
-            <div class="key-body">El paciente realiza su rehabilitación en casa sin desplazamientos.</div>
+            <div class="key-title" style="font-size: 0.9rem;">Entorno domiciliario</div>
+            <div class="key-body" style="font-size: 0.8rem;">El paciente realiza su rehabilitación en casa sin desplazamientos.</div>
           </div>
         </div>
-        <div class="key-item">
-          <div class="key-icon">📡</div>
+        <div class="key-item" style="padding: 20px;">
+          <div class="key-icon" style="font-size: 1.8rem;">📡</div>
           <div>
-            <div class="key-title">Supervisión remota</div>
-            <div class="key-body">El fisioterapeuta controla el progreso a distancia en tiempo real.</div>
+            <div class="key-title" style="font-size: 0.9rem;">Supervisión remota</div>
+            <div class="key-body" style="font-size: 0.8rem;">El fisioterapeuta controla el progreso a distancia en tiempo real.</div>
           </div>
         </div>
-        <div class="key-item">
-          <div class="key-icon">📊</div>
+        <div class="key-item" style="padding: 20px;">
+          <div class="key-icon" style="font-size: 1.8rem;">📊</div>
           <div>
-            <div class="key-title">Datos objetivos</div>
-            <div class="key-body">Métricas de movimiento y reportes automáticos de cada sesión.</div>
+            <div class="key-title" style="font-size: 0.9rem;">Datos objetivos</div>
+            <div class="key-body" style="font-size: 0.8rem;">Métricas de movimiento y reportes automáticos de cada sesión.</div>
           </div>
         </div>
-        <div class="key-item">
-          <div class="key-icon">🔒</div>
+        <div class="key-item" style="padding: 20px;">
+          <div class="key-icon" style="font-size: 1.8rem;">🔒</div>
           <div>
-            <div class="key-title">Seguridad clínica</div>
-            <div class="key-body">Plataformas específicas que protegen los datos del paciente.</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- DERECHA -->
-    <div>
-      <div class="section-eyebrow">Cómo funciona el proceso</div>
-
-      <div class="steps">
-        <div class="step">
-          <div class="step-left">
-            <div class="step-num">1</div>
-            <div class="step-line"></div>
-          </div>
-          <div class="step-content">
-            <div class="step-title">Evaluación inicial virtual</div>
-            <div class="step-body">El profesional valora al paciente de forma remota y diseña un plan terapéutico personalizado adaptado a su lesión, nivel y entorno domiciliario.</div>
-            <span class="step-tag">Videollamada · Anamnesis digital</span>
-          </div>
-        </div>
-
-        <div class="step">
-          <div class="step-left">
-            <div class="step-num">2</div>
-            <div class="step-line"></div>
-          </div>
-          <div class="step-content">
-            <div class="step-title">Plan de ejercicios digital</div>
-            <div class="step-body">Se envían pautas a través de la plataforma: vídeos explicativos y ejercicios interactivos guiados con los que el paciente trabaja de forma autónoma.</div>
-            <span class="step-tag">App · Vídeos · Ejercicios interactivos</span>
-          </div>
-        </div>
-
-        <div class="step">
-          <div class="step-left">
-            <div class="step-num">3</div>
-            <div class="step-line"></div>
-          </div>
-          <div class="step-content">
-            <div class="step-title">Análisis biomecánico en tiempo real</div>
-            <div class="step-body">El sistema evalúa la postura y la técnica del paciente frame a frame, emitiendo feedback correctivo inmediato ante cualquier desviación postural.</div>
-            <span class="step-tag">Visión por computador · IA · Landmarks 3D</span>
-          </div>
-        </div>
-
-        <div class="step">
-          <div class="step-left">
-            <div class="step-num">4</div>
-            <div class="step-line"></div>
-          </div>
-          <div class="step-content">
-            <div class="step-title">Supervisión y ajuste del profesional</div>
-            <div class="step-body">El especialista revisa métricas objetivas —repeticiones, errores, profundidad— y ajusta el tratamiento según la evolución real del paciente.</div>
-            <span class="step-tag">Reportes automáticos · Historial clínico</span>
+            <div class="key-title" style="font-size: 0.9rem;">Seguridad clínica</div>
+            <div class="key-body" style="font-size: 0.8rem;">Plataformas específicas que protegen los datos del paciente.</div>
           </div>
         </div>
       </div>
@@ -204,6 +149,5 @@
 
   </div>
 
-  <div class="slide-num">02 / 05</div>
 </body>
 </html>

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <title>11 — Demostración</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css"/>
+  <style>
+    body { padding: 40px 60px; overflow: hidden; display: flex; flex-direction: column; }
+    
+    .main-content {
+      flex: 1; display: flex; justify-content: center; align-items: center; width: 100%;
+    }
+
+    .center-block {
+      display: flex;
+      align-items: center;
+      gap: 30px;
+      max-width: 900px;
+    }
+
+    .play-icon {
+      font-size: 6rem;
+      background: linear-gradient(135deg, #10b981, #3b82f6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 10px 30px rgba(16,185,129,0.3));
+    }
+
+    .demo-text-box {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .demo-title-center {
+      font-size: 2.5rem;
+      font-weight: 800;
+      color: white;
+      margin: 0;
+      line-height: 1.1;
+    }
+
+    .demo-subtitle-center {
+      font-size: 1.2rem;
+      color: var(--muted);
+      line-height: 1.5;
+      margin: 0;
+    }
+
+  </style>
+</head>
+<body>
+  <div class="bg-glow"></div>
+  <div class="dot-grid"></div>
+  <div class="corner corner-tl"></div><div class="corner corner-tr"></div>
+  <div class="corner corner-bl"></div><div class="corner corner-br"></div>
+
+  <div class="slide-label">11 &nbsp;·&nbsp; Demostración</div>
+
+  <div class="main-content">
+    <div class="center-block">
+      <div class="play-icon">▶</div>
+      <div class="demo-text-box">
+        <h1 class="demo-title-center">Demostración en vivo</h1>
+        <p class="demo-subtitle-center">Transición al entorno de ejecución real de Python para probar el motor de captura de movimiento.</p>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

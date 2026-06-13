@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <title>09 — Tecnologías</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css"/>
+  <style>
+    body { position:relative; display:flex; flex-direction:column; padding:34px 60px 28px; }
+
+    .layout {
+      flex:1; display:flex;
+      gap: 40px; align-items: center; justify-content: center;
+      margin-top: 10px;
+    }
+
+    /* IZQUIERDA — Lista de Librerías */
+    .left-col { flex: 1; max-width: 400px; }
+    .lib-list {
+      display: flex; flex-direction: column; gap: 14px;
+    }
+    .lib-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-left: 3px solid #3b82f6;
+      border-radius: 10px; padding: 12px 16px;
+    }
+    .lib-card:nth-child(2) { border-left-color: #10b981; }
+    .lib-card:nth-child(3) { border-left-color: #f59e0b; }
+    .lib-card:nth-child(4) { border-left-color: #8b5cf6; }
+
+    .lib-title { font-size: 0.9rem; font-weight: 800; margin-bottom: 4px; color: var(--text); }
+    .lib-body  { font-size: 0.72rem; color: var(--muted); line-height: 1.45; }
+
+    /* DERECHA — Diagrama CSS Moderno (Fixed Size for perfect alignment) */
+    .diagram-container {
+      position: relative; width: 680px; height: 500px; min-width: 680px;
+      background: rgba(13,26,43,0.3);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 20px;
+      box-shadow: inset 0 0 80px rgba(59,130,246,0.05);
+      /* Use scale if it overflows small screens, but we assume 1080p usually */
+    }
+
+    .node {
+      position: absolute;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px; text-align: center;
+      width: 190px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      z-index: 2;
+    }
+    .node-title { font-size: 0.8rem; font-weight: 800; margin-bottom: 4px; }
+    .node-desc  { font-size: 0.62rem; color: var(--muted); line-height: 1.3; }
+
+    /* Nodos */
+    .n-app { 
+      top: 30px; left: 30px; width: 230px; height: 440px;
+      background: rgba(255,255,255,0.02); border: 1px dashed rgba(255,255,255,0.2);
+      z-index: 1; padding: 14px; text-align: left;
+    }
+    .n-app-title { font-size:0.7rem; font-weight:800; color:var(--muted); text-transform:uppercase; letter-spacing:0.1em; margin-bottom: 16px; text-align: center;}
+    
+    .n-modulo {
+      position: relative; top: 0; left: 0; width: 100%;
+      background: rgba(139,92,246,0.1); border: 1px solid rgba(139,92,246,0.4);
+      margin-bottom: 120px;
+    }
+    .n-modulo .node-title { color: #c4b5fd; }
+    
+    .n-db {
+      position: absolute; bottom: 14px; left: 14px; width: 200px;
+      background: rgba(148,163,184,0.1); border: 1px solid rgba(148,163,184,0.4);
+      border-radius: 12px 12px 30px 30px;
+    }
+    
+    .n-opencv {
+      top: 50px; left: 450px;
+      background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.4);
+    }
+    .n-opencv .node-title { color: #93c5fd; }
+
+    .n-mediapipe {
+      top: 260px; left: 450px;
+      background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.4);
+    }
+    .n-mediapipe .node-title { color: #6ee7b7; }
+
+    .n-numpy {
+      top: 400px; left: 280px;
+      background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.4);
+    }
+    .n-numpy .node-title { color: #fcd34d; }
+
+    /* SVG Lines */
+    .svg-layer {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none;
+    }
+    path {
+      fill: none;
+      stroke: rgba(255,255,255,0.4);
+      stroke-width: 2;
+    }
+    .marker-arrow { fill: rgba(255,255,255,0.4); }
+
+    /* Arrow Labels */
+    .edge-label {
+      position: absolute; z-index: 3;
+      font-size: 0.55rem; font-weight: 600; color: #cbd5e1;
+      background: #0f172a; padding: 2px 8px; border-radius: 4px;
+      border: 1px solid rgba(255,255,255,0.2);
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-glow"></div>
+  <div class="dot-grid"></div>
+  <div class="corner corner-tl"></div><div class="corner corner-tr"></div>
+  <div class="corner corner-bl"></div><div class="corner corner-br"></div>
+
+  <div class="slide-label">07 &nbsp;·&nbsp; Tecnologías Utilizadas</div>
+
+  <div class="layout">
+    
+    <!-- IZQUIERDA -->
+    <div class="left-col">
+      <h2 class="slide-title" style="margin-bottom:20px; font-size: 2rem;">
+        Librerías<br/><span class="hl">Utilizadas</span>
+      </h2>
+
+      <div class="lib-list">
+        <div class="lib-card">
+          <div class="lib-title">OpenCV</div>
+          <div class="lib-body">Librería de Visión por Computador encargada de capturar los fotogramas y renderizar la interfaz gráfica de la aplicación.</div>
+        </div>
+        <div class="lib-card">
+          <div class="lib-title">MediaPipe AI</div>
+          <div class="lib-body">Red neuronal topológica de Google que procesa la imagen para extraer con alta precisión 33 landmarks corporales en 3D.</div>
+        </div>
+        <div class="lib-card">
+          <div class="lib-title">NumPy</div>
+          <div class="lib-body">Motor matemático fundamental para la estructuración matricial y cálculo vectorial de los ángulos biomecánicos.</div>
+        </div>
+        <div class="lib-card">
+          <div class="lib-title">SQLite</div>
+          <div class="lib-body">Sistema gestor de bases de datos relacionales ligero encargado de almacenar localmente el historial clínico.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DERECHA (DIAGRAMA CSS FIXED) -->
+    <div class="diagram-container">
+      
+      <!-- Nodos -->
+      <div class="node n-app">
+        <div class="n-app-title">Aplicación</div>
+        
+        <div class="node n-modulo">
+          <div class="node-title">Módulo de Ejercicios</div>
+          <div class="node-desc">Evaluación de tolerancias, feedback y seguridad</div>
+        </div>
+        
+        <div class="node n-db">
+          <div class="node-title">Base de Datos</div>
+          <div class="node-desc">Almacenamiento del historial clínico</div>
+        </div>
+      </div>
+
+      <div class="node n-opencv">
+        <div class="node-title">OpenCV</div>
+        <div class="node-desc">Captura fotogramas y renderiza la interfaz</div>
+      </div>
+
+      <div class="node n-mediapipe">
+        <div class="node-title">MediaPipe AI</div>
+        <div class="node-desc">Inferencia topológica: extrae 33 nodos 3D</div>
+      </div>
+
+      <div class="node n-numpy">
+        <div class="node-title">NumPy</div>
+        <div class="node-desc">Estructuración matricial y cálculo vectorial</div>
+      </div>
+
+      <!-- Conectores SVG -->
+      <svg class="svg-layer">
+        <defs>
+          <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" class="marker-arrow"/>
+          </marker>
+        </defs>
+        
+        <!-- OpenCV (450,50) to MediaPipe (450,260) -->
+        <!-- Center OpenCV = 450+95=545. Bottom OpenCV = 50+75=125. Top MediaPipe = 260 -->
+        <path d="M 545 130 L 545 250" marker-end="url(#arrow)"/>
+        
+        <!-- MediaPipe (450,260) to NumPy (280,400) -->
+        <!-- Left MediaPipe = 450, Top NumPy = 400 -->
+        <path d="M 450 310 L 375 395" marker-end="url(#arrow)"/>
+
+        <!-- NumPy (280,400) to Modulo Ejercicios (inside app left:30 top:30 -> modulo top:70 left:45 width:200) -->
+        <!-- Center NumPy = 280+95=375, Top=400 -->
+        <path d="M 280 440 L 160 160" marker-end="url(#arrow)"/>
+
+        <!-- Modulo Ejercicios to OpenCV -->
+        <!-- Modulo right = 45+200=245, Top = 70+35=105. OpenCV left = 450. -->
+        <path d="M 250 85 L 440 85" marker-end="url(#arrow)"/>
+
+        <!-- Modulo Ejercicios to DB (Inside app) -->
+        <!-- Modulo Bottom = 70+75=145. Center = 145. DB Top = 380 -->
+        <path d="M 145 160 L 145 375" marker-end="url(#arrow)"/>
+      </svg>
+
+      <!-- Textos de las flechas (posicionados absolutamente con precisión) -->
+      <!-- 1. OpenCV -> MediaPipe (Line x=545, y=130-250) -->
+      <div class="edge-label" style="left: 555px; top: 185px;">1. Envía Frame a RGB</div>
+      
+      <!-- 2. MediaPipe -> NumPy (Line 450,310 -> 375,395) -->
+      <div class="edge-label" style="left: 420px; top: 360px;">2. Posiciones (Landmarks)</div>
+      
+      <!-- 3. NumPy -> Modulo (Line 280,440 -> 160,160) -->
+      <div class="edge-label" style="left: 200px; top: 310px;">3. Transforma a Ángulos Biométricos</div>
+      
+      <!-- 4. Modulo -> OpenCV (Line 250,85 -> 440,85) -->
+      <div class="edge-label" style="left: 260px; top: 60px;">4. Ordena superponer alertas visuales y gráficas</div>
+      
+      <!-- DB: Exporta métricas (Line 145,160 -> 145,375) -->
+      <div class="edge-label" style="left: 45px; top: 250px;">Exporta métricas</div>
+
+    </div>
+
+  </div>
+
+</body>
+</html>

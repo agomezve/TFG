@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <title>12 — Validación Clínica</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css"/>
+  <style>
+    body { padding: 40px 60px; overflow: hidden; display: flex; flex-direction: column; }
+    
+    .split-layout {
+      display: flex; gap: 60px; flex: 1; align-items: center; width: 100%; max-width: 1250px; margin: 0 auto; height: 100%;
+    }
+
+    /* COLUMNA IZQUIERDA - Perfil */
+    .left-col {
+      flex: 0 0 35%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      background: rgba(13,26,43,0.6);
+      border: 1px solid rgba(59,130,246,0.15);
+      border-radius: 20px;
+      padding: 40px 30px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+      position: relative;
+    }
+    
+    .left-col::before {
+      content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px;
+      background: linear-gradient(90deg, #10b981, #3b82f6);
+      border-radius: 20px 20px 0 0;
+    }
+
+    .profile-img-container {
+      width: 160px; height: 160px;
+      border-radius: 50%;
+      padding: 4px;
+      background: linear-gradient(135deg, #10b981, #3b82f6);
+      margin-bottom: 5px;
+    }
+    
+    .profile-img {
+      width: 100%; height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+      object-position: center 20%;
+      border: 4px solid #0a1120;
+    }
+
+    .profile-name {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: white;
+      text-align: center;
+      margin: 0;
+    }
+
+    .profile-role {
+      font-size: 0.95rem;
+      color: #93c5fd;
+      text-align: center;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 10px;
+    }
+
+    .credentials-list {
+      display: flex; flex-direction: column; gap: 12px; width: 100%; margin-top: 10px;
+    }
+
+    .cred-item {
+      display: flex; align-items: flex-start; gap: 10px;
+      font-size: 0.85rem; color: var(--text); line-height: 1.4;
+    }
+    .cred-icon { color: #10b981; flex-shrink: 0; }
+
+    /* RIGHT COL - Mejoras */
+    .right-col {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 15px; /* Reduced gap to fit 4 cards */
+    }
+
+    .section-header { margin-bottom: 10px; }
+
+    .improvement-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 16px;
+      padding: 16px 20px; /* Reduced padding slightly to fit 4 cards */
+      display: flex;
+      gap: 20px;
+      align-items: center; /* Centered nicely */
+      transition: transform 0.2s, background 0.2s;
+    }
+    
+    .improvement-card:hover {
+      background: rgba(59,130,246,0.08);
+      border-color: rgba(59,130,246,0.3);
+      transform: translateX(10px);
+    }
+
+    .imp-icon-box {
+      width: 46px; height: 46px; border-radius: 12px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 1.4rem;
+    }
+    .c1 .imp-icon-box { background: rgba(59,130,246,0.15); color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); }
+    .c2 .imp-icon-box { background: rgba(245,158,11,0.15); color: #fbbf24; border: 1px solid rgba(245,158,11,0.3); }
+    .c3 .imp-icon-box { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.3); } /* Red for errors */
+    .c4 .imp-icon-box { background: rgba(16,185,129,0.15); color: #34d399; border: 1px solid rgba(16,185,129,0.3); }
+
+    .imp-content { display: flex; flex-direction: column; gap: 4px; }
+    
+    .imp-title { font-size: 1.05rem; font-weight: 700; color: white; }
+    .imp-desc { font-size: 0.85rem; color: var(--muted); line-height: 1.4; }
+
+  </style>
+</head>
+<body>
+  <div class="bg-glow"></div>
+  <div class="dot-grid"></div>
+  <div class="corner corner-tl"></div><div class="corner corner-tr"></div>
+  <div class="corner corner-bl"></div><div class="corner corner-br"></div>
+
+  <div class="slide-label">12 &nbsp;·&nbsp; Validación Clínica</div>
+
+  <div class="split-layout">
+    
+    <!-- COLUMNA IZQUIERDA: PERFIL -->
+    <div class="left-col">
+      <div class="profile-img-container">
+        <img src="javier_barrrueco.png" alt="Javier Barrueco" class="profile-img">
+      </div>
+      
+      <div style="display:flex; flex-direction: column; gap: 5px;">
+        <h2 class="profile-name">Javier Barrueco García</h2>
+        <div class="profile-role">Preparador Físico y Readaptador</div>
+      </div>
+
+      <div class="credentials-list">
+        <div class="cred-item">
+          <div class="cred-icon">✓</div>
+          <div>Graduado en <strong>INEF</strong> vía Alto Rendimiento y Salud</div>
+        </div>
+        <div class="cred-item">
+          <div class="cred-icon">✓</div>
+          <div>Máster en <strong>Método Pilates</strong> en Madrid</div>
+        </div>
+        <div class="cred-item">
+          <div class="cred-icon">✓</div>
+          <div>Máster en <strong>Deportes Colectivos</strong> en Barcelona</div>
+        </div>
+        <div class="cred-item">
+          <div class="cred-icon">✓</div>
+          <div>Entrenador Nacional de Baloncesto y Fútbol Sala Nivel 3</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- COLUMNA DERECHA: MEJORAS -->
+    <div class="right-col">
+      <div class="section-header">
+        <h2 class="slide-title" style="font-size: 2.3rem; margin-bottom: 5px;">
+          Propuestas y <span class="hl">Mejoras Clínicas</span>
+        </h2>
+        <p style="color: var(--muted); font-size: 0.95rem;">
+          Implementaciones derivadas de la supervisión profesional para optimizar la utilidad médica de la aplicación.
+        </p>
+      </div>
+
+      <div class="improvement-card c1">
+        <div class="imp-icon-box">🔄</div>
+        <div class="imp-content">
+          <div class="imp-title">Límites de Series y Repeticiones</div>
+          <div class="imp-desc">Fijación de objetivos cerrados para <strong>evitar la frustración del paciente</strong> y prevenir la ineficiencia neuromuscular por fatiga extrema.</div>
+        </div>
+      </div>
+
+      <div class="improvement-card c2">
+        <div class="imp-icon-box">⚡</div>
+        <div class="imp-content">
+          <div class="imp-title">Monitorización de la Velocidad</div>
+          <div class="imp-desc">Adición de la <strong>velocidad de ejecución</strong> como métrica fundamental en ejercicios de fuerza para auditar el progreso real de recuperación.</div>
+        </div>
+      </div>
+
+      <div class="improvement-card c3">
+        <div class="imp-icon-box">⚠️</div>
+        <div class="imp-content">
+          <div class="imp-title">Límites Estrictos de Corrección</div>
+          <div class="imp-desc">Finalización del ejercicio tras <strong>dos errores consecutivos o tres acumulados</strong> para evitar forzar la zona afectada, redirigiendo al vídeo explicativo.</div>
+        </div>
+      </div>
+
+      <div class="improvement-card c4">
+        <div class="imp-icon-box">🎥</div>
+        <div class="imp-content">
+          <div class="imp-title">Ángulo de Grabación Adaptable</div>
+          <div class="imp-desc">Flexibilidad para modificar la orientación espacial y permitir capturas de <strong>plano frontal o plano sagital</strong> dependiendo del interés clínico.</div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+</body>
+</html>

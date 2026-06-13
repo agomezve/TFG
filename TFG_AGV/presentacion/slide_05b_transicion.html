@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <title>06 — Transición Solución</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css"/>
+  <style>
+    body { padding: 40px 60px; overflow: hidden; display: flex; flex-direction: column; }
+    
+    .main-content {
+      flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%; text-align: center;
+    }
+
+    .big-title {
+      font-size: 4.5rem;
+      font-weight: 900;
+      color: white;
+      margin: 0 0 20px 0;
+      line-height: 1.1;
+      text-shadow: 0 10px 30px rgba(59,130,246,0.3);
+    }
+
+    .subtitle {
+      font-size: 1.8rem;
+      font-weight: 600;
+      color: var(--cyan);
+      max-width: 900px;
+      line-height: 1.4;
+      margin: 0;
+    }
+
+  </style>
+</head>
+<body>
+  <div class="bg-glow"></div>
+  <div class="dot-grid"></div>
+  <div class="corner corner-tl"></div><div class="corner corner-tr"></div>
+  <div class="corner corner-bl"></div><div class="corner corner-br"></div>
+
+  <!-- Utilizamos un formato más limpio sin el número para la transición -->
+  <div class="slide-label">La Solución</div>
+
+  <div class="main-content">
+    <h1 class="big-title">Mi solución al problema</h1>
+    <h2 class="subtitle">Plataforma de Telerehabilitación Asistida por Inteligencia Artificial</h2>
+  </div>
+
+</body>
+</html>

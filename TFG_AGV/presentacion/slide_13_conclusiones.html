@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <title>13 — Conclusiones</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css"/>
+  <style>
+    body { padding: 40px 60px; overflow: hidden; display: flex; flex-direction: column; }
+    
+    .header-section { margin-bottom: 30px; text-align: center; }
+
+    .main-content {
+      flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%;
+    }
+
+    /* Grid horizontal para las conclusiones */
+    .logro-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 25px;
+      justify-content: center;
+      max-width: 1200px;
+    }
+
+    .logro-card {
+      background: rgba(13,26,43,0.4);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 20px;
+      padding: 30px 25px;
+      width: calc(33.333% - 17px); /* 3 in a row */
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 15px;
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+
+    .logro-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 15px 30px rgba(0,0,0,0.4);
+      border-color: rgba(59,130,246,0.3);
+      background: rgba(13,26,43,0.8);
+    }
+
+    /* Las dos últimas cartas centradas abajo */
+    .logro-card:nth-child(4) { margin-left: 16.666%; }
+
+    .logro-icon {
+      font-size: 2rem;
+      width: 60px; height: 60px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 16px;
+      flex-shrink: 0;
+    }
+
+    .logro-title {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: white;
+      margin-bottom: 6px;
+      line-height: 1.3;
+    }
+
+    .logro-desc {
+      font-size: 0.9rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    /* Colores por icono */
+    .ic-1 { color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); background: rgba(59,130,246,0.1); }
+    .ic-2 { color: #fbbf24; border: 1px solid rgba(245,158,11,0.3); background: rgba(245,158,11,0.1); }
+    .ic-3 { color: #34d399; border: 1px solid rgba(16,185,129,0.3); background: rgba(16,185,129,0.1); }
+    .ic-4 { color: #c084fc; border: 1px solid rgba(192,132,252,0.3); background: rgba(192,132,252,0.1); }
+    .ic-5 { color: #f87171; border: 1px solid rgba(239,68,68,0.3); background: rgba(239,68,68,0.1); }
+
+  </style>
+</head>
+<body>
+  <div class="bg-glow"></div>
+  <div class="dot-grid"></div>
+  <div class="corner corner-tl"></div><div class="corner corner-tr"></div>
+  <div class="corner corner-bl"></div><div class="corner corner-br"></div>
+
+  <div class="slide-label">13 &nbsp;·&nbsp; Conclusiones</div>
+
+  <div class="header-section">
+    <h2 class="slide-title" style="font-size: 2.5rem; margin-bottom: 10px;">
+      Conclusiones
+    </h2>
+  </div>
+
+  <div class="main-content">
+    
+    <div class="logro-grid">
+      <div class="logro-card">
+        <div class="logro-icon ic-1">📷</div>
+        <div>
+          <div class="logro-title">Democratización del Hardware</div>
+          <div class="logro-desc">Mediciones cinemáticas 3D fiables utilizando exclusivamente una cámara web convencional.</div>
+        </div>
+      </div>
+
+      <div class="logro-card">
+        <div class="logro-icon ic-2">⚡</div>
+        <div>
+          <div class="logro-title">Excelencia y Rendimiento</div>
+          <div class="logro-desc">Auditoría geométrica instantánea sin saturar procesadores gracias a matrices de NumPy.</div>
+        </div>
+      </div>
+
+      <div class="logro-card">
+        <div class="logro-icon ic-3">🛡️</div>
+        <div>
+          <div class="logro-title">Seguridad Clínica Nativa</div>
+          <div class="logro-desc">Cortafuegos técnico que detiene iteraciones peligrosas y salvaguarda la higiene postural del paciente.</div>
+        </div>
+      </div>
+
+      <div class="logro-card">
+        <div class="logro-icon ic-4">🧩</div>
+        <div>
+          <div class="logro-title">Escalabilidad por Diseño</div>
+          <div class="logro-desc">Arquitectura modular y Orientada a Objetos para integrar infinitos ejercicios sin romper la base.</div>
+        </div>
+      </div>
+
+      <div class="logro-card">
+        <div class="logro-icon ic-5">💾</div>
+        <div>
+          <div class="logro-title">Persistencia Autónoma</div>
+          <div class="logro-desc">Generación automatizada de historiales e informes telemétricos con bases de datos relacionales.</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>

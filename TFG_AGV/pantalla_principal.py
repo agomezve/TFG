@@ -18,6 +18,7 @@ from modulos.modulo_press_banca import ModuloPressBanca
 from modulos.modulo_hip_thrust import ModuloHipThrust
 from modulos.modulo_zancadas import ModuloZancadas
 from modulos.modulo_bulgaras import ModuloBulgaras
+from modulos.camara_iphone import seleccionar_camara
 
 ctk.set_appearance_mode("Dark")
 ctk.set_default_color_theme("blue")
@@ -399,12 +400,12 @@ class AppRehabilitacion(ctk.CTk):
     def mostrar_popup_iniciar(self, nombre_ejercicio):
         popup = ctk.CTkToplevel(self)
         popup.title(f"Iniciar: {nombre_ejercicio}")
-        popup.geometry("350x330")
+        popup.geometry("380x420")
         popup.attributes("-topmost", True)
-        
+
         popup.update_idletasks()
-        x = self.winfo_x() + (self.winfo_width() // 2) - (350 // 2)
-        y = self.winfo_y() + (self.winfo_height() // 2) - (330 // 2)
+        x = self.winfo_x() + (self.winfo_width() // 2) - (380 // 2)
+        y = self.winfo_y() + (self.winfo_height() // 2) - (420 // 2)
         popup.geometry(f"+{x}+{y}")
 
         lbl_tit = ctk.CTkLabel(popup, text=nombre_ejercicio.upper(), font=ctk.CTkFont(size=20, weight="bold"))
@@ -412,12 +413,12 @@ class AppRehabilitacion(ctk.CTk):
 
         lbl_niv = ctk.CTkLabel(popup, text="Selecciona tu nivel de dificultad:")
         lbl_niv.pack(pady=10)
-        
+
         var_nivel = ctk.StringVar(value="Principiante")
-        
+
         frame_radio = ctk.CTkFrame(popup, fg_color="transparent")
         frame_radio.pack(pady=10)
-        
+
         r1 = ctk.CTkRadioButton(frame_radio, text="Principiante", variable=var_nivel, value="Principiante")
         r1.pack(side="left", padx=8)
         r2 = ctk.CTkRadioButton(frame_radio, text="Intermedio", variable=var_nivel, value="Intermedio")
@@ -425,16 +426,24 @@ class AppRehabilitacion(ctk.CTk):
         r3 = ctk.CTkRadioButton(frame_radio, text="Avanzado", variable=var_nivel, value="Avanzado")
         r3.pack(side="left", padx=8)
 
+        # ── Selector de cámara ──────────────────────────────────────────────
+        lbl_cam = ctk.CTkLabel(popup, text="Selecciona la cámara:", font=ctk.CTkFont(size=13))
+        lbl_cam.pack(pady=(14, 4))
+
         camara_var = ctk.StringVar(value="📸 Webcam del Mac")
         opciones_camara = ["📸 Webcam del Mac", "📱 Cámara iPhone"]
-        combo_camara = ctk.CTkOptionMenu(popup, values=opciones_camara, variable=camara_var, width=220)
+        combo_camara = ctk.CTkOptionMenu(popup, values=opciones_camara, variable=camara_var, width=240)
         combo_camara.pack(pady=10)
 
         def proceed():
-            idx = 1 if "iPhone" in camara_var.get() else 0
-            self._trigger_inicio(popup, nombre_ejercicio, var_nivel.get(), idx)
+            usar_iphone = "iPhone" in camara_var.get()
+            self._trigger_inicio(popup, nombre_ejercicio, var_nivel.get(), usar_iphone)
 
-        btn_web = ctk.CTkButton(popup, text="▶ INICIAR ENTRENAMIENTO", fg_color="green", hover_color="darkgreen", text_color="white", command=proceed)
+        btn_web = ctk.CTkButton(
+            popup, text="▶ INICIAR ENTRENAMIENTO",
+            fg_color="green", hover_color="darkgreen",
+            text_color="white", command=proceed
+        )
         btn_web.pack(pady=15)
 
     # ── Consejos por ejercicio ─────────────────────────────────────────────────
@@ -510,15 +519,15 @@ class AppRehabilitacion(ctk.CTk):
         ],
     }
 
-    def _trigger_inicio(self, popup, ejercicio, nivel, cam_index=0):
+    def _trigger_inicio(self, popup, ejercicio, nivel, usar_iphone=False):
         popup.destroy()
         consejos = self.CONSEJOS_EJERCICIO.get(ejercicio, [])
         if not consejos:
-            self.iniciar_webcam(ejercicio, nivel.lower(), cam_index)
+            self.iniciar_webcam(ejercicio, nivel.lower(), usar_iphone)
             return
-        self._mostrar_popup_consejos(ejercicio, nivel, consejos, cam_index)
+        self._mostrar_popup_consejos(ejercicio, nivel, consejos, usar_iphone)
 
-    def _mostrar_popup_consejos(self, ejercicio, nivel, consejos, cam_index=0):
+    def _mostrar_popup_consejos(self, ejercicio, nivel, consejos, usar_iphone=False):
         w, h = 460, 400
         tips = ctk.CTkToplevel(self)
         tips.title(f"Consejos: {ejercicio}")
@@ -544,7 +553,7 @@ class AppRehabilitacion(ctk.CTk):
         ctk.CTkButton(tips, text="✅  Entendido, ¡comenzar!", fg_color="#27AE60",
                       hover_color="#1E8449", text_color="white",
                       font=ctk.CTkFont(size=14, weight="bold"),
-                      command=lambda: [tips.destroy(), self.iniciar_webcam(ejercicio, nivel.lower(), cam_index)]
+                      command=lambda: [tips.destroy(), self.iniciar_webcam(ejercicio, nivel.lower(), usar_iphone)]
                       ).pack(pady=(15, 14))
 
     def preparar_vista_video(self, texto_pantalla=""):
@@ -582,31 +591,31 @@ class AppRehabilitacion(ctk.CTk):
             
         self.ejercicio_activo.set_paciente(self.paciente_activo_id)
 
-    def iniciar_webcam(self, ejercicio, nivel, cam_index=0):
+    def iniciar_webcam(self, ejercicio, nivel, usar_iphone=False):
         if self.procesando_video:
             self.detener_video()
         self.iniciar_motor_ejercicio(ejercicio, nivel)
-        
+
         self.cap = None
-        
-        if cam_index == 1:
-            # Si el usuario eligió el iPhone, intentamos los índices comunes (1, 2, 3) 
-            # por si macOS lo ha reasignado al conectar algo.
-            for idx in [1, 2, 3]:
-                temp_cap = cv2.VideoCapture(idx)
-                if temp_cap.isOpened():
-                    ret, _ = temp_cap.read()
-                    if ret:
-                        self.cap = temp_cap
-                        break
-                temp_cap.release()
-            
-            # Si no ha encontrado ninguna cámara en 1, 2 o 3, fallamos.
-            if self.cap is None or not self.cap.isOpened():
-                self.preparar_vista_video("❌ Error: No se encuentra el iPhone. Asegúrate de que está bloqueado y en la misma WiFi.")
+
+        if usar_iphone:
+            # ── Selección automática: WiFi (Continuity Camera inalámbrico)
+            #    o cable USB – macOS gestiona la prioridad de forma transparente.
+            self.preparar_vista_video("📱 Conectando con iPhone...")
+            self.update()  # Refrescar UI mientras buscamos
+            cap, descripcion = seleccionar_camara(usar_iphone=True, verbose=True)
+            if cap is None:
+                self.preparar_vista_video(
+                    "❌ iPhone no encontrado\n\n"
+                    "Asegúrate de que:\n"
+                    "• El iPhone está en la misma WiFi que el Mac\n"
+                    "• O conectado por cable USB (acepta 'Confiar')"
+                )
                 return
+            self.cap = cap
+            print(f"[Cámara] Usando: {descripcion}")
         else:
-            # Cámara del Mac (0)
+            # Webcam integrada del Mac
             self.cap = cv2.VideoCapture(0)
             if not self.cap.isOpened():
                 self.preparar_vista_video("❌ Error: No se puede acceder a la webcam del Mac.")
@@ -616,8 +625,8 @@ class AppRehabilitacion(ctk.CTk):
         self.hora_inicio_analisis = time.time()
         self.tiempo_preparacion_fin = time.time() + 5.0
         self._nombre_ejercicio_activo = ejercicio
-        self.video_writer = None # Se inicializará con el primer frame
-        
+        self.video_writer = None  # Se inicializará con el primer frame
+
         self.preparar_vista_video("")
         self.btn_stop.configure(state="normal")
         self.btn_stop.place(relx=0.98, rely=0.05, anchor="ne")

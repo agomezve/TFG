@@ -89,7 +89,7 @@ class ModuloPressMilitar(ModuloEjercicio):
         
         # Penalización por abrir exageradamente los brazos (forma de "Y")
         separacion_hombro_muneca = max(abs(hombro_der[0] - muneca_der[0]), abs(hombro_izq[0] - muneca_izq[0]))
-        if separacion_hombro_muneca > 0.25:
+        if separacion_hombro_muneca > 0.40:
             angulo_evaluacion -= 20.0  # Penalizamos fuertemente el ángulo calculado si los brazos están muy abiertos
 
         rango = self.umbrales["extension_minima"] - self.umbrales["flexion_maxima"]

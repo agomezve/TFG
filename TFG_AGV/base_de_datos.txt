@@ -1,6 +1,6 @@
 ==================================================
         REGISTRO GLOBAL DE PACIENTES Y SESIONES
-        Última actualización: 12/06/2026 14:32:00
+        Última actualización: 16/06/2026 23:02:43
 ==================================================
 
 👤 PACIENTE #1: MARTA
@@ -99,6 +99,30 @@
        68. [2026-06-12 13:55:30] Press Banca (Principiante) -> 0 reps (0 errores) | Ext/Flex media: N/A | Obs: 
        69. [2026-06-12 14:02:05] Press Militar (Intermedio) -> 0 reps (0 errores) | Ext/Flex media: N/A | Obs: 
        70. [2026-06-12 14:31:59] Press Militar (Principiante) -> 0 reps (0 errores) | Ext/Flex media: N/A | Obs: 
+       71. [2026-06-16 17:57:42] Press Militar (Principiante) -> 0 reps (0 errores) | Ext/Flex media: N/A | Obs: 
+       72. [2026-06-16 18:01:24] Press Militar (Intermedio) -> 0 reps (0 errores) | Ext/Flex media: N/A | Obs: 
+       73. [2026-06-16 18:04:02] Peso Muerto (Intermedio) -> 0 reps (0 errores) | Ext/Flex media: N/A | Obs: Sin anomalías severas.
+       74. [2026-06-16 18:08:09] Press Militar (Avanzado) -> 5 reps (2 errores) | Ext/Flex media: 147.8º | Obs: 
+       75. [2026-06-16 18:46:57] Press Militar (Intermedio) -> 0 reps (0 errores) | Ext/Flex media: N/A | Obs: 
+       76. [2026-06-16 18:53:00] Press Militar (Principiante) -> 0 reps (0 errores) | Ext/Flex media: N/A | Obs: 
+       77. [2026-06-16 19:06:55] Peso Muerto (Principiante) -> 0 reps (0 errores) | Ext/Flex media: N/A | Obs: Sin anomalías severas.
+       78. [2026-06-16 19:07:11] Peso Muerto (Principiante) -> 0 reps (0 errores) | Ext/Flex media: N/A | Obs: Sin anomalías severas.
+       79. [2026-06-16 19:07:45] Press Militar (Avanzado) -> 4 reps (2 errores) | Ext/Flex media: 110.6º | Obs: 
+       80. [2026-06-16 19:09:31] Sentadilla (Intermedio) -> 2 reps (2 errores) | Ext/Flex media: 75.7º | Obs: 
+       81. [2026-06-16 19:11:51] Press Militar (Avanzado) -> 7 reps (3 errores) | Ext/Flex media: 104.2º | Obs: 
+       82. [2026-06-16 19:17:00] Peso Muerto (Principiante) -> 0 reps (0 errores) | Ext/Flex media: N/A | Obs: Sin anomalías severas.
+       83. [2026-06-16 19:18:53] Peso Muerto (Principiante) -> 2 reps (1 errores) | Ext/Flex media: 95.1º | Obs: Alerta de flexión excesiva de rodilla o rango insuficiente detectado.
+       84. [2026-06-16 20:03:45] Sentadilla (Principiante) -> 0 reps (0 errores) | Ext/Flex media: N/A | Obs: 
+       85. [2026-06-16 20:03:57] Sentadilla (Principiante) -> 0 reps (0 errores) | Ext/Flex media: N/A | Obs: 
+       86. [2026-06-16 20:10:36] Press Militar (Principiante) -> 0 reps (0 errores) | Ext/Flex media: N/A | Obs: 
+       87. [2026-06-16 20:10:46] Press Banca (Principiante) -> 0 reps (0 errores) | Ext/Flex media: N/A | Obs: 
+       88. [2026-06-16 20:15:45] Press Militar (Principiante) -> 0 reps (0 errores) | Ext/Flex media: N/A | Obs: 
+       89. [2026-06-16 20:18:11] Press Militar (Principiante) -> 0 reps (0 errores) | Ext/Flex media: N/A | Obs: 
+       90. [2026-06-16 20:22:47] Press Militar (Intermedio) -> 10 reps (2 errores) | Ext/Flex media: 129.1º | Obs: 
+       91. [2026-06-16 20:28:02] Press Militar (Intermedio) -> 5 reps (2 errores) | Ext/Flex media: 115.5º | Obs: 
+       92. [2026-06-16 20:34:51] Press Militar (Intermedio) -> 8 reps (3 errores) | Ext/Flex media: 109.1º | Obs: 
+       93. [2026-06-16 20:35:47] Press Militar (Intermedio) -> 4 reps (2 errores) | Ext/Flex media: 105.8º | Obs: 
+       94. [2026-06-16 23:02:43] Press Militar (Principiante) -> 0 reps (0 errores) | Ext/Flex media: N/A | Obs: 
 
 ------------------------------------------------------------
 

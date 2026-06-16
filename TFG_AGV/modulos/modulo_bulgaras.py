@@ -157,7 +157,6 @@ class ModuloBulgaras(ModuloEjercicio):
         errores_totales = self.errores_profundidad + self.errores_equilibrio
         reps_correctas = self.repeticiones - errores_totales
         self.dibujar_estadisticas_ui(frame, "Bulgaras", reps_correctas, errores_totales)
-        cv2.putText(frame, self.feedback_actual, (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.7, self.color_feedback, 2)
 
     def generar_informe_clinico(self):
         import os, datetime

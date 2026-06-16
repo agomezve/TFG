@@ -129,7 +129,6 @@ class ModuloHipThrust(ModuloEjercicio):
         self.dibujar_barra_progreso(frame, porcentaje)
         reps_correctas = self.repeticiones - self.errores
         self.dibujar_estadisticas_ui(frame, "Hip Thrust", reps_correctas, self.errores)
-        cv2.putText(frame, self.feedback_actual, (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.7, self.color_feedback, 2)
 
     def generar_informe_clinico(self):
         import os, datetime

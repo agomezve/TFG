@@ -137,8 +137,7 @@ class ModuloSentadilla(ModuloEjercicio):
         self.dibujar_barra_progreso(frame, porcentaje)
         reps_correctas = self.stats_repeticiones_totales - self.stats_repeticiones_con_valgo
         self.dibujar_estadisticas_ui(frame, "Sentadilla", reps_correctas, self.stats_repeticiones_con_valgo)
-        if self.feedback_actual:
-            cv2.putText(frame, self.feedback_actual, (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.7, self.color_feedback, 2)
+
 
     def generar_informe_clinico(self):
         import os, datetime

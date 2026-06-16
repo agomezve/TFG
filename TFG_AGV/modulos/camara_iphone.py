@@ -121,63 +121,60 @@ def _ffmpeg_presente() -> bool:
 
 def conectar_camara_iphone(verbose: bool = True) -> tuple[cv2.VideoCapture | None, str]:
     """
-    Intenta conectar a la cámara del iPhone usando Continuity Camera.
-
-    Prioridad:
-      1. iPhone detectado via AVFoundation (WiFi o cable – macOS lo gestiona solo)
-      2. Escaneo de índices 1..4 (fallback por si ffmpeg no está instalado)
-      3. None si no se encuentra el iPhone
-
-    Args:
-        verbose: Si True, imprime mensajes informativos por consola.
-
-    Retorna:
-        (cap, descripcion)
-          - cap: objeto cv2.VideoCapture listo para usar, o None si falla.
-          - descripcion: cadena describiendo la conexión realizada.
+    Intenta conectar a la cámara del iPhone escaneando explícitamente los índices de OpenCV,
+    evitando el índice 0 que en Mac suele estar reservado rígidamente para la cámara integrada.
     """
     def log(msg):
         if verbose:
             print(msg)
 
-    log("\n🔍 Buscando cámara del iPhone...")
-
-    # ── Paso 1: detección via AVFoundation (ffmpeg) ──────────────────────────
+    log("\n🔍 Buscando cámara del iPhone (escaneo robusto)...")
+    
+    # Imprimir dispositivos informativos solo para depuración
     dispositivos = _listar_dispositivos_avfoundation()
-
     if dispositivos:
-        log(f"   Dispositivos detectados: {[n for _, n in dispositivos]}")
-        resultado = _encontrar_indice_iphone(dispositivos)
+        log(f"   [Info] Dispositivos de sistema: {[n for _, n in dispositivos]}")
 
-        if resultado:
-            idx, nombre = resultado
-            log(f"   📱 iPhone encontrado: '{nombre}' → índice AVFoundation [{idx}]")
-
-            cap = cv2.VideoCapture(idx)
-            if cap.isOpened():
-                ret, _ = cap.read()
-                if ret:
-                    log(f"✅ Conectado al iPhone via Continuity Camera (índice {idx})")
-                    return cap, f"iPhone – {nombre}"
-            cap.release()
-            log(f"   ⚠️  Índice {idx} detectado pero no responde. Probando alternativas...")
-
-    # ── Paso 2: escaneo de índices sin ffmpeg ─────────────────────────────────
-    # (útil si ffmpeg no está instalado pero el iPhone sigue montado como cámara)
-    log("   🔌 Escaneando índices de cámara (1 al 4)...")
-    for i in range(1, 5):
+    camaras_disponibles = []
+    
+    log("   🔌 Escaneando puertos de cámara OpenCV (0 a 3)...")
+    for i in range(4):
         cap = cv2.VideoCapture(i)
         if cap.isOpened():
-            ret, _ = cap.read()
+            ret, frame = cap.read()
             if ret:
-                log(f"✅ Cámara externa encontrada en índice {i} (posiblemente iPhone)")
-                return cap, f"Cámara externa (índice {i})"
-        cap.release()
+                h, w, _ = frame.shape
+                camaras_disponibles.append({'idx': i, 'w': w, 'h': h, 'cap': cap})
+            else:
+                cap.release()
+        else:
+            cap.release()
 
-    # ── Sin iPhone ────────────────────────────────────────────────────────────
-    log("❌ No se encontró ninguna cámara del iPhone.")
-    log("   → Asegúrate de que el iPhone está en la misma WiFi O conectado por cable USB.")
-    log("   → En el iPhone: Ajustes > General > AirPlay y Handoff > Cámara de Continuidad (activo).")
+    # Estrategia 1: Buscar iPhone por resolución (Continuity suele enviar 1920x1080)
+    # y que NO sea el índice 0 (el Mac suele ser 1280x720)
+    for cam in camaras_disponibles:
+        if cam['idx'] > 0 and (cam['w'] == 1920 or cam['w'] == 1080):
+            log(f"✅ iPhone detectado con éxito (índice {cam['idx']} - {cam['w']}x{cam['h']})")
+            # Liberar el resto
+            for c in camaras_disponibles:
+                if c['idx'] != cam['idx']: c['cap'].release()
+            return cam['cap'], f"iPhone (índice {cam['idx']})"
+
+    # Estrategia 2: Cualquier cámara que no sea la 0 (externa)
+    for cam in camaras_disponibles:
+        if cam['idx'] > 0:
+            log(f"✅ Cámara externa detectada (índice {cam['idx']} - {cam['w']}x{cam['h']})")
+            # Liberar el resto
+            for c in camaras_disponibles:
+                if c['idx'] != cam['idx']: c['cap'].release()
+            return cam['cap'], f"iPhone/Externa (índice {cam['idx']})"
+
+    # Limpiar si no hemos devuelto nada
+    for cam in camaras_disponibles:
+        cam['cap'].release()
+
+    log("❌ No se encontró el iPhone como cámara externa.")
+    log("   → El sistema solo detectó la webcam interna del Mac.")
     return None, "iPhone no encontrado"
 
 

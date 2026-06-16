@@ -28,8 +28,8 @@ class ModuloPressMilitar(ModuloEjercicio):
             }
         else:  # principiante
             self.umbrales = {
-                "extension_minima": 115.0,   # Muy básico, poca movilidad
-                "flexion_maxima": 115.0,      # Posición baja permisiva
+                "extension_minima": 135.0,   # Rango mínimo exigido hacia arriba
+                "flexion_maxima": 110.0,      # Posición baja permisiva
                 "desalineacion_maxima": 0.18
             }
         
@@ -84,23 +84,29 @@ class ModuloPressMilitar(ModuloEjercicio):
         angulo_mas_alto = max(angulo_codo_der, angulo_codo_izq)
         desviacion_max = max(desviacion_x_der, desviacion_x_izq)
 
-        # Progreso basado en la media de ambos brazos (no el peor) para mayor equidad
-        angulo_medio_prog = (angulo_codo_der + angulo_codo_izq) / 2.0
+        # Progreso basado en el brazo más rezagado (el mínimo) para evitar trampas de un solo brazo
+        angulo_evaluacion = angulo_mas_bajo
+        
+        # Penalización por abrir exageradamente los brazos (forma de "Y")
+        separacion_hombro_muneca = max(abs(hombro_der[0] - muneca_der[0]), abs(hombro_izq[0] - muneca_izq[0]))
+        if separacion_hombro_muneca > 0.25:
+            angulo_evaluacion -= 20.0  # Penalizamos fuertemente el ángulo calculado si los brazos están muy abiertos
+
         rango = self.umbrales["extension_minima"] - self.umbrales["flexion_maxima"]
-        progreso_grados = angulo_medio_prog - self.umbrales["flexion_maxima"]
+        progreso_grados = angulo_evaluacion - self.umbrales["flexion_maxima"]
         porcentaje = (progreso_grados / rango) * 100.0 if rango > 0 else 0
         porcentaje = max(0, min(100, porcentaje))
 
         if not hasattr(self, 'max_porcentaje_actual'):
             self.max_porcentaje_actual = 0.0
 
-        if self.fase_actual == "ABAJO" and angulo_medio_prog <= self.umbrales["flexion_maxima"] + 15:
+        if self.fase_actual == "ABAJO" and angulo_evaluacion <= self.umbrales["flexion_maxima"] + 15:
             self.estado_esqueleto = "neutro"
 
         # --- MOTOR DE REGLAS CLÍNICAS (BILATERAL) ---
-        if angulo_medio_prog < self.umbrales["flexion_maxima"] and self.fase_actual == "ABAJO":
+        if angulo_evaluacion < self.umbrales["flexion_maxima"] and self.fase_actual == "ABAJO":
             self.fase_actual = "SUBIENDO"
-            self.angulo_maximo_actual = angulo_medio_prog
+            self.angulo_maximo_actual = angulo_evaluacion
             self.hubo_desalineacion = False
             self.max_porcentaje_actual = porcentaje
             self.feedback_actual = ""
@@ -109,8 +115,8 @@ class ModuloPressMilitar(ModuloEjercicio):
             
         elif self.fase_actual == "SUBIENDO":
             self.max_porcentaje_actual = max(self.max_porcentaje_actual, porcentaje)
-            if angulo_medio_prog > self.angulo_maximo_actual:
-                self.angulo_maximo_actual = angulo_medio_prog
+            if angulo_evaluacion > self.angulo_maximo_actual:
+                self.angulo_maximo_actual = angulo_evaluacion
             
             if desviacion_max > self.umbrales["desalineacion_maxima"] and not self.hubo_desalineacion:
                 self.hubo_desalineacion = True
@@ -121,23 +127,23 @@ class ModuloPressMilitar(ModuloEjercicio):
             if porcentaje == 100 and not self.hubo_desalineacion:
                 self.estado_esqueleto = "correcto"
                 
-            if angulo_medio_prog < self.angulo_maximo_actual - 10:
+            if angulo_evaluacion < self.angulo_maximo_actual - 10:
                 self.fase_actual = "BAJANDO"
                 self.feedback_actual = ""
                 self.color_feedback = (255, 255, 255)
-            elif angulo_medio_prog > self.umbrales["extension_minima"]:
+            elif angulo_evaluacion > self.umbrales["extension_minima"]:
                 self.fase_actual = "ARRIBA"
                 self.feedback_actual = ""
                 
         elif self.fase_actual == "ARRIBA":
             self.max_porcentaje_actual = max(self.max_porcentaje_actual, porcentaje)
-            if angulo_medio_prog < self.umbrales["extension_minima"] - 10:
+            if angulo_evaluacion < self.umbrales["extension_minima"] - 10:
                 self.fase_actual = "BAJANDO"
                 self.feedback_actual = ""
             
         elif self.fase_actual == "BAJANDO":
             self.max_porcentaje_actual = max(self.max_porcentaje_actual, porcentaje)
-            if angulo_medio_prog < self.umbrales["flexion_maxima"]:
+            if angulo_evaluacion < self.umbrales["flexion_maxima"]:
                 self.fase_actual = "ABAJO"
                 
                 if self.max_porcentaje_actual >= 100:
@@ -162,7 +168,6 @@ class ModuloPressMilitar(ModuloEjercicio):
         self.dibujar_barra_progreso(frame, porcentaje)
         reps_correctas = self.stats_repeticiones_totales - self.stats_repeticiones_con_error
         self.dibujar_estadisticas_ui(frame, "Press Militar", reps_correctas, self.stats_repeticiones_con_error)
-        cv2.putText(frame, self.feedback_actual, (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.7, self.color_feedback, 2)
 
     def generar_informe_clinico(self):
         """Genera el reporte por consola y lo exporta a un archivo de texto plano (.txt)."""

@@ -87,7 +87,6 @@ class ModuloPropiocepcion(ModuloEjercicio):
 
         segundos_restantes = max(0, int(self.objetivo_segundos - self.segundos_totales))
         self.dibujar_estadisticas_ui(frame, "Apoyo Monopodal", f"{int(self.segundos_totales)}s", self.puntos_inestabilidad)
-        cv2.putText(frame, self.feedback_actual, (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.7, self.color_feedback, 2)
         cv2.putText(frame, f"Objetivo: {segundos_restantes}s restantes ({self.objetivo_segundos}s total)", (10, 100), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (200, 200, 200), 1)
 
     def generar_informe_clinico(self):

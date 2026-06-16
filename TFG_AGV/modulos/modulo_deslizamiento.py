@@ -48,7 +48,6 @@ class ModuloDeslizamiento(ModuloEjercicio):
         self.en_error = False
         self.dibujar_estadisticas_ui(frame, "Deslizamiento", int(self.max_flexion), 0)
         
-        cv2.putText(frame, self.feedback_actual, (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.7, self.color_feedback, 2)
 
     def generar_informe_clinico(self):
         import os, datetime

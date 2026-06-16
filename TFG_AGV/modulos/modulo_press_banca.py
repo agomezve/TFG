@@ -32,8 +32,8 @@ class ModuloPressBanca(ModuloEjercicio):
             }
         else:  # principiante
             self.umbrales = {
-                "extension_minima": 110.0,
-                "flexion_maxima": 105.0,
+                "extension_minima": 130.0,
+                "flexion_maxima": 100.0,
                 "desalineacion_maxima": 0.18
             }
 
@@ -169,7 +169,6 @@ class ModuloPressBanca(ModuloEjercicio):
         self.dibujar_barra_progreso(frame, porcentaje)
         reps_correctas = self.stats_repeticiones_totales - self.stats_repeticiones_con_error
         self.dibujar_estadisticas_ui(frame, "Press Banca", reps_correctas, self.stats_repeticiones_con_error)
-        cv2.putText(frame, self.feedback_actual, (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.7, self.color_feedback, 2)
 
     def generar_informe_clinico(self):
         import os

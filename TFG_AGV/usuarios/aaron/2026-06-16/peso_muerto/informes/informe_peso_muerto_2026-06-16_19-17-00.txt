@@ -1,0 +1,9 @@
+==================================================
+📋 INFORME CLÍNICO: PESO MUERTO (Nivel: Principiante)
+Fecha del análisis: 16/06/2026 19:17:00
+==================================================
+
+📊 DATOS CUANTITATIVOS:
+ - Repeticiones totales: 0 / 10
+ - Repeticiones válidas completadas: 0
+ - Repeticiones con error (flexión de rodillas/rango): 0

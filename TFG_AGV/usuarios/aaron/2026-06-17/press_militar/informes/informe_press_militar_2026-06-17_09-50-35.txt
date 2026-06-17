@@ -1,0 +1,9 @@
+==================================================
+📋 INFORME CLÍNICO DE TELEREHABILITACIÓN
+Ejercicio: Press Militar (Nivel: Intermedio)
+Fecha del análisis: 17/06/2026 09:50:35
+==================================================
+
+❌ RESULTADO: No se ha detectado ninguna repetición completa.
+
+Posibles causas: El paciente no alcanzó el rango mínimo de flexión o extensión estipulado por los umbrales clínicos.

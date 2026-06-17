@@ -1,6 +1,6 @@
 ==================================================
         REGISTRO GLOBAL DE PACIENTES Y SESIONES
-        Última actualización: 16/06/2026 23:21:13
+        Última actualización: 17/06/2026 10:55:13
 ==================================================
 
 👤 PACIENTE #1: MARTA
@@ -125,6 +125,15 @@
        94. [2026-06-16 23:02:43] Press Militar (Principiante) -> 0 reps (0 errores) | Ext/Flex media: N/A | Obs: 
        95. [2026-06-16 23:20:53] Press Militar (Avanzado) -> 0 reps (0 errores) | Ext/Flex media: N/A | Obs: 
        96. [2026-06-16 23:21:13] Press Militar (Avanzado) -> 0 reps (0 errores) | Ext/Flex media: N/A | Obs: 
+       97. [2026-06-17 09:50:35] Press Militar (Intermedio) -> 0 reps (0 errores) | Ext/Flex media: N/A | Obs: 
+       98. [2026-06-17 09:52:01] Peso Muerto (Intermedio) -> 0 reps (0 errores) | Ext/Flex media: N/A | Obs: Sin anomalías severas.
+       99. [2026-06-17 09:52:43] Press Militar (Avanzado) -> 5 reps (2 errores) | Ext/Flex media: 116.6º | Obs: 
+       100. [2026-06-17 09:56:35] Press Militar (Avanzado) -> 0 reps (0 errores) | Ext/Flex media: N/A | Obs: 
+       101. [2026-06-17 10:18:04] Press Militar (Intermedio) -> 0 reps (0 errores) | Ext/Flex media: N/A | Obs: 
+       102. [2026-06-17 10:18:29] Press Militar (Principiante) -> 0 reps (0 errores) | Ext/Flex media: N/A | Obs: 
+       103. [2026-06-17 10:18:45] Press Militar (Intermedio) -> 0 reps (0 errores) | Ext/Flex media: N/A | Obs: 
+       104. [2026-06-17 10:37:38] Press Militar (Intermedio) -> 0 reps (0 errores) | Ext/Flex media: N/A | Obs: 
+       105. [2026-06-17 10:55:13] Press Militar (Avanzado) -> 9 reps (3 errores) | Ext/Flex media: 108.5º | Obs: 
 
 ------------------------------------------------------------
 

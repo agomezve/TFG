@@ -6,19 +6,17 @@ import os
 import time
 import mediapipe as mp
 import datetime
+import shutil
 import subprocess
-from database import obtener_pacientes, crear_paciente, obtener_historial_paciente
-from modulos.modulo_sentadilla import ModuloSentadilla
-from modulos.modulo_peso_muerto import ModuloPesoMuerto
-from modulos.modulo_press_militar import ModuloPressMilitar
-from modulos.modulo_plancha import ModuloPlancha
-from modulos.modulo_propiocepcion import ModuloPropiocepcion
-from modulos.modulo_hombro_lateral import ModuloHombroLateral
-from modulos.modulo_press_banca import ModuloPressBanca
-from modulos.modulo_hip_thrust import ModuloHipThrust
-from modulos.modulo_zancadas import ModuloZancadas
-from modulos.modulo_bulgaras import ModuloBulgaras
+import sys
+import ejercicios
+from config import directorio_datos, nombre_carpeta_paciente, abrir_con_aplicacion_del_sistema
+from database import (obtener_pacientes, crear_paciente, obtener_historial_paciente, autenticar,
+                      existe_paciente, cambiar_password_fisio)
 from modulos.camara_iphone import seleccionar_camara
+
+ES_MAC = sys.platform == "darwin"
+NOMBRE_WEBCAM = "📸 Webcam del Mac" if ES_MAC else "📸 Webcam"
 
 ctk.set_appearance_mode("Dark")
 ctk.set_default_color_theme("blue")
@@ -93,38 +91,22 @@ class AppRehabilitacion(ctk.CTk):
 
         btn_login = ctk.CTkButton(frame_login, text="Iniciar Sesión", command=self.login_paciente, width=250)
         btn_login.pack(pady=(20, 40))
+        self.entry_password.bind("<Return>", lambda _e: self.login_paciente())
+        self.entry_usuario.bind("<Return>", lambda _e: self.entry_password.focus())
         
         self.pacientes = obtener_pacientes() # Lista de (id, nombre, edad)
 
     def login_paciente(self):
-        usuario = self.entry_usuario.get().strip()
-        password = self.entry_password.get().strip()
-        
-        if not usuario or not password:
-            self.lbl_error.configure(text="Por favor, rellene todos los campos")
-            return
-            
-        if usuario.lower() == "fisio" and password == "12345":
+        # Las credenciales se comprueban contra la BBDD (contraseñas guardadas con hash).
+        rol, datos = autenticar(self.entry_usuario.get(), self.entry_password.get())
+
+        if rol == "fisio":
             self.mostrar_dashboard_fisio()
-            return
-            
-        if password != "12345":
-            self.lbl_error.configure(text="Contraseña incorrecta")
-            return
-            
-        usuario_encontrado = False
-        for p in self.pacientes:
-            # Comparamos ignorando mayúsculas/minúsculas para mayor flexibilidad
-            if p[1].lower() == usuario.lower():
-                self.paciente_activo_id = p[0]
-                self.paciente_activo_nombre = p[1]
-                usuario_encontrado = True
-                break
-                
-        if usuario_encontrado:
+        elif rol == "paciente":
+            self.paciente_activo_id, self.paciente_activo_nombre = datos
             self.mostrar_principal()
         else:
-            self.lbl_error.configure(text="Usuario no registrado")
+            self.lbl_error.configure(text=datos)
 
     def mostrar_principal(self):
         for widget in self.winfo_children():
@@ -160,20 +142,7 @@ class AppRehabilitacion(ctk.CTk):
         frame_cards = ctk.CTkScrollableFrame(self.main_panel, fg_color="transparent")
         frame_cards.pack(fill="both", expand=True, padx=20)
         
-        ejercicios = [
-            "Sentadilla",
-            "Peso Muerto",
-            "Press Militar",
-            "Press Banca",
-            "Plancha",
-            "Propiocepcion",
-            "Hombros Laterales",
-            "Hip Thrust",
-            "Zancadas",
-            "Bulgaras"
-        ]
-        
-        for i, nombre in enumerate(ejercicios):
+        for i, nombre in enumerate(ejercicios.nombres()):
             card = ctk.CTkFrame(frame_cards, corner_radius=10)
             card.pack(pady=10, fill="x", padx=20)
             
@@ -284,18 +253,7 @@ class AppRehabilitacion(ctk.CTk):
 
 
     # Mapeo ejercicio -> archivo de vídeo explicativo (MP4 con audio)
-    VIDEOS_EXPLICATIVOS = {
-        "Press Militar":     "v_e_press_militar.mp4",
-        "Peso Muerto":       "v_e_peso_muerto.mp4",
-        "Zancadas":          "v_e_zancadas.mp4",
-        "Hombros Laterales": "v_e_elevaciones_laterales.mp4",
-        "Sentadilla":        "v_e_sentadilla.mp4",
-        "Press Banca":       "v_e_press_banca.mp4",
-        "Plancha":           "v_e_plancha.mp4",
-        "Propiocepcion":     "v_e_propiocepcion.mp4",
-        "Hip Thrust":        "v_e_hip_trust.mp4",
-        "Bulgaras":          "v_e_bulgaras.mp4",
-    }
+    VIDEOS_EXPLICATIVOS = {e.nombre: e.video_explicativo for e in ejercicios.CATALOGO}
 
     def mostrar_video_explicativo(self, nombre_ejercicio, mensaje_error=None):
         for widget in self.main_panel.winfo_children():
@@ -367,7 +325,7 @@ class AppRehabilitacion(ctk.CTk):
 
             # --- Botón de reproducción ---
             def abrir_video(ruta=ruta_video):
-                subprocess.Popen(["open", ruta])
+                abrir_con_aplicacion_del_sistema(ruta)
 
             btn_play = ctk.CTkButton(
                 self.main_panel,
@@ -430,8 +388,8 @@ class AppRehabilitacion(ctk.CTk):
         lbl_cam = ctk.CTkLabel(popup, text="Selecciona la cámara:", font=ctk.CTkFont(size=13))
         lbl_cam.pack(pady=(14, 4))
 
-        camara_var = ctk.StringVar(value="📸 Webcam del Mac")
-        opciones_camara = ["📸 Webcam del Mac", "📱 Cámara iPhone"]
+        camara_var = ctk.StringVar(value=NOMBRE_WEBCAM)
+        opciones_camara = [NOMBRE_WEBCAM, "📱 Cámara iPhone"] if ES_MAC else [NOMBRE_WEBCAM]
         combo_camara = ctk.CTkOptionMenu(popup, values=opciones_camara, variable=camara_var, width=240)
         combo_camara.pack(pady=10)
 
@@ -567,28 +525,7 @@ class AppRehabilitacion(ctk.CTk):
                                       command=self.detener_video, state="disabled")
 
     def iniciar_motor_ejercicio(self, ejercicio, nivel):
-
-        if ejercicio == "Sentadilla":
-            self.ejercicio_activo = ModuloSentadilla(nivel=nivel)
-        elif ejercicio == "Peso Muerto":
-            self.ejercicio_activo = ModuloPesoMuerto(nivel=nivel)
-        elif ejercicio == "Press Militar":
-            self.ejercicio_activo = ModuloPressMilitar(nivel=nivel)
-        elif ejercicio == "Press Banca":
-            self.ejercicio_activo = ModuloPressBanca(nivel=nivel)
-        elif ejercicio == "Plancha":
-            self.ejercicio_activo = ModuloPlancha(nivel=nivel)
-        elif ejercicio == "Propiocepcion":
-            self.ejercicio_activo = ModuloPropiocepcion(nivel=nivel)
-        elif ejercicio == "Hombros Laterales":
-            self.ejercicio_activo = ModuloHombroLateral(nivel=nivel)
-        elif ejercicio == "Hip Thrust":
-            self.ejercicio_activo = ModuloHipThrust(nivel=nivel)
-        elif ejercicio == "Zancadas":
-            self.ejercicio_activo = ModuloZancadas(nivel=nivel)
-        elif ejercicio == "Bulgaras":
-            self.ejercicio_activo = ModuloBulgaras(nivel=nivel)
-            
+        self.ejercicio_activo = ejercicios.crear_modulo(ejercicio, nivel)
         self.ejercicio_activo.set_paciente(self.paciente_activo_id)
 
     def iniciar_webcam(self, ejercicio, nivel, usar_iphone=False):
@@ -618,7 +555,7 @@ class AppRehabilitacion(ctk.CTk):
             # Webcam integrada del Mac
             self.cap = cv2.VideoCapture(0)
             if not self.cap.isOpened():
-                self.preparar_vista_video("❌ Error: No se puede acceder a la webcam del Mac.")
+                self.preparar_vista_video("❌ Error: No se puede acceder a la webcam.\n\nRevisa que ninguna otra aplicación la esté usando\ny que la app tenga permiso de cámara.")
                 return
 
         self.procesando_video = True
@@ -658,31 +595,7 @@ class AppRehabilitacion(ctk.CTk):
             self.cap.release()
             self.cap = None
             
-        if hasattr(self, 'video_writer') and self.video_writer is not None:
-            self.video_writer.release()
-            
-            # Renombrar con FPS real
-            if hasattr(self, 'inicio_grabacion_vid') and hasattr(self, 'frames_grabados_vid') and hasattr(self, 'ruta_video_actual'):
-                duracion = time.time() - self.inicio_grabacion_vid
-                if duracion > 0 and self.frames_grabados_vid > 0:
-                    fps_real = self.frames_grabados_vid / duracion
-                    nuevo_nombre_mp4 = self.ruta_video_actual.replace(".avi", ".mp4")
-                    try:
-                        import subprocess
-                        subprocess.run([
-                            "ffmpeg", "-y", "-r", str(fps_real), 
-                            "-i", self.ruta_video_actual, 
-                            "-c:v", "libx264", "-preset", "ultrafast", 
-                            "-pix_fmt", "yuv420p", nuevo_nombre_mp4
-                        ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-                        os.remove(self.ruta_video_actual)
-                    except:
-                        nuevo_nombre = self.ruta_video_actual.replace(".avi", f"_fps{fps_real:.2f}.avi")
-                        try:
-                            os.rename(self.ruta_video_actual, nuevo_nombre)
-                        except: pass
-                    
-            self.video_writer = None
+        self._cerrar_grabacion()
         if self.ejercicio_activo is not None:
             # Generar el informe y guardar en BBDD ANTES de obtener_historial_paciente
             self.ejercicio_activo.generar_informe_clinico()
@@ -691,6 +604,50 @@ class AppRehabilitacion(ctk.CTk):
         # Volver al Dashboard al detener el vídeo
         self.mostrar_dashboard()
 
+    def _cerrar_grabacion(self):
+        """Cierra el vídeo de la serie y lo convierte a MP4 con los FPS reales.
+
+        Si ffmpeg no está instalado o la conversión falla, se conserva el .avi original
+        (antes, un fallo de ffmpeg podía borrar el vídeo sin haber creado el .mp4).
+        """
+        if getattr(self, 'video_writer', None) is None:
+            return
+        self.video_writer.release()
+        self.video_writer = None
+
+        ruta_avi = getattr(self, 'ruta_video_actual', None)
+        frames = getattr(self, 'frames_grabados_vid', 0)
+        inicio = getattr(self, 'inicio_grabacion_vid', None)
+        if not ruta_avi or inicio is None or not os.path.exists(ruta_avi):
+            return
+        duracion = time.time() - inicio
+        if duracion <= 0 or frames <= 0:
+            return
+
+        fps_real = frames / duracion
+        ruta_mp4 = ruta_avi.replace(".avi", ".mp4")
+        convertido = False
+        if shutil.which("ffmpeg"):
+            try:
+                resultado = subprocess.run([
+                    "ffmpeg", "-y", "-r", str(fps_real),
+                    "-i", ruta_avi,
+                    "-c:v", "libx264", "-preset", "ultrafast",
+                    "-pix_fmt", "yuv420p", ruta_mp4
+                ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                convertido = (resultado.returncode == 0 and os.path.exists(ruta_mp4)
+                              and os.path.getsize(ruta_mp4) > 0)
+            except OSError:
+                convertido = False
+
+        if convertido:
+            os.remove(ruta_avi)
+        else:
+            try:
+                os.rename(ruta_avi, ruta_avi.replace(".avi", f"_fps{fps_real:.2f}.avi"))
+            except OSError:
+                pass
+
     def _disparar_fin_serie(self, nombre_ejercicio):
         """Finaliza la sesión automáticamente al completar el objetivo y muestra mensaje de éxito."""
         self.procesando_video = False
@@ -698,31 +655,7 @@ class AppRehabilitacion(ctk.CTk):
             self.cap.release()
             self.cap = None
 
-        if hasattr(self, 'video_writer') and self.video_writer is not None:
-            self.video_writer.release()
-            
-            # Renombrar con FPS real
-            if hasattr(self, 'inicio_grabacion_vid') and hasattr(self, 'frames_grabados_vid') and hasattr(self, 'ruta_video_actual'):
-                duracion = time.time() - self.inicio_grabacion_vid
-                if duracion > 0 and self.frames_grabados_vid > 0:
-                    fps_real = self.frames_grabados_vid / duracion
-                    nuevo_nombre_mp4 = self.ruta_video_actual.replace(".avi", ".mp4")
-                    try:
-                        import subprocess
-                        subprocess.run([
-                            "ffmpeg", "-y", "-r", str(fps_real), 
-                            "-i", self.ruta_video_actual, 
-                            "-c:v", "libx264", "-preset", "ultrafast", 
-                            "-pix_fmt", "yuv420p", nuevo_nombre_mp4
-                        ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-                        os.remove(self.ruta_video_actual)
-                    except:
-                        nuevo_nombre = self.ruta_video_actual.replace(".avi", f"_fps{fps_real:.2f}.avi")
-                        try:
-                            os.rename(self.ruta_video_actual, nuevo_nombre)
-                        except: pass
-                    
-            self.video_writer = None
+        self._cerrar_grabacion()
 
         if self.ejercicio_activo is not None:
             self.ejercicio_activo.generar_informe_clinico()
@@ -819,12 +752,10 @@ class AppRehabilitacion(ctk.CTk):
         if getattr(self, 'procesando_video', False):
             if not hasattr(self, 'video_writer') or self.video_writer is None:
                 h_vid, w_vid, _ = frame_rgb.shape
-                nombre_pac_limpio = "".join([c for c in getattr(self, 'paciente_activo_nombre', 'paciente') if c.isalpha() or c.isdigit() or c==' ']).rstrip().replace(" ", "_").lower()
-                import datetime
+                nombre_pac_limpio = nombre_carpeta_paciente(getattr(self, 'paciente_activo_nombre', None) or 'paciente')
                 fecha_actual = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
                 fecha_dia = datetime.datetime.now().strftime("%Y-%m-%d")
-                import os
-                carpeta_base = os.path.dirname(os.path.abspath(__file__))
+                carpeta_base = directorio_datos()
                 ej_limpio = getattr(self, '_nombre_ejercicio_activo', 'ejercicio').lower().replace(" ", "_")
                 carpeta_videos = os.path.join(carpeta_base, "usuarios", nombre_pac_limpio, fecha_dia, ej_limpio, "videos")
                 if not os.path.exists(carpeta_videos):
@@ -872,6 +803,14 @@ class AppRehabilitacion(ctk.CTk):
                                    text_color="white", command=self.mostrar_login, width=120)
         btn_logout.pack(side="right", padx=(20, 0))
 
+        btn_password = ctk.CTkButton(self.header_frame, text="🔑 Cambiar contraseña", fg_color="gray",
+                                     hover_color="darkgray", command=self._popup_cambiar_password_fisio, width=170)
+        btn_password.pack(side="right", padx=(10, 0))
+
+        btn_nuevo = ctk.CTkButton(self.header_frame, text="➕ Nuevo paciente", fg_color="green",
+                                  hover_color="darkgreen", command=self._popup_nuevo_paciente, width=150)
+        btn_nuevo.pack(side="right", padx=(10, 0))
+
         lbl_paciente = ctk.CTkLabel(self.header_frame, text="Panel de Fisioterapeuta", 
                                     font=ctk.CTkFont(size=20, weight="bold"), text_color="#00FFAA")
         lbl_paciente.pack(side="left", padx=0)
@@ -881,7 +820,13 @@ class AppRehabilitacion(ctk.CTk):
         
         lbl_titulo = ctk.CTkLabel(self.main_panel, text="Seleccione un Paciente", font=ctk.CTkFont(size=24, weight="bold"))
         lbl_titulo.pack(pady=(0, 20))
-        
+
+        self.pacientes = obtener_pacientes()  # Siempre la lista actualizada
+        if not self.pacientes:
+            ctk.CTkLabel(self.main_panel, text="Todavía no hay pacientes.\nPulsa «➕ Nuevo paciente» para dar de alta el primero.",
+                         font=ctk.CTkFont(size=16)).pack(pady=40)
+            return
+
         frame_grid = ctk.CTkScrollableFrame(self.main_panel, fg_color="transparent")
         frame_grid.pack(fill="both", expand=True)
         
@@ -904,8 +849,13 @@ class AppRehabilitacion(ctk.CTk):
         for widget in self.main_panel.winfo_children():
             widget.destroy()
             
-        btn_volver = ctk.CTkButton(self.main_panel, text="⬅ Volver", command=self.mostrar_dashboard_fisio, fg_color="gray", hover_color="darkgray")
-        btn_volver.pack(anchor="nw", pady=10)
+        barra = ctk.CTkFrame(self.main_panel, fg_color="transparent")
+        barra.pack(fill="x", pady=10)
+        btn_volver = ctk.CTkButton(barra, text="⬅ Volver", command=self.mostrar_dashboard_fisio, fg_color="gray", hover_color="darkgray")
+        btn_volver.pack(side="left")
+        btn_progreso = ctk.CTkButton(barra, text="📈 Ver progreso", fg_color="#1F6AA5",
+                                     command=lambda: self.mostrar_progreso_paciente_fisio(paciente_id, nombre))
+        btn_progreso.pack(side="right")
         
         lbl_titulo = ctk.CTkLabel(self.main_panel, text=f"Entrenamientos de {nombre}", font=ctk.CTkFont(size=24, weight="bold"))
         lbl_titulo.pack(pady=(0, 20))
@@ -982,24 +932,28 @@ class AppRehabilitacion(ctk.CTk):
             widget.destroy()
             
         # Buscar el informe y video en la carpeta
-        nombre_pac_limpio = "".join([c for c in nombre if c.isalpha() or c.isdigit() or c==' ']).rstrip().replace(" ", "_").lower()
-        carpeta_base = os.path.dirname(os.path.abspath(__file__))
-        carpeta_ejercicio = os.path.join(carpeta_base, "usuarios", nombre_pac_limpio, fecha, ejercicio.lower().replace(" ", "_"))
-        carpeta_txt = os.path.join(carpeta_ejercicio, "informes")
-        carpeta_vid = os.path.join(carpeta_ejercicio, "videos")
-        
+        nombre_pac_limpio = nombre_carpeta_paciente(nombre)
+        carpeta_dia = os.path.join(directorio_datos(), "usuarios", nombre_pac_limpio, fecha)
+        # Los informes los guarda cada módulo en su carpeta (p. ej. "hombro_lateral") y los vídeos
+        # se guardan con el nombre del ejercicio (p. ej. "hombros_laterales"): se buscan ambas.
+        carpeta_ej_informes = os.path.join(carpeta_dia, ejercicios.carpeta_informes(ejercicio))
+        carpeta_ej_videos = os.path.join(carpeta_dia, ejercicio.lower().replace(" ", "_"))
+        carpeta_txt = os.path.join(carpeta_ej_informes, "informes")
+        carpeta_vid = os.path.join(carpeta_ej_videos, "videos")
+        if not os.path.exists(carpeta_txt) and os.path.exists(carpeta_ej_informes):
+            carpeta_txt = carpeta_ej_informes  # Estructura antigua: informes sin subcarpeta
+
         archivos_txt = []
         archivos_mp4 = []
         if os.path.exists(carpeta_txt):
             archivos_txt = sorted([f for f in os.listdir(carpeta_txt) if f.endswith(".txt")])
         if os.path.exists(carpeta_vid):
             archivos_mp4 = sorted([f for f in os.listdir(carpeta_vid) if f.endswith(".mp4") or f.endswith(".avi")])
-            
+
         ruta_txt = None
         ruta_mp4 = None
         t_txt = None
-        
-        import datetime
+
         def extraer_dt(filename):
             try:
                 name = filename.rsplit('.', 1)[0]
@@ -1066,11 +1020,152 @@ class AppRehabilitacion(ctk.CTk):
         textbox.insert("1.0", texto_informe)
         textbox.configure(state="disabled")
 
+    # ──────────────────────────────────────────────────────────────────────────
+    # GESTIÓN DE PACIENTES Y PROGRESO (panel del fisioterapeuta)
+    # ──────────────────────────────────────────────────────────────────────────
+
+    def _crear_popup(self, titulo, ancho, alto):
+        popup = ctk.CTkToplevel(self)
+        popup.title(titulo)
+        popup.geometry(f"{ancho}x{alto}")
+        popup.attributes("-topmost", True)
+        popup.update_idletasks()
+        x = self.winfo_x() + (self.winfo_width() // 2) - (ancho // 2)
+        y = self.winfo_y() + (self.winfo_height() // 2) - (alto // 2)
+        popup.geometry(f"+{x}+{y}")
+        return popup
+
+    def _popup_nuevo_paciente(self):
+        popup = self._crear_popup("Nuevo paciente", 400, 520)
+        ctk.CTkLabel(popup, text="Alta de paciente", font=ctk.CTkFont(size=20, weight="bold")).pack(pady=(20, 10))
+
+        campos = {}
+        for clave, etiqueta, oculto in (("nombre", "Nombre de usuario *", False), ("edad", "Edad", False),
+                                        ("notas", "Lesión / notas clínicas", False),
+                                        ("password", "Contraseña inicial *", True),
+                                        ("password2", "Repite la contraseña *", True)):
+            ctk.CTkLabel(popup, text=etiqueta).pack(pady=(6, 2))
+            entrada = ctk.CTkEntry(popup, width=280, show="*" if oculto else "")
+            entrada.pack()
+            campos[clave] = entrada
+
+        lbl_error = ctk.CTkLabel(popup, text="", text_color="red")
+        lbl_error.pack(pady=6)
+
+        def guardar():
+            nombre = campos["nombre"].get().strip()
+            edad_txt = campos["edad"].get().strip()
+            password = campos["password"].get().strip()
+            if not nombre or not password:
+                lbl_error.configure(text="Nombre y contraseña son obligatorios")
+                return
+            if nombre.lower() == "fisio":
+                lbl_error.configure(text="Ese nombre de usuario está reservado")
+                return
+            if existe_paciente(nombre):
+                lbl_error.configure(text="Ya existe un paciente con ese nombre")
+                return
+            if len(password) < 6:
+                lbl_error.configure(text="La contraseña debe tener al menos 6 caracteres")
+                return
+            if password != campos["password2"].get().strip():
+                lbl_error.configure(text="Las contraseñas no coinciden")
+                return
+            if edad_txt and not edad_txt.isdigit():
+                lbl_error.configure(text="La edad debe ser un número")
+                return
+            crear_paciente(nombre, int(edad_txt) if edad_txt else None,
+                           campos["notas"].get().strip(), password=password)
+            popup.destroy()
+            self.mostrar_dashboard_fisio()
+
+        ctk.CTkButton(popup, text="Guardar paciente", fg_color="green", hover_color="darkgreen",
+                      command=guardar).pack(pady=10)
+
+    def _popup_cambiar_password_fisio(self):
+        popup = self._crear_popup("Cambiar contraseña", 380, 300)
+        ctk.CTkLabel(popup, text="Nueva contraseña del fisioterapeuta",
+                     font=ctk.CTkFont(size=16, weight="bold")).pack(pady=(20, 10))
+        nueva = ctk.CTkEntry(popup, width=260, show="*", placeholder_text="Nueva contraseña")
+        nueva.pack(pady=5)
+        repetida = ctk.CTkEntry(popup, width=260, show="*", placeholder_text="Repite la contraseña")
+        repetida.pack(pady=5)
+        lbl_msg = ctk.CTkLabel(popup, text="", text_color="red")
+        lbl_msg.pack(pady=6)
+
+        def guardar():
+            if len(nueva.get().strip()) < 6:
+                lbl_msg.configure(text="Mínimo 6 caracteres")
+            elif nueva.get().strip() != repetida.get().strip():
+                lbl_msg.configure(text="Las contraseñas no coinciden")
+            else:
+                cambiar_password_fisio(nueva.get().strip())
+                popup.destroy()
+
+        ctk.CTkButton(popup, text="Guardar", command=guardar).pack(pady=10)
+
+    def mostrar_progreso_paciente_fisio(self, paciente_id, nombre):
+        """Gráfica de evolución por ejercicio: repeticiones correctas vs. fallidas en cada serie."""
+        for widget in self.main_panel.winfo_children():
+            widget.destroy()
+
+        btn_volver = ctk.CTkButton(self.main_panel, text="⬅ Volver",
+                                   command=lambda: self.mostrar_calendario_paciente_fisio(paciente_id, nombre),
+                                   fg_color="gray", hover_color="darkgray")
+        btn_volver.pack(anchor="nw", pady=10)
+        ctk.CTkLabel(self.main_panel, text=f"📈 Progreso de {nombre}",
+                     font=ctk.CTkFont(size=24, weight="bold")).pack(pady=(0, 10))
+
+        historial = list(reversed(obtener_historial_paciente(paciente_id)))  # cronológico
+        if not historial:
+            ctk.CTkLabel(self.main_panel, text="El paciente no tiene entrenamientos registrados.",
+                         font=ctk.CTkFont(size=16)).pack(pady=40)
+            return
+
+        # Resumen global
+        total_reps = sum(int(s[3] or 0) for s in historial)
+        total_err = sum(int(s[4] or 0) for s in historial)
+        dias = sorted({s[0][:10] for s in historial})
+        hace_30 = (datetime.date.today() - datetime.timedelta(days=30)).isoformat()
+        dias_30 = [d for d in dias if d >= hace_30]
+        pct = (100.0 * (total_reps - total_err) / total_reps) if total_reps else 0.0
+        resumen = (f"Series: {len(historial)}   |   Días entrenados: {len(dias)} "
+                   f"({len(dias_30)} en los últimos 30 días)   |   Ejecución correcta: {pct:.0f}%")
+        ctk.CTkLabel(self.main_panel, text=resumen, font=ctk.CTkFont(size=15), text_color="#AAAAAA").pack(pady=(0, 10))
+
+        ejercicios_hechos = []
+        for s in historial:
+            if s[1] not in ejercicios_hechos:
+                ejercicios_hechos.append(s[1])
+
+        zona_grafica = ctk.CTkFrame(self.main_panel, fg_color="#2B2B2B", corner_radius=10)
+
+        def dibujar(ejercicio):
+            for w in zona_grafica.winfo_children():
+                w.destroy()
+            try:
+                from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+                from graficas import figura_progreso
+            except ImportError:
+                ctk.CTkLabel(zona_grafica, text="Instala matplotlib para ver las gráficas (pip install matplotlib)").pack(pady=40)
+                return
+
+            fig = figura_progreso(historial, ejercicio)
+            canvas = FigureCanvasTkAgg(fig, master=zona_grafica)
+            canvas.draw()
+            canvas.get_tk_widget().pack(fill="both", expand=True, padx=10, pady=10)
+
+        selector = ctk.CTkSegmentedButton(self.main_panel, values=ejercicios_hechos, command=dibujar)
+        selector.pack(pady=(0, 10))
+        zona_grafica.pack(fill="both", expand=True, pady=(0, 10))
+        selector.set(ejercicios_hechos[0])
+        dibujar(ejercicios_hechos[0])
+
     def reproducir_video_fisio(self, ruta_mp4):
         """Abre el vídeo de la serie en el reproductor del sistema (no bloqueante).
         Usar cv2.imshow en un bucle bloqueaba el hilo de tkinter impidiendo
         que los botones 'Volver' y 'Cerrar Sesión' respondieran."""
-        subprocess.Popen(["open", ruta_mp4])
+        abrir_con_aplicacion_del_sistema(ruta_mp4)
 
 if __name__ == "__main__":
     app = AppRehabilitacion()

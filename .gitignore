@@ -29,3 +29,17 @@ Thumbs.db
 *.njsproj
 *.sln
 *.swp
+
+# ── Datos clínicos y personales: NUNCA se suben al repositorio ──
+TFG_AGV/pacientes.db
+TFG_AGV/base_de_datos.txt
+TFG_AGV/usuarios/
+TFG_AGV/datos_demo/
+*.db
+*.sqlite
+*.avi
+*.MOV
+*.mov
+
+# ── Ficheros temporales de Office ──
+~$*

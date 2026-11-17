@@ -196,7 +196,8 @@ class ModuloPressBanca(ModuloEjercicio):
         fecha_dia = datetime.datetime.now().strftime("%Y-%m-%d")
         nombre_archivo = f"informe_press_banca_{fecha_actual}.txt"
 
-        carpeta_base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        from config import directorio_datos
+        carpeta_base = directorio_datos()
         carpeta_informes = os.path.join(carpeta_base, "usuarios", nombre_pac_limpio, fecha_dia, "press_banca", "informes")
         if not os.path.exists(carpeta_informes):
             os.makedirs(carpeta_informes)

@@ -1,0 +1,8 @@
+# Dependencias de la plataforma de telerehabilitación (versiones probadas)
+# Instalación:  pip install -r requirements.txt
+mediapipe==0.10.14        # Estimación de pose (33 puntos 3D). Incluye opencv-contrib-python
+opencv-python==4.13.0.92  # Captura de cámara, vídeo y dibujo
+numpy==2.4.6              # Cálculo vectorial de ángulos articulares
+customtkinter==5.2.2      # Interfaz gráfica de escritorio
+pillow==12.2.0            # Conversión de fotogramas para la interfaz
+matplotlib==3.10.9        # Gráficas de progreso en el panel del fisioterapeuta

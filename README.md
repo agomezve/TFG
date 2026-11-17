@@ -28,13 +28,18 @@ Las dos comparten base de datos, módulos de análisis, informes y grabaciones.
 - Corrección en tiempo real por voz y en pantalla, basada en ángulos articulares 3D (MediaPipe Pose).
 - Vídeo explicativo y consejos de cada ejercicio.
 - Estadísticas personales.
+- **"Tu plan de hoy"** (app móvil): los ejercicios que ha recetado su fisio, con las series que lleva hoy y su cumplimiento semanal.
+- **Privacidad** (app móvil): consentimiento informado antes de grabar, descarga de sus datos y retirada del consentimiento.
 
 **Fisioterapeuta**
 - Alta de pacientes con contraseña propia.
+- **Plan por paciente** (app móvil): qué ejercicios, en qué nivel, cuántas series al día y cuántos días por semana.
+- **Adherencia y alertas** (app móvil): % de cumplimiento del plan en los últimos 7 días y aviso de los pacientes que requieren atención. Se avisa si un paciente lleva días sin entrenar, si cumple poco el plan o si repite errores en un ejercicio.
 - Calendario de sesiones por paciente.
 - Detalle de cada serie, con informe clínico y grabación.
 - Gráfica de evolución diaria: repeticiones correctas o con error y % de ejecución correcta.
 - Cambio de contraseña del fisioterapeuta.
+- Borrado de un paciente con todos sus datos (derecho de supresión).
 
 ## Instalación
 
@@ -99,6 +104,8 @@ python -m unittest discover -s tests -v
 | `servidor_web.py` + `web/` | App móvil (PWA): servidor FastAPI + interfaz HTML/CSS/JS sin dependencias |
 | `motor.py` | Bucle de una serie (preparación, evaluación, cortafuegos, objetivo y grabación), común a escritorio y móvil |
 | `informes.py` | Localiza el informe y el vídeo de cada serie |
+| `adherencia.py` | Plan de hoy, % de adherencia y alertas para el fisio (funciones puras) |
+| `Dockerfile` + `despliegue/` | Imagen para la nube y guía para publicarla con dominio y HTTPS |
 | `modulos/` | Un módulo de análisis biomecánico por ejercicio (hereda de `modulo_base.py`) |
 | `ejercicios.py` | Catálogo único de ejercicios: módulo, carpeta de informes y vídeo |
 | `database.py` | SQLite: pacientes, sesiones, autenticación y migraciones |
@@ -108,4 +115,4 @@ python -m unittest discover -s tests -v
 
 ## Privacidad
 
-Los datos de pacientes (`pacientes.db`, `usuarios/`, grabaciones) **no se suben al repositorio** (ver `.gitignore`). Las contraseñas se guardan con hash, nunca en texto plano. El análisis de vídeo se hace en local: las imágenes no salen del equipo.
+Los datos de pacientes (`pacientes.db`, `usuarios/`, grabaciones) **no se suben al repositorio** (ver `.gitignore`). Las contraseñas se guardan con hash, nunca en texto plano. En la app de escritorio el análisis de vídeo se hace en local: las imágenes no salen del equipo. En la app móvil se analizan en el servidor de la plataforma, y el paciente tiene que aceptar antes el consentimiento. Política de privacidad: [`web/privacidad.html`](TFG_AGV/web/privacidad.html). Para publicarla en internet, ver [`despliegue/`](TFG_AGV/despliegue/README.md).

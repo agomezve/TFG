@@ -114,7 +114,8 @@ function pantallaLogin() {
       try {
         const r = await api("/api/login", { method: "POST", body: JSON.stringify({ usuario: document.getElementById("u").value, password: document.getElementById("p").value }) });
         S.token = r.token; S.usuario = r; guardar("sesion", r);
-        entrar();
+        if (r.rol === "paciente" && !r.consentimiento) inicio(pantallaConsentimiento);
+        else entrar();
       } catch (err) { document.getElementById("err").textContent = err.message; btn.disabled = false; }
     };
   });
@@ -128,7 +129,111 @@ function cerrarSesion() {
 
 function entrar() {
   if (S.usuario.rol === "fisio") inicio(() => fisioInicio());
-  else inicio(() => pacienteInicio("ejercicios"));
+  else inicio(() => pacienteInicio("hoy"));
+}
+
+// ─── Consentimiento (RGPD) ────────────────────────────────────────────────────
+const TEXTO_PRIVACIDAD = `
+  <p>Para corregir tus ejercicios, TeleRehab IA trata estos datos:</p>
+  <ul>
+    <li><b>Imagen de tu cámara</b> mientras haces una serie. Se analiza la postura y se guarda un vídeo de la serie.</li>
+    <li><b>Resultados de cada serie</b>: repeticiones, errores, ángulos e informe.</li>
+    <li><b>Tus datos de paciente</b>: nombre, edad y notas de tu fisioterapeuta.</li>
+  </ul>
+  <p><b>Para qué:</b> solo para tu rehabilitación y para que tu fisioterapeuta siga tu evolución. No se venden ni se usan para publicidad.</p>
+  <p><b>Quién los ve:</b> tú y tu fisioterapeuta. Los vídeos solo los ve tu fisioterapeuta.</p>
+  <p><b>Tus derechos:</b> desde <i>Mi cuenta</i> puedes descargar tus datos o retirar este consentimiento. Para borrarlos, pídeselo a tu fisioterapeuta.</p>
+  <p><a class="enlace" href="/privacidad" target="_blank" rel="noopener">Leer la política de privacidad completa</a></p>`;
+
+async function pantallaConsentimiento() {
+  let version;
+  try { version = (await api("/api/consentimiento")).version_actual; } catch (e) { return; }
+  pintar(`<main class="pantalla">${cabecera("Tu privacidad", { atras: false })}
+    <div class="contenido sin-tabs">
+      <div class="saludo"><h2>Antes de empezar 🔒</h2><p>Tus datos de salud son tuyos. Así es como los cuidamos.</p></div>
+      <div class="tarjeta privacidad-txt">${TEXTO_PRIVACIDAD}</div>
+      <label class="check"><input type="checkbox" id="acepto">
+        <span>He leído la información y doy mi consentimiento para que se traten mis datos de salud con esta finalidad.</span></label>
+      <div class="fila-btns">
+        <button class="btn" id="aceptar" disabled>Aceptar y continuar</button>
+        <button class="btn fantasma" id="no">Ahora no (cerrar sesión)</button>
+      </div>
+    </div></main>`, () => {
+    const check = document.getElementById("acepto"), boton = document.getElementById("aceptar");
+    check.onchange = () => (boton.disabled = !check.checked);
+    boton.onclick = async () => {
+      boton.disabled = true;
+      try { await api("/api/consentimiento", { method: "POST", body: JSON.stringify({ version, acepto: true }) }); entrar(); }
+      catch (e) { aviso(e.message); boton.disabled = false; }
+    };
+    document.getElementById("no").onclick = cerrarSesion;
+  });
+}
+
+function hojaCuentaPaciente() {
+  abrirHoja(`<h2>Mi cuenta</h2>
+    <div class="lista">
+      <button class="item" id="c-pass"><span class="emoji">🔑</span><span class="txt"><b>Cambiar contraseña</b></span><span class="flecha">›</span></button>
+      <button class="item" id="c-priv"><span class="emoji">🔒</span><span class="txt"><b>Privacidad y mis datos</b><small>Descargar, retirar consentimiento</small></span><span class="flecha">›</span></button>
+    </div>
+    <div class="fila-btns" style="margin-top:14px"><button class="btn secundario" id="c-salir">Cerrar sesión</button></div>`, (hoja) => {
+    hoja.querySelector("#c-salir").onclick = () => { cerrarHoja(); cerrarSesion(); };
+    hoja.querySelector("#c-pass").onclick = hojaPasswordPaciente;
+    hoja.querySelector("#c-priv").onclick = hojaPrivacidadPaciente;
+  });
+}
+
+function hojaPasswordPaciente() {
+  abrirHoja(`<h2>Cambiar contraseña</h2>
+    <form id="f-pass" novalidate>
+      <div class="campo"><label for="a-act">Contraseña actual</label><input id="a-act" type="password" autocomplete="current-password"></div>
+      <div class="dos-col">
+        <div class="campo"><label for="a-n1">Nueva</label><input id="a-n1" type="password" autocomplete="new-password"></div>
+        <div class="campo"><label for="a-n2">Repetir</label><input id="a-n2" type="password" autocomplete="new-password"></div>
+      </div>
+      <p class="error" id="a-err"></p>
+      <div class="fila-btns"><button class="btn" type="submit">Guardar</button>
+        <button class="btn fantasma" type="button" data-cerrar>Cancelar</button></div>
+    </form>`, (hoja) => {
+    hoja.querySelector("#f-pass").onsubmit = async (e) => {
+      e.preventDefault();
+      const v = (id) => hoja.querySelector(id).value;
+      try {
+        await api("/api/mi-password", { method: "POST", body: JSON.stringify({ actual: v("#a-act"), nueva: v("#a-n1"), nueva2: v("#a-n2") }) });
+        cerrarHoja(); aviso("✅ Contraseña cambiada");
+      } catch (err) { hoja.querySelector("#a-err").textContent = err.message; }
+    };
+  });
+}
+
+async function hojaPrivacidadPaciente() {
+  let c = {};
+  try { c = await api("/api/consentimiento"); } catch (_) { }
+  abrirHoja(`<h2>Privacidad y mis datos</h2>
+    <div class="privacidad-txt">${TEXTO_PRIVACIDAD}</div>
+    <p class="receta">${c.fecha ? `Consentimiento aceptado el ${fechaCorta(c.fecha)}.` : ""}</p>
+    <div class="fila-btns" style="margin-top:12px">
+      <button class="btn secundario" id="p-descargar">⬇️ Descargar mis datos</button>
+    </div>
+    <div class="zona-peligro">
+      <p>Si retiras el consentimiento no se grabarán más series hasta que lo vuelvas a aceptar. Para borrar todos tus datos, pídeselo a tu fisioterapeuta.</p>
+      <button class="btn borde-rojo" id="p-retirar">Retirar consentimiento</button>
+    </div>`, (hoja) => {
+    hoja.querySelector("#p-descargar").onclick = async () => {
+      try {
+        const r = await fetch("/api/mis-datos", { headers: { Authorization: "Bearer " + S.token } });
+        if (!r.ok) throw new Error("No se han podido descargar los datos");
+        const url = URL.createObjectURL(await r.blob());
+        const a = Object.assign(document.createElement("a"), { href: url, download: "mis_datos_telerehab.json" });
+        document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 2000);
+      } catch (e) { aviso(e.message); }
+    };
+    hoja.querySelector("#p-retirar").onclick = async () => {
+      if (!confirm("¿Seguro que quieres retirar tu consentimiento?")) return;
+      try { await api("/api/consentimiento", { method: "DELETE" }); cerrarHoja(); inicio(pantallaConsentimiento); }
+      catch (e) { aviso(e.message); }
+    };
+  });
 }
 
 // ─── Paciente ─────────────────────────────────────────────────────────────────
@@ -159,40 +264,68 @@ function tabs(actual, opciones) {
 
 async function pacienteInicio(tab) {
   pintar(`<div class="cargando">Cargando…</div>`);
-  let lista, historial;
-  try { [lista, historial] = await Promise.all([cargarEjercicios(), api("/api/mi-historial")]); }
+  let lista, historial, plan;
+  try { [lista, historial, plan] = await Promise.all([cargarEjercicios(), api("/api/mi-historial"), api("/api/mi-plan")]); }
   catch (e) { return pintar(`<div class="vacio">${esc(e.message)}</div>`); }
+  S.plan = plan.plan;
 
   const r = resumen(historial);
-  const salir = `<button class="btn-icono" id="salir" aria-label="Cerrar sesión" title="Cerrar sesión">⏻</button>`;
-  const pestañas = tabs(tab, [["ejercicios", "🏃", "Ejercicios"], ["progreso", "📈", "Mi progreso"]]);
+  const cuenta = `<button class="btn-icono" id="cuenta" aria-label="Mi cuenta" title="Mi cuenta">👤</button>`;
+  const pestañas = tabs(tab, [["hoy", "🏃", "Hoy"], ["progreso", "📈", "Mi progreso"]]);
 
-  if (tab === "ejercicios") {
+  if (tab === "hoy") {
     const ultima = {};
     historial.forEach((s) => { ultima[s.ejercicio] ||= s.fecha; });
-    pintar(`<main class="pantalla">${cabecera("TeleRehab", { atras: false, derecha: salir })}
-      <div class="contenido">
-        <div class="saludo"><h2>Hola, ${esc(S.usuario.nombre)} 👋</h2>
-          <p>${r.semana ? `Llevas ${r.semana} ${r.semana === 1 ? "serie" : "series"} esta semana. ¡Sigue así!` : "Elige un ejercicio para empezar tu sesión de hoy."}</p></div>
-        <div class="kpis">
-          <div class="kpi"><b>${r.semana}</b><span>series esta semana</span></div>
-          <div class="kpi"><b>${r.dias}</b><span>días entrenados</span></div>
-          <div class="kpi"><b>${r.correcto ?? "–"}${r.correcto != null ? "%" : ""}</b><span>ejecución correcta</span></div>
-        </div>
-        <h3 class="seccion-tit">Tus ejercicios</h3>
-        <div class="lista">${lista.map((e) => `
+    const enPlan = new Set(plan.plan.map((p) => p.ejercicio));
+    const pendientes = plan.plan.filter((p) => !p.completado_hoy).length;
+    const itemEjercicio = (e) => `
           <button class="item" data-ej="${esc(e.nombre)}">
             <span class="emoji">${EMOJIS[e.nombre] || "🏃"}</span>
             <span class="txt"><b>${esc(nombreVisible(e.nombre))}</b>
               <small>${e.por_tiempo ? "30 segundos" : "10 repeticiones"} · ${ultima[e.nombre] ? "último: " + fechaCorta(ultima[e.nombre]) : "sin hacer aún"}</small></span>
             <span class="flecha">›</span>
-          </button>`).join("")}</div>
+          </button>`;
+    const itemPlan = (p) => {
+      const pct = Math.min(100, Math.round((100 * p.hechas_hoy) / p.series));
+      return `<button class="item ${p.completado_hoy ? "hecho" : ""}" data-ej="${esc(p.ejercicio)}">
+        <span class="emoji">${p.completado_hoy ? "✅" : EMOJIS[p.ejercicio] || "🏃"}</span>
+        <span class="txt"><b>${esc(nombreVisible(p.ejercicio))}</b>
+          <small>${Math.min(p.hechas_hoy, p.series)} de ${p.series} ${p.series === 1 ? "serie" : "series"} hoy · ${esc(p.nivel)}</small>
+          <span class="progreso" aria-hidden="true"><i style="width:${pct}%"></i></span></span>
+        <span class="flecha">›</span></button>`;
+    };
+    let saludo;
+    if (!plan.plan.length) saludo = r.semana ? `Llevas ${r.semana} ${r.semana === 1 ? "serie" : "series"} esta semana. ¡Sigue así!` : "Elige un ejercicio para empezar tu sesión de hoy.";
+    else if (!pendientes) saludo = "¡Plan de hoy completado! 🎉 Buen trabajo.";
+    else saludo = `Hoy te ${pendientes === 1 ? "queda 1 ejercicio" : `quedan ${pendientes} ejercicios`} de tu plan.`;
+
+    const bloquePlan = plan.plan.length ? `
+        <div class="tarjeta semana">
+          <div class="anillo" style="--p:${plan.adherencia ?? 0}"><b>${plan.adherencia ?? 0}%</b></div>
+          <div><b>Tu semana</b><p>${plan.plan.reduce((a, p) => a + Math.min(p.hechas_semana, p.objetivo_semana), 0)} de ${plan.plan.reduce((a, p) => a + p.objetivo_semana, 0)} series del plan en los últimos 7 días</p></div>
+        </div>
+        <h3 class="seccion-tit">Tu plan de hoy</h3>
+        <div class="lista">${plan.plan.map(itemPlan).join("")}</div>
+        <h3 class="seccion-tit">Otros ejercicios</h3>
+        <div class="lista">${lista.filter((e) => !enPlan.has(e.nombre)).map(itemEjercicio).join("")}</div>`
+      : `<div class="kpis">
+          <div class="kpi"><b>${r.semana}</b><span>series esta semana</span></div>
+          <div class="kpi"><b>${r.dias}</b><span>días entrenados</span></div>
+          <div class="kpi"><b>${r.correcto ?? "–"}${r.correcto != null ? "%" : ""}</b><span>ejecución correcta</span></div>
+        </div>
+        <h3 class="seccion-tit">Tus ejercicios</h3>
+        <div class="lista">${lista.map(itemEjercicio).join("")}</div>`;
+
+    pintar(`<main class="pantalla">${cabecera("TeleRehab", { atras: false, derecha: cuenta })}
+      <div class="contenido">
+        <div class="saludo"><h2>Hola, ${esc(S.usuario.nombre)} 👋</h2><p>${saludo}</p></div>
+        ${bloquePlan}
       </div>${pestañas}</main>`, () => {
       app.querySelectorAll("[data-ej]").forEach((b) => (b.onclick = () => ir(() => detalleEjercicio(b.dataset.ej))));
     });
   } else {
     const hechos = lista.filter((e) => historial.some((s) => s.ejercicio === e.nombre));
-    pintar(`<main class="pantalla">${cabecera("Mi progreso", { atras: false, derecha: salir })}
+    pintar(`<main class="pantalla">${cabecera("Mi progreso", { atras: false, derecha: cuenta })}
       <div class="contenido">
         <div class="kpis" style="margin-top:6px">
           <div class="kpi"><b>${r.series}</b><span>series totales</span></div>
@@ -203,7 +336,7 @@ async function pacienteInicio(tab) {
         : `<div class="vacio"><span class="emoji">📊</span>Cuando completes tu primera serie verás aquí tu evolución.</div>`}
       </div>${pestañas}</main>`, () => activarProgreso());
   }
-  document.getElementById("salir").onclick = cerrarSesion;
+  document.getElementById("cuenta").onclick = hojaCuentaPaciente;
   app.querySelectorAll("[data-tab]").forEach((b) => (b.onclick = () => ir(() => pacienteInicio(b.dataset.tab), { reemplazar: true })));
 }
 
@@ -241,10 +374,15 @@ function activarProgreso() {
 
 async function detalleEjercicio(nombre, mensajeError) {
   const ej = (await cargarEjercicios()).find((e) => e.nombre === nombre);
-  let nivel = leer("nivel:" + nombre) || "principiante";
+  const recetado = (S.plan || []).find((p) => p.ejercicio === nombre);
+  // Si el fisio lo ha recetado, se empieza en su nivel; si no, en el último que eligió el paciente
+  let nivel = (recetado && recetado.nivel) || leer("nivel:" + nombre) || "principiante";
   pintar(`<main class="pantalla">${cabecera(nombreVisible(nombre))}
     <div class="contenido sin-tabs">
       ${mensajeError ? `<div class="alerta">⚠️ ${esc(mensajeError)}</div>` : ""}
+      ${recetado ? `<div class="tarjeta" style="margin-bottom:14px"><b>📋 Recetado por tu fisioterapeuta</b>
+        <p class="receta" style="margin-top:4px">${recetado.series} ${recetado.series === 1 ? "serie" : "series"} al día · ${recetado.dias_semana} ${recetado.dias_semana === 1 ? "día" : "días"} por semana · nivel ${esc(recetado.nivel)}.
+        Hoy llevas ${Math.min(recetado.hechas_hoy, recetado.series)} de ${recetado.series}.</p></div>` : ""}
       <video class="video-explicativo" src="${ej.video}" controls playsinline preload="metadata" ${mensajeError ? "autoplay" : ""}></video>
       <h3 class="seccion-tit">Antes de empezar</h3>
       <ul class="consejos">${ej.consejos.map((c) => `<li>${esc(c)}</li>`).join("")}</ul>
@@ -392,7 +530,12 @@ async function serieDirecto(ej, nivel, fuente) {
       limpiar();
       return ir(() => resultadoSerie(ej, nivel, d.resultado), { reemplazar: true });
     }
-    if (d.estado === "error") { mensaje.textContent = d.mensaje; return; }
+    if (d.estado === "error") {
+      terminado = true; limpiar(); mensaje.textContent = d.mensaje;
+      const b = document.getElementById("detener");
+      b.textContent = "Volver"; b.onclick = volver; document.getElementById("cerrar").onclick = volver;
+      return;
+    }
     pildora.textContent = `${d.errores}/3 errores`;
     pildora.classList.toggle("mal", d.errores > 0);
     if (d.estado === "completado" || d.estado === "cortafuegos") {
@@ -418,12 +561,24 @@ function resultadoSerie(ej, nivel, resultado) {
       ${resultado === "cortafuegos"
       ? `<button class="btn" id="b1">🎬 Ver vídeo explicativo</button>`
       : `<button class="btn" id="b1">↻ Hacer otra serie</button>`}
-      <button class="btn secundario" id="b2">Volver a mis ejercicios</button>
+      <button class="btn secundario" id="b2">Volver a mi plan</button>
     </div></main>`, () => {
     document.getElementById("b1").onclick = () => resultado === "cortafuegos"
       ? ir(() => detalleEjercicio(ej.nombre, texto), { reemplazar: true })
       : ir(() => detalleEjercicio(ej.nombre), { reemplazar: true });
-    document.getElementById("b2").onclick = () => inicio(() => pacienteInicio("ejercicios"));
+    document.getElementById("b2").onclick = () => inicio(() => pacienteInicio("hoy"));
+    // Progreso del plan de hoy en este ejercicio (si el fisio lo ha recetado)
+    api("/api/mi-plan").then((p) => {
+      S.plan = p.plan;
+      const item = p.plan.find((x) => x.ejercicio === ej.nombre);
+      if (!item) return;
+      const linea = document.createElement("p");
+      linea.className = "receta";
+      linea.textContent = item.completado_hoy
+        ? `✅ Has completado las ${item.series} series de hoy de ${nombreVisible(ej.nombre)}.`
+        : `Llevas ${item.hechas_hoy} de ${item.series} series de hoy de ${nombreVisible(ej.nombre)}.`;
+      document.querySelector(".resultado p")?.after(linea);
+    }).catch(() => { });
   });
 }
 
@@ -434,13 +589,26 @@ async function fisioInicio() {
   try { pacientes = await api("/api/fisio/pacientes"); } catch (e) { return pintar(`<div class="vacio">${esc(e.message)}</div>`); }
   const ajustes = `<button class="btn-icono" id="ajustes" aria-label="Ajustes">⚙︎</button>`;
   const activos = pacientes.filter((p) => p.ultima && p.ultima.slice(0, 10) >= new Date(Date.now() - 7 * 864e5).toISOString().slice(0, 10)).length;
+  const conPlan = pacientes.filter((p) => p.adherencia != null);
+  const adhMedia = conPlan.length ? Math.round(conPlan.reduce((a, p) => a + p.adherencia, 0) / conPlan.length) : null;
+  // Pacientes que necesitan que el fisio haga algo (alertas graves o medias), los más urgentes primero
+  const urgencia = (p) => (p.alertas.some((a) => a.gravedad === "alta") ? 0 : p.alertas.some((a) => a.gravedad === "media") ? 1 : 2);
+  const atencion = pacientes.filter((p) => urgencia(p) < 2).sort((a, b) => urgencia(a) - urgencia(b));
   pintar(`<main class="pantalla">${cabecera("Mis pacientes", { atras: false, derecha: ajustes })}
     <div class="contenido sin-tabs">
-      <div class="kpis" style="margin:6px 0 16px">
+      <div class="kpis" style="margin:6px 0 4px">
         <div class="kpi"><b>${pacientes.length}</b><span>pacientes</span></div>
         <div class="kpi"><b>${activos}</b><span>activos esta semana</span></div>
-        <div class="kpi"><b>${pacientes.reduce((a, p) => a + p.series, 0)}</b><span>series totales</span></div>
+        <div class="kpi"><b>${adhMedia ?? "–"}${adhMedia != null ? "%" : ""}</b><span>adherencia media al plan</span></div>
       </div>
+      ${atencion.length ? `<h3 class="seccion-tit">Requieren atención (${atencion.length})</h3>
+      <div class="atencion">${atencion.slice(0, 5).map((p) => {
+        const a = p.alertas.find((x) => x.gravedad !== "info");
+        return `<button class="aviso-pac ${a.gravedad}" data-pac="${p.id}"><span class="punto"></span>
+          <span class="txt"><b>${esc(p.nombre)}</b><span>${esc(a.texto)}${p.alertas.filter((x) => x.gravedad !== "info").length > 1 ? " · y más" : ""}</span></span>
+          <span class="flecha">›</span></button>`;
+      }).join("")}</div>` : ""}
+      <h3 class="seccion-tit">Todos</h3>
       <input class="buscador" id="buscar" type="search" placeholder="🔍  Buscar paciente" aria-label="Buscar paciente">
       <div class="lista" id="lista"></div>
       <div class="pie-fijo"><button class="btn" id="nuevo">＋ Nuevo paciente</button></div>
@@ -453,15 +621,21 @@ async function fisioInicio() {
           <span class="emoji">${esc(p.nombre.slice(0, 1).toUpperCase())}</span>
           <span class="txt"><b>${esc(p.nombre)}</b>
             <small>${p.edad ? p.edad + " años · " : ""}${p.series} series · ${p.ultima ? "última: " + fechaCorta(p.ultima) : "sin sesiones"}</small></span>
-          <span class="flecha">›</span></button>`).join("")
+          ${etiquetaAdherencia(p.adherencia)}</button>`).join("")
         : `<div class="vacio"><span class="emoji">🧑‍⚕️</span>${pacientes.length ? "Ningún paciente coincide." : "Aún no tienes pacientes. Da de alta el primero."}</div>`;
-      app.querySelectorAll("[data-pac]").forEach((b) => (b.onclick = () => ir(() => fisioPaciente(+b.dataset.pac, "progreso"))));
+      app.querySelectorAll("[data-pac]").forEach((b) => (b.onclick = () => ir(() => fisioPaciente(+b.dataset.pac, "plan"))));
     };
     pintarLista();
     document.getElementById("buscar").oninput = (e) => pintarLista(e.target.value);
     document.getElementById("nuevo").onclick = hojaNuevoPaciente;
     document.getElementById("ajustes").onclick = hojaAjustesFisio;
   });
+}
+
+function etiquetaAdherencia(adh) {
+  if (adh == null) return `<span class="adh" title="Sin plan asignado">sin plan</span>`;
+  const clase = adh >= 80 ? "ok" : adh >= 50 ? "media" : "baja";
+  return `<span class="adh ${clase}" title="Adherencia al plan (7 días)">${adh}%</span>`;
 }
 
 function hojaNuevoPaciente() {
@@ -487,7 +661,8 @@ function hojaNuevoPaciente() {
             nombre: v("#n-nombre"), edad: v("#n-edad"), notas: v("#n-notas"), password: v("#n-p1"), password2: v("#n-p2"),
           }),
         });
-        cerrarHoja(); aviso(`✅ ${r.nombre} dado de alta`); fisioInicio();
+        cerrarHoja(); aviso(`✅ ${r.nombre} dado de alta. Ahora asígnale su plan.`);
+        ir(() => fisioPaciente(r.id, "plan"));
       } catch (err) { hoja.querySelector("#n-err").textContent = err.message; }
     };
   });
@@ -525,11 +700,13 @@ async function fisioPaciente(id, tab) {
   try { datos = await api(`/api/fisio/pacientes/${id}/historial`); } catch (e) { return pintar(`<div class="vacio">${esc(e.message)}</div>`); }
   const { nombre, sesiones } = datos;
   const r = resumen(sesiones);
-  const pestañas = tabs(tab, [["progreso", "📈", "Progreso"], ["sesiones", "🗓️", "Sesiones"]]);
+  const pestañas = tabs(tab, [["plan", "📋", "Plan"], ["progreso", "📈", "Progreso"], ["sesiones", "🗓️", "Sesiones"]]);
   const vacio = `<div class="vacio"><span class="emoji">🗓️</span>${esc(nombre)} todavía no tiene entrenamientos registrados.</div>`;
   let cuerpo;
 
-  if (tab === "progreso") {
+  if (tab === "plan") {
+    return fisioPlan(id, datos, pestañas);
+  } else if (tab === "progreso") {
     const nombresEj = [...new Set(sesiones.map((s) => s.ejercicio))];
     cuerpo = `<div class="kpis" style="margin-top:6px">
         <div class="kpi"><b>${r.series}</b><span>series</span></div>
@@ -559,6 +736,96 @@ async function fisioPaciente(id, tab) {
   });
 }
 
+/* Pestaña "Plan" del paciente: adherencia, alertas, editor del plan y protección de datos. */
+async function fisioPlan(id, datos, pestañas) {
+  const lista = await cargarEjercicios();
+  const { nombre, plan, adherencia, alertas, consentimiento } = datos;
+  // Estado editable: un registro por ejercicio del catálogo
+  const estado = {};
+  lista.forEach((e) => (estado[e.nombre] = { activo: false, nivel: "principiante", series: 3, dias_semana: 3 }));
+  plan.forEach((p) => (estado[p.ejercicio] = { activo: true, nivel: p.nivel, series: p.series, dias_semana: p.dias_semana }));
+  const porEj = Object.fromEntries(plan.map((p) => [p.ejercicio, p]));
+
+  const contador = (ej, campo, txt, max) => `<div class="contador"><span>${txt}</span>
+    <span class="ctrl"><button type="button" data-menos="${esc(ej)}|${campo}" aria-label="Menos ${txt}">−</button>
+    <output data-valor="${esc(ej)}|${campo}">${estado[ej][campo]}</output>
+    <button type="button" data-mas="${esc(ej)}|${campo}|${max}" aria-label="Más ${txt}">+</button></span></div>`;
+
+  const filas = lista.map((e) => {
+    const s = estado[e.nombre], p = porEj[e.nombre];
+    return `<div class="fila-plan ${s.activo ? "activa" : ""}" data-fila="${esc(e.nombre)}">
+      <div class="cab"><span>${EMOJIS[e.nombre] || "🏃"}</span><b>${esc(nombreVisible(e.nombre))}
+        ${p ? `<br><small class="receta" style="font-weight:400">${p.hechas_semana}/${p.objetivo_semana} series esta semana</small>` : ""}</b>
+        <label class="interruptor"><input type="checkbox" data-activo="${esc(e.nombre)}" ${s.activo ? "checked" : ""} aria-label="Incluir ${esc(nombreVisible(e.nombre))} en el plan"><span></span></label></div>
+      <div class="ajustes">
+        <div class="segmentado peq" role="group" aria-label="Nivel">${NIVELES.map(([nid, txt]) =>
+      `<button type="button" data-niv="${esc(e.nombre)}|${nid}" aria-pressed="${s.nivel === nid}">${txt}</button>`).join("")}</div>
+        ${contador(e.nombre, "series", "Series al día", 10)}
+        ${contador(e.nombre, "dias_semana", "Días por semana", 7)}
+      </div></div>`;
+  }).join("");
+
+  const alertasReales = alertas.filter((a) => a.tipo !== "sin_plan");
+  pintar(`<main class="pantalla">${cabecera(nombre)}<div class="contenido">
+    ${plan.length ? `<div class="tarjeta semana" style="margin-top:6px">
+      <div class="anillo" style="--p:${adherencia ?? 0}"><b>${adherencia ?? 0}%</b></div>
+      <div><b>Adherencia al plan</b><p>Series hechas de las recetadas en los últimos 7 días</p></div></div>`
+      : `<div class="alerta" style="margin-top:6px">📋 ${esc(nombre)} todavía no tiene plan. Activa los ejercicios que debe hacer y pulsa <b>Guardar plan</b>.</div>`}
+    ${alertasReales.length ? `<h3 class="seccion-tit">Alertas</h3><div class="atencion">${alertasReales.map((a) =>
+        `<div class="aviso-pac ${a.gravedad}"><span class="punto"></span><span class="txt">${esc(a.texto)}</span></div>`).join("")}</div>` : ""}
+    <h3 class="seccion-tit">Ejercicios recetados</h3>
+    <div class="lista">${filas}</div>
+    <div class="pie-fijo" style="bottom:calc(70px + var(--seguro-abajo))"><button class="btn" id="guardar-plan">💾 Guardar plan</button></div>
+    <div class="zona-peligro">
+      <h3 class="seccion-tit" style="margin-top:0">Protección de datos</h3>
+      <p>${consentimiento ? `Consentimiento ${consentimiento.vigente ? "aceptado" : "de una versión anterior, aceptado"} el ${fechaCorta(consentimiento.fecha)}.` : "El paciente aún no ha aceptado el consentimiento: se le pedirá al entrar en la app."}</p>
+      <p>Borrar al paciente elimina para siempre sus sesiones, informes y vídeos (derecho de supresión).</p>
+      <button class="btn borde-rojo" id="borrar">🗑 Borrar paciente y todos sus datos</button>
+    </div>
+  </div>${pestañas}</main>`, () => {
+    const refrescar = (ej) => {
+      const fila = app.querySelector(`[data-fila="${CSS.escape(ej)}"]`);
+      fila.classList.toggle("activa", estado[ej].activo);
+      fila.querySelectorAll("[data-niv]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.niv.split("|")[1] === estado[ej].nivel));
+      fila.querySelectorAll("[data-valor]").forEach((o) => (o.textContent = estado[ej][o.dataset.valor.split("|")[1]]));
+    };
+    app.querySelectorAll("[data-activo]").forEach((c) => (c.onchange = () => { estado[c.dataset.activo].activo = c.checked; refrescar(c.dataset.activo); }));
+    app.querySelectorAll("[data-niv]").forEach((b) => (b.onclick = () => { const [ej, n] = b.dataset.niv.split("|"); estado[ej].nivel = n; refrescar(ej); }));
+    app.querySelectorAll("[data-menos]").forEach((b) => (b.onclick = () => { const [ej, c] = b.dataset.menos.split("|"); estado[ej][c] = Math.max(1, estado[ej][c] - 1); refrescar(ej); }));
+    app.querySelectorAll("[data-mas]").forEach((b) => (b.onclick = () => { const [ej, c, max] = b.dataset.mas.split("|"); estado[ej][c] = Math.min(+max, estado[ej][c] + 1); refrescar(ej); }));
+    document.getElementById("guardar-plan").onclick = async (ev) => {
+      const items = lista.filter((e) => estado[e.nombre].activo).map((e) => ({ ejercicio: e.nombre, ...estado[e.nombre], activo: undefined }));
+      ev.target.disabled = true;
+      try {
+        await api(`/api/fisio/pacientes/${id}/plan`, { method: "PUT", body: JSON.stringify({ plan: items }) });
+        aviso(items.length ? `✅ Plan guardado: ${items.length} ${items.length === 1 ? "ejercicio" : "ejercicios"}` : "Plan vaciado");
+        fisioPaciente(id, "plan");
+      } catch (e) { aviso(e.message); ev.target.disabled = false; }
+    };
+    document.getElementById("borrar").onclick = () => hojaBorrarPaciente(id, nombre);
+    app.querySelectorAll("[data-tab]").forEach((b) => (b.onclick = () => ir(() => fisioPaciente(id, b.dataset.tab), { reemplazar: true })));
+  });
+}
+
+function hojaBorrarPaciente(id, nombre) {
+  abrirHoja(`<h2>Borrar a ${esc(nombre)}</h2>
+    <p class="privacidad-txt">Se borrarán <b>para siempre</b> su cuenta, sus sesiones, su plan, sus informes y sus vídeos. No se puede deshacer.</p>
+    <form id="f-borrar" novalidate>
+      <div class="campo"><label for="b-nombre">Escribe <b>${esc(nombre)}</b> para confirmar</label><input id="b-nombre" autocomplete="off"></div>
+      <p class="error" id="b-err"></p>
+      <div class="fila-btns"><button class="btn peligro" type="submit">Borrar definitivamente</button>
+        <button class="btn fantasma" type="button" data-cerrar>Cancelar</button></div>
+    </form>`, (hoja) => {
+    hoja.querySelector("#f-borrar").onsubmit = async (e) => {
+      e.preventDefault();
+      try {
+        await api(`/api/fisio/pacientes/${id}`, { method: "DELETE", body: JSON.stringify({ confirmacion: hoja.querySelector("#b-nombre").value }) });
+        cerrarHoja(); aviso(`${nombre} y todos sus datos se han borrado`); inicio(() => fisioInicio());
+      } catch (err) { hoja.querySelector("#b-err").textContent = err.message; }
+    };
+  });
+}
+
 async function hojaSerie(id, s) {
   abrirHoja(`<div class="cargando">Buscando informe…</div>`);
   try {
@@ -578,7 +845,9 @@ const sesion = leer("sesion");
 if (sesion && sesion.token) {
   S.token = sesion.token; S.usuario = sesion;
   // Comprueba que la sesión sigue siendo válida (el servidor puede haberse reiniciado)
-  api(sesion.rol === "fisio" ? "/api/fisio/pacientes" : "/api/mi-historial").then(entrar).catch(() => inicio(pantallaLogin));
+  api(sesion.rol === "fisio" ? "/api/fisio/pacientes" : "/api/consentimiento")
+    .then((r) => (sesion.rol === "paciente" && !r.aceptado ? inicio(pantallaConsentimiento) : entrar()))
+    .catch(() => inicio(pantallaLogin));
 } else {
   inicio(pantallaLogin);
 }

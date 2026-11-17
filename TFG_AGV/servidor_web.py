@@ -11,6 +11,7 @@ Uso:
 """
 import argparse
 import asyncio
+import datetime
 import io
 import json
 import os
@@ -27,6 +28,7 @@ from fastapi.staticfiles import StaticFiles
 
 import database
 import ejercicios
+from adherencia import plan_de_hoy, resumen_adherencia
 from config import directorio_datos
 from informes import buscar_informe_y_video
 from motor import SesionEjercicio
@@ -35,6 +37,9 @@ RAIZ = os.path.dirname(os.path.abspath(__file__))
 CARPETA_WEB = os.path.join(RAIZ, "web")
 CARPETA_CERTS = os.path.join(RAIZ, "certs")
 NIVELES = ("principiante", "intermedio", "avanzado")
+# Versión del texto de consentimiento (web/privacidad.html). Si cambia el texto, se sube la versión
+# y a cada paciente se le vuelve a pedir que lo acepte.
+VERSION_CONSENTIMIENTO = "2026-11"
 
 app = FastAPI(title="TeleRehab IA", docs_url=None, redoc_url=None)
 
@@ -68,9 +73,14 @@ async def login(request: Request):
     token = secrets.token_urlsafe(24)
     if rol == "fisio":
         _SESIONES[token] = {"rol": "fisio", "id": None, "nombre": "Fisioterapeuta"}
-    else:
-        _SESIONES[token] = {"rol": "paciente", "id": info[0], "nombre": info[1]}
-    return {"token": token, **_SESIONES[token]}
+        return {"token": token, **_SESIONES[token]}
+    _SESIONES[token] = {"rol": "paciente", "id": info[0], "nombre": info[1]}
+    return {"token": token, **_SESIONES[token], "consentimiento": _consentimiento_vigente(info[0])}
+
+
+def _consentimiento_vigente(paciente_id):
+    fila = database.obtener_consentimiento(paciente_id)
+    return bool(fila and fila[0] == VERSION_CONSENTIMIENTO)
 
 
 @app.post("/api/logout")
@@ -124,6 +134,75 @@ async def mi_progreso(request: Request, ejercicio: str):
     return await run_in_threadpool(_png_progreso, usuario["id"], ejercicio)
 
 
+@app.get("/api/mi-plan")
+async def mi_plan(request: Request):
+    """Plan que ha recetado el fisio, con lo que lleva hecho hoy y esta semana."""
+    usuario = _usuario(request, "paciente")
+    historial = _historial_json(usuario["id"])
+    plan = database.obtener_plan(usuario["id"])
+    return {"plan": plan_de_hoy(plan, historial), **resumen_adherencia(plan, historial)}
+
+
+@app.post("/api/mi-password")
+async def mi_password(request: Request):
+    usuario = _usuario(request, "paciente")
+    d = await request.json()
+    nueva = d.get("nueva") or ""
+    if database.autenticar(usuario["nombre"], d.get("actual"))[0] != "paciente":
+        raise HTTPException(400, "La contraseña actual no es correcta")
+    if len(nueva) < 6:
+        raise HTTPException(400, "La nueva contraseña debe tener al menos 6 caracteres")
+    if nueva != d.get("nueva2"):
+        raise HTTPException(400, "Las contraseñas no coinciden")
+    database.cambiar_password_paciente(usuario["id"], nueva)
+    return {"ok": True}
+
+
+# ─── Protección de datos (RGPD) ───────────────────────────────────────────────
+
+@app.get("/api/consentimiento")
+async def ver_consentimiento(request: Request):
+    usuario = _usuario(request, "paciente")
+    fila = database.obtener_consentimiento(usuario["id"])
+    return {"version_actual": VERSION_CONSENTIMIENTO, "aceptado": _consentimiento_vigente(usuario["id"]),
+            "fecha": fila[1] if fila else None}
+
+
+@app.post("/api/consentimiento")
+async def aceptar_consentimiento(request: Request):
+    usuario = _usuario(request, "paciente")
+    d = await request.json()
+    if d.get("version") != VERSION_CONSENTIMIENTO or d.get("acepto") is not True:
+        raise HTTPException(400, "Debes aceptar la versión vigente del consentimiento")
+    database.registrar_consentimiento(usuario["id"], VERSION_CONSENTIMIENTO)
+    return {"ok": True}
+
+
+@app.delete("/api/consentimiento")
+async def retirar_consentimiento(request: Request):
+    """El paciente retira el consentimiento: no se graban más series hasta que lo vuelva a aceptar."""
+    usuario = _usuario(request, "paciente")
+    database.retirar_consentimiento(usuario["id"])
+    return {"ok": True}
+
+
+@app.get("/api/mis-datos")
+async def mis_datos(request: Request):
+    """Derecho de acceso y portabilidad: todos los datos del paciente en JSON."""
+    usuario = _usuario(request, "paciente")
+    fila = database.obtener_consentimiento(usuario["id"])
+    datos = {
+        "paciente": usuario["nombre"],
+        "exportado": datetime.datetime.now().isoformat(timespec="seconds"),
+        "consentimiento": {"version": fila[0], "fecha": fila[1]} if fila else None,
+        "plan": database.obtener_plan(usuario["id"]),
+        "sesiones": _historial_json(usuario["id"]),
+    }
+    nombre_fichero = f"mis_datos_telerehab_{usuario['id']}.json"
+    return Response(json.dumps(datos, ensure_ascii=False, indent=2), media_type="application/json",
+                    headers={"Content-Disposition": f'attachment; filename="{nombre_fichero}"'})
+
+
 # ──────────────────────────────────────────────────────────────────────────────
 # FISIOTERAPEUTA
 # ──────────────────────────────────────────────────────────────────────────────
@@ -133,9 +212,11 @@ async def fisio_pacientes(request: Request):
     _usuario(request, "fisio")
     resultado = []
     for pid, nombre, edad in database.obtener_pacientes():
-        historial = database.obtener_historial_paciente(pid)
+        historial = _historial_json(pid)
+        plan = database.obtener_plan(pid)
         resultado.append({"id": pid, "nombre": nombre, "edad": edad, "series": len(historial),
-                          "ultima": historial[0][0] if historial else None})
+                          "ultima": historial[0]["fecha"] if historial else None,
+                          "en_plan": len(plan), **resumen_adherencia(plan, historial)})
     return resultado
 
 
@@ -166,7 +247,59 @@ async def fisio_nuevo_paciente(request: Request):
 @app.get("/api/fisio/pacientes/{paciente_id}/historial")
 async def fisio_historial(request: Request, paciente_id: int):
     _usuario(request, "fisio")
-    return {"nombre": database.obtener_nombre_paciente(paciente_id), "sesiones": _historial_json(paciente_id)}
+    historial = _historial_json(paciente_id)
+    plan = database.obtener_plan(paciente_id)
+    consentimiento = database.obtener_consentimiento(paciente_id)
+    return {"nombre": database.obtener_nombre_paciente(paciente_id), "sesiones": historial,
+            "plan": plan_de_hoy(plan, historial), **resumen_adherencia(plan, historial),
+            "consentimiento": {"version": consentimiento[0], "fecha": consentimiento[1],
+                               "vigente": consentimiento[0] == VERSION_CONSENTIMIENTO} if consentimiento else None}
+
+
+def _paciente_existe(paciente_id):
+    if not any(pid == paciente_id for pid, _, _ in database.obtener_pacientes()):
+        raise HTTPException(404, "Paciente no encontrado")
+
+
+@app.put("/api/fisio/pacientes/{paciente_id}/plan")
+async def fisio_guardar_plan(request: Request, paciente_id: int):
+    """El fisio receta el plan: lista de {ejercicio, nivel, series (1-10), dias_semana (1-7)}."""
+    _usuario(request, "fisio")
+    _paciente_existe(paciente_id)
+    items = (await request.json()).get("plan")
+    if not isinstance(items, list):
+        raise HTTPException(400, "Formato de plan no válido")
+    limpios, vistos = [], set()
+    for i in items:
+        ej, nivel = i.get("ejercicio"), i.get("nivel")
+        try:
+            series, dias = int(i.get("series")), int(i.get("dias_semana"))
+        except (TypeError, ValueError):
+            raise HTTPException(400, "Series y días deben ser números")
+        if ej not in ejercicios.POR_NOMBRE or nivel not in NIVELES or ej in vistos:
+            raise HTTPException(400, f"Ejercicio o nivel no válido: {ej}")
+        if not (1 <= series <= 10 and 1 <= dias <= 7):
+            raise HTTPException(400, "Series entre 1 y 10, días por semana entre 1 y 7")
+        vistos.add(ej)
+        limpios.append({"ejercicio": ej, "nivel": nivel, "series": series, "dias_semana": dias})
+    database.guardar_plan(paciente_id, limpios)
+    return {"ok": True, "plan": limpios}
+
+
+@app.delete("/api/fisio/pacientes/{paciente_id}")
+async def fisio_borrar_paciente(request: Request, paciente_id: int):
+    """Derecho de supresión: borra al paciente con todas sus sesiones, informes y vídeos."""
+    _usuario(request, "fisio")
+    d = await request.json()
+    nombre = database.obtener_nombre_paciente(paciente_id)
+    _paciente_existe(paciente_id)
+    if (d.get("confirmacion") or "").strip().lower() != nombre.lower():
+        raise HTTPException(400, "Escribe el nombre del paciente para confirmar")
+    await run_in_threadpool(database.borrar_paciente, paciente_id)
+    # Cierra las sesiones abiertas de ese paciente
+    for token in [t for t, u in _SESIONES.items() if u["rol"] == "paciente" and u["id"] == paciente_id]:
+        _SESIONES.pop(token, None)
+    return {"ok": True}
 
 
 @app.get("/api/fisio/pacientes/{paciente_id}/progreso.png")
@@ -239,6 +372,11 @@ async def ws_serie(ws: WebSocket, token: str = Query(...), ejercicio: str = Quer
         await ws.send_text(json.dumps({"estado": "error", "mensaje": "Sesión no válida"}))
         await ws.close()
         return
+    if not _consentimiento_vigente(usuario["id"]):
+        # Sin consentimiento no se analiza ni se graba nada
+        await ws.send_text(json.dumps({"estado": "error", "mensaje": "Antes de grabar tienes que aceptar el consentimiento"}))
+        await ws.close()
+        return
 
     sesion = await run_in_threadpool(SesionEjercicio, ejercicio, nivel, usuario["id"], usuario["nombre"])
     estado = "en_curso"
@@ -278,6 +416,17 @@ app.mount("/static", StaticFiles(directory=CARPETA_WEB), name="static")
 @app.get("/")
 async def inicio():
     return FileResponse(os.path.join(CARPETA_WEB, "index.html"), headers={"Cache-Control": "no-cache"})
+
+
+@app.get("/privacidad")
+async def privacidad():
+    return FileResponse(os.path.join(CARPETA_WEB, "privacidad.html"), headers={"Cache-Control": "no-cache"})
+
+
+@app.get("/salud")
+async def salud():
+    """Comprobación para el servidor en la nube (health check)."""
+    return {"ok": True}
 
 
 @app.get("/sw.js")

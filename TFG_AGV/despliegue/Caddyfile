@@ -1,0 +1,12 @@
+# Caddy consigue y renueva solo el certificado HTTPS (Let's Encrypt).
+# Sustituye app.tudominio.es por tu dominio real.
+app.tudominio.es {
+	encode gzip
+	reverse_proxy app:8000
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "same-origin"
+		Permissions-Policy "camera=(self), microphone=()"
+	}
+}

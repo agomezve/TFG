@@ -206,4 +206,68 @@ h1, h2, h3 { margin: 0; line-height: 1.2; }
 .buscador { width: 100%; min-height: 46px; padding: 10px 14px; border-radius: 12px; border: 1px solid var(--borde); background: var(--superficie); margin-bottom: 12px; outline: none; }
 .cargando { display: grid; place-items: center; padding: 50px; color: var(--texto-2); }
 
+/* ── Plan de hoy (paciente) ────────────────────────────── */
+.progreso { display: block; height: 8px; border-radius: 99px; background: var(--superficie-2); overflow: hidden; }
+.progreso i { display: block; height: 100%; border-radius: inherit; background: var(--acento); transition: width .3s; }
+.semana { display: flex; align-items: center; gap: 14px; }
+.semana .anillo {
+  --p: 0; width: 64px; height: 64px; flex: none; border-radius: 50%; display: grid; place-items: center;
+  background: conic-gradient(var(--acento) calc(var(--p) * 1%), var(--superficie-2) 0);
+}
+.semana .anillo b { width: 50px; height: 50px; border-radius: 50%; background: var(--superficie); display: grid; place-items: center; font-size: 15px; font-variant-numeric: tabular-nums; }
+.semana p { margin: 2px 0 0; color: var(--texto-2); font-size: 14px; }
+.item.hecho { border-color: rgba(34, 197, 94, .45); }
+.item.hecho .emoji { background: rgba(34, 197, 94, .15); }
+.item .txt .progreso { margin-top: 8px; }
+.receta { font-size: 14px; color: var(--texto-2); margin: 12px 0 0; }
+
+/* ── Alertas y adherencia (fisio) ──────────────────────── */
+.atencion { display: grid; gap: 8px; }
+.aviso-pac {
+  display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; padding: 12px 14px;
+  border-radius: 14px; border: 1px solid var(--borde); background: var(--superficie); color: var(--texto);
+}
+.aviso-pac .punto { width: 10px; height: 10px; border-radius: 50%; flex: none; background: var(--ambar); }
+.aviso-pac.alta .punto { background: var(--rojo); }
+.aviso-pac.info .punto { background: var(--azul); }
+.aviso-pac .txt { flex: 1; min-width: 0; font-size: 14px; }
+.aviso-pac .txt b { display: block; font-size: 15px; }
+.aviso-pac .txt span { color: var(--texto-2); }
+.adh { font-size: 12px; font-weight: 700; padding: 4px 8px; border-radius: 99px; flex: none; background: var(--superficie-2); color: var(--texto-2); font-variant-numeric: tabular-nums; }
+.adh.ok { background: rgba(34, 197, 94, .15); color: #86EFAC; }
+.adh.media { background: rgba(245, 158, 11, .15); color: #FCD34D; }
+.adh.baja { background: rgba(239, 68, 68, .15); color: #FCA5A5; }
+
+/* ── Editor del plan (fisio) ───────────────────────────── */
+.fila-plan { background: var(--superficie); border: 1px solid var(--borde); border-radius: 16px; padding: 12px 14px; }
+.fila-plan.activa { border-color: rgba(34, 197, 94, .5); }
+.fila-plan .cab { display: flex; align-items: center; gap: 12px; }
+.fila-plan .cab b { flex: 1; }
+.fila-plan .ajustes { display: grid; gap: 10px; margin-top: 12px; }
+.fila-plan:not(.activa) .ajustes { display: none; }
+.interruptor { position: relative; width: 50px; height: 30px; flex: none; }
+.interruptor input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; z-index: 1; }
+.interruptor span { position: absolute; inset: 0; border-radius: 99px; background: var(--superficie-2); border: 1px solid var(--borde); transition: background .15s; }
+.interruptor span::after { content: ""; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: var(--texto-2); transition: transform .15s, background .15s; }
+.interruptor input:checked + span { background: var(--acento-osc); border-color: var(--acento); }
+.interruptor input:checked + span::after { transform: translateX(20px); background: #fff; }
+.interruptor input:focus-visible + span { box-shadow: 0 0 0 3px rgba(59, 130, 246, .4); }
+.contador { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 14px; color: var(--texto-2); }
+.contador .ctrl { display: flex; align-items: center; gap: 4px; background: var(--superficie-2); border-radius: 12px; padding: 3px; }
+.contador .ctrl button { width: 38px; height: 34px; border: 0; border-radius: 9px; background: transparent; font-size: 18px; color: var(--texto); }
+.contador .ctrl button:active { background: var(--borde); }
+.contador .ctrl output { min-width: 28px; text-align: center; font-weight: 700; color: var(--texto); font-variant-numeric: tabular-nums; }
+.segmentado.peq button { min-height: 36px; font-size: 13px; }
+
+/* ── Privacidad ────────────────────────────────────────── */
+.privacidad-txt { font-size: 14px; color: var(--texto-2); }
+.privacidad-txt ul { padding-left: 18px; margin: 8px 0; }
+.privacidad-txt li { margin-bottom: 6px; }
+.enlace { color: #93C5FD; }
+.check { display: flex; gap: 12px; align-items: flex-start; padding: 14px; border-radius: 14px; background: var(--superficie); border: 1px solid var(--borde); margin: 14px 0; font-size: 15px; }
+.check input { width: 22px; height: 22px; flex: none; margin: 1px 0 0; accent-color: var(--acento); }
+.zona-peligro { margin-top: 28px; padding-top: 18px; border-top: 1px solid var(--borde); }
+.zona-peligro p { font-size: 13px; color: var(--texto-2); margin: 0 0 10px; }
+.btn.borde-rojo { background: transparent; border: 1px solid rgba(239, 68, 68, .5); color: #FCA5A5; }
+
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }

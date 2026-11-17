@@ -71,6 +71,29 @@ def init_db():
             )
         ''')
 
+        # Plan de ejercicios que receta el fisioterapeuta a cada paciente (una fila por ejercicio)
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS planes (
+                paciente_id INTEGER NOT NULL,
+                ejercicio TEXT NOT NULL,
+                nivel TEXT NOT NULL,
+                series INTEGER NOT NULL DEFAULT 3,
+                dias_semana INTEGER NOT NULL DEFAULT 3,
+                actualizado TEXT,
+                PRIMARY KEY (paciente_id, ejercicio),
+                FOREIGN KEY(paciente_id) REFERENCES pacientes(id)
+            )
+        ''')
+        # Consentimiento informado del paciente (RGPD): versión del texto aceptado y fecha
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS consentimientos (
+                paciente_id INTEGER PRIMARY KEY,
+                version TEXT NOT NULL,
+                fecha TEXT NOT NULL,
+                FOREIGN KEY(paciente_id) REFERENCES pacientes(id)
+            )
+        ''')
+
         # Migración: columna de contraseña (las BBDD del TFG no la tenían)
         columnas = [fila[1] for fila in cursor.execute("PRAGMA table_info(pacientes)")]
         if "password_hash" not in columnas:
@@ -181,6 +204,77 @@ def cambiar_password_fisio(nueva_password):
     with _conexion() as conn:
         conn.execute("INSERT OR REPLACE INTO ajustes (clave, valor) VALUES ('fisio_password_hash', ?)",
                      (generar_hash(nueva_password),))
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# PLAN DE EJERCICIOS (lo receta el fisioterapeuta)
+# ──────────────────────────────────────────────────────────────────────────────
+
+def obtener_plan(paciente_id):
+    """Lista de dicts {ejercicio, nivel, series, dias_semana} del plan del paciente."""
+    with _conexion() as conn:
+        filas = conn.execute(
+            "SELECT ejercicio, nivel, series, dias_semana, actualizado FROM planes WHERE paciente_id = ? ORDER BY rowid",
+            (paciente_id,)).fetchall()
+    return [{"ejercicio": e, "nivel": n, "series": s, "dias_semana": d, "actualizado": a} for e, n, s, d, a in filas]
+
+
+def guardar_plan(paciente_id, items):
+    """Sustituye el plan del paciente por `items` (lista de dicts con ejercicio, nivel, series, dias_semana)."""
+    ahora = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    with _conexion() as conn:
+        conn.execute("DELETE FROM planes WHERE paciente_id = ?", (paciente_id,))
+        conn.executemany(
+            "INSERT INTO planes (paciente_id, ejercicio, nivel, series, dias_semana, actualizado) VALUES (?, ?, ?, ?, ?, ?)",
+            [(paciente_id, i["ejercicio"], i["nivel"], int(i["series"]), int(i["dias_semana"]), ahora) for i in items])
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# PROTECCIÓN DE DATOS (RGPD)
+# ──────────────────────────────────────────────────────────────────────────────
+
+def obtener_consentimiento(paciente_id):
+    """Devuelve (version, fecha) del consentimiento aceptado, o None."""
+    with _conexion() as conn:
+        return conn.execute("SELECT version, fecha FROM consentimientos WHERE paciente_id = ?", (paciente_id,)).fetchone()
+
+
+def registrar_consentimiento(paciente_id, version):
+    ahora = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    with _conexion() as conn:
+        conn.execute("INSERT OR REPLACE INTO consentimientos (paciente_id, version, fecha) VALUES (?, ?, ?)",
+                     (paciente_id, version, ahora))
+
+
+def retirar_consentimiento(paciente_id):
+    with _conexion() as conn:
+        conn.execute("DELETE FROM consentimientos WHERE paciente_id = ?", (paciente_id,))
+
+
+def borrar_paciente(paciente_id):
+    """Borra el paciente con TODAS sus sesiones, plan, consentimiento, informes y vídeos.
+
+    Devuelve el nombre del paciente borrado (o None si no existía).
+    """
+    import shutil
+    from config import nombre_carpeta_paciente
+    with _conexion() as conn:
+        fila = conn.execute("SELECT nombre FROM pacientes WHERE id = ?", (paciente_id,)).fetchone()
+        if not fila:
+            return None
+        nombre = fila[0]
+        # ¿Hay otro paciente con la misma carpeta? (nombres repetidos de BBDD antiguas): entonces no se toca
+        otros = [n for (n,) in conn.execute("SELECT nombre FROM pacientes WHERE id != ?", (paciente_id,))]
+        for tabla in ("sesiones", "planes", "consentimientos"):
+            conn.execute(f"DELETE FROM {tabla} WHERE paciente_id = ?", (paciente_id,))
+        conn.execute("DELETE FROM pacientes WHERE id = ?", (paciente_id,))
+    carpeta = nombre_carpeta_paciente(nombre)
+    if carpeta and all(nombre_carpeta_paciente(o) != carpeta for o in otros):
+        ruta = os.path.join(directorio_datos(), "usuarios", carpeta)
+        if os.path.isdir(ruta):
+            shutil.rmtree(ruta)
+    exportar_bbdd_texto()
+    return nombre
 
 
 # ──────────────────────────────────────────────────────────────────────────────

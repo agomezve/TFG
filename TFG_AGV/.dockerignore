@@ -1,0 +1,22 @@
+# Nada de datos reales ni pesados dentro de la imagen
+TFG/
+.venv/
+__pycache__/
+**/__pycache__/
+*.pyc
+pacientes.db
+base_de_datos.txt
+usuarios/
+datos_demo/
+datos_prueba/
+certs/
+videos/
+tests/
+presentacion/
+*.MOV
+*.mov
+*.docx
+*.pdf
+*.aiff
+tfg_temp.txt
+preguntas_tribunal.md

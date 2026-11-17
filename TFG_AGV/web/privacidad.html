@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0E1116">
+  <title>Privacidad · TeleRehab IA</title>
+  <link rel="icon" href="/static/icono.svg" type="image/svg+xml">
+  <style>
+    :root { --fondo: #0E1116; --superficie: #171B22; --borde: #2A3140; --texto: #EEF2F7; --texto-2: #9AA4B2; --azul: #93C5FD; color-scheme: dark; }
+    body { margin: 0; background: var(--fondo); color: var(--texto); font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    main { max-width: 720px; margin: 0 auto; padding: 28px 16px 60px; }
+    h1 { font-size: 28px; line-height: 1.2; margin: 0 0 6px; }
+    h2 { font-size: 18px; margin: 28px 0 8px; }
+    p, li { color: var(--texto-2); }
+    b, strong { color: var(--texto); }
+    a { color: var(--azul); }
+    .nota { background: var(--superficie); border: 1px solid var(--borde); border-radius: 14px; padding: 14px 16px; margin: 18px 0; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--borde); vertical-align: top; }
+    th { color: var(--texto); }
+    td { color: var(--texto-2); }
+  </style>
+</head>
+<body>
+<main>
+  <p><a href="/">← Volver a la app</a></p>
+  <h1>Política de privacidad</h1>
+  <p>Versión 2026-11 · TeleRehab IA</p>
+
+  <div class="nota">
+    <b>Resumen:</b> TeleRehab IA analiza la imagen de tu cámara para corregir tus ejercicios de rehabilitación.
+    Los datos son de salud y solo los ve tu fisioterapeuta. No se venden ni se usan para publicidad, y puedes
+    descargarlos, retirar el consentimiento o pedir que se borren cuando quieras.
+  </div>
+
+  <h2>1. Responsable del tratamiento</h2>
+  <p>El responsable es el <b>centro o profesional de fisioterapia</b> que te ha dado de alta en la app.
+    TeleRehab IA actúa como <b>encargado del tratamiento</b> por cuenta de ese centro, según el artículo 28 del RGPD.
+    <br><i>[Pendiente: nombre, CIF, dirección y correo de contacto del centro y, en su caso, del Delegado de Protección de Datos.]</i></p>
+
+  <h2>2. Qué datos tratamos</h2>
+  <table>
+    <tr><th>Dato</th><th>Para qué</th></tr>
+    <tr><td>Nombre, edad y notas clínicas que añade tu fisioterapeuta</td><td>Identificarte y adaptar tu plan</td></tr>
+    <tr><td>Imagen de la cámara durante una serie</td><td>Detectar tu postura (33 puntos del cuerpo) y corregirte en tiempo real</td></tr>
+    <tr><td>Vídeo de cada serie</td><td>Que tu fisioterapeuta revise tu técnica</td></tr>
+    <tr><td>Resultados: repeticiones, errores, ángulos e informe</td><td>Seguir tu evolución y tu cumplimiento del plan</td></tr>
+  </table>
+  <p>Son <b>datos de salud</b> (categoría especial, art. 9 RGPD). Los tratamos con tu <b>consentimiento explícito</b>
+    y para la prestación de asistencia sanitaria por parte de tu fisioterapeuta.</p>
+
+  <h2>3. Quién puede verlos</h2>
+  <p>Solo tú y tu fisioterapeuta. Los vídeos de las series solo los ve tu fisioterapeuta. No se ceden a terceros
+    salvo obligación legal. El análisis de imagen se hace en nuestro servidor; no usamos servicios externos de
+    inteligencia artificial ni enviamos tus imágenes fuera.</p>
+
+  <h2>4. Cuánto tiempo se guardan</h2>
+  <p>Mientras dure tu tratamiento y, después, el tiempo que obligue la normativa sanitaria sobre historia clínica.
+    Cuando pidas su supresión y no haya obligación legal de conservarlos, se borran definitivamente (cuenta, sesiones,
+    informes y vídeos).</p>
+
+  <h2>5. Tus derechos</h2>
+  <ul>
+    <li><b>Acceso y portabilidad:</b> en la app, <i>Mi cuenta → Privacidad y mis datos → Descargar mis datos</i>.</li>
+    <li><b>Retirar el consentimiento:</b> en el mismo sitio. A partir de ese momento no se graban más series.</li>
+    <li><b>Supresión, rectificación, oposición y limitación:</b> pídeselo a tu fisioterapeuta; puede borrar tu cuenta y todos tus datos desde su panel.</li>
+    <li>Si crees que no se respetan tus derechos, puedes reclamar ante la <a href="https://www.aepd.es" target="_blank" rel="noopener">Agencia Española de Protección de Datos</a>.</li>
+  </ul>
+
+  <h2>6. Seguridad</h2>
+  <p>Conexión cifrada (HTTPS), contraseñas guardadas con hash (PBKDF2, nunca en texto plano), acceso por roles
+    (paciente / fisioterapeuta) y servidor alojado en la Unión Europea.</p>
+
+  <h2>7. Aviso importante</h2>
+  <p>TeleRehab IA es una herramienta de apoyo al ejercicio terapéutico supervisado por un profesional. No sustituye
+    la valoración de tu fisioterapeuta. Si sientes dolor durante un ejercicio, para y consúltale.</p>
+</main>
+</body>
+</html>

@@ -1,0 +1,28 @@
+# Despliegue en un servidor propio (VPS en la UE) con HTTPS automático.
+# 1) Apunta tu dominio (registro A) a la IP del servidor.
+# 2) Cambia DOMINIO abajo y en Caddyfile.
+# 3) docker compose up -d --build
+services:
+  app:
+    build: ..
+    restart: unless-stopped
+    volumes:
+      - datos:/datos
+    expose:
+      - "8000"
+
+  caddy:
+    image: caddy:2.8
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_datos:/data
+    depends_on:
+      - app
+
+volumes:
+  datos:
+  caddy_datos:

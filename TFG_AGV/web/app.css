@@ -271,3 +271,30 @@ h1, h2, h3 { margin: 0; line-height: 1.2; }
 .btn.borde-rojo { background: transparent; border: 1px solid rgba(239, 68, 68, .5); color: #FCA5A5; }
 
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+
+/* ── Clínicas, métricas del piloto, informe PDF e invitaciones ── */
+a.btn, a.btn-icono { text-decoration: none; }
+a.btn { display: flex; align-items: center; justify-content: center; }
+.acciones-cab { display: flex; gap: 8px; }
+.clinica { margin: 4px 2px 8px; color: var(--texto-2); font-size: 14px; font-weight: 550; }
+.ayuda { font-size: 13px; color: var(--texto-2); margin: 6px 2px 10px; line-height: 1.45; }
+.tarjeta.acceso { display: flex; align-items: center; gap: 12px; margin-top: 22px; }
+.tarjeta.acceso p { margin: 4px 0 0; font-size: 13px; color: var(--texto-2); line-height: 1.4; }
+.tarjeta.acceso .btn { width: auto; flex: none; min-height: 44px; padding: 0 16px; }
+.qr { display: block; width: 220px; height: 220px; margin: 14px auto; border-radius: 14px; background: #fff; }
+.enlace-inv { width: 100%; font: 13px ui-monospace, SFMono-Regular, Menlo, monospace; padding: 10px 12px; border-radius: 12px;
+  border: 1px solid var(--borde); background: var(--superficie-2); color: var(--texto); }
+.comparativa { display: grid; grid-template-columns: 96px 1fr; align-items: center; gap: 10px; margin: 8px 0; font-size: 13px; color: var(--texto-2); }
+.barra-h { position: relative; height: 26px; border-radius: 8px; background: var(--superficie-2); overflow: hidden; }
+.barra-h span { position: absolute; inset: 0 auto 0 0; border-radius: 8px; }
+.barra-h.antes span { background: rgba(154, 164, 178, .45); }
+.barra-h.despues span { background: var(--acento); }
+.barra-h b { position: relative; display: block; line-height: 26px; padding-left: 10px; font-size: 13px; color: var(--texto); font-variant-numeric: tabular-nums; }
+.tabla-wrap { padding: 4px 8px; overflow-x: auto; }
+.tabla-met { width: 100%; border-collapse: collapse; font-size: 14px; }
+.tabla-met th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--texto-2); font-weight: 650; padding: 10px 6px; }
+.tabla-met td { padding: 10px 6px; border-top: 1px solid var(--borde); vertical-align: middle; font-variant-numeric: tabular-nums; }
+.tabla-met td small { display: block; color: var(--texto-2); font-size: 12px; margin-top: 2px; }
+.mejora { font-weight: 700; }
+.mejora.sube { color: #86EFAC; }
+.mejora.baja { color: #FCA5A5; }

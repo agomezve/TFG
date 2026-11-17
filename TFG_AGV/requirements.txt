@@ -7,4 +7,5 @@ customtkinter==5.2.2      # Interfaz gráfica de escritorio
 pillow==12.2.0            # Conversión de fotogramas para la interfaz
 matplotlib==3.10.9        # Gráficas de progreso en el panel del fisioterapeuta
 fastapi==0.115.6          # Servidor de la app móvil (API + WebSocket)
+segno==1.6.6              # Códigos QR de invitación (Python puro, sin dependencias)
 uvicorn[standard]==0.32.1 # Servidor ASGI (incluye websockets)

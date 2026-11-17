@@ -587,7 +587,8 @@ async function fisioInicio() {
   pintar(`<div class="cargando">Cargando…</div>`);
   let pacientes;
   try { pacientes = await api("/api/fisio/pacientes"); } catch (e) { return pintar(`<div class="vacio">${esc(e.message)}</div>`); }
-  const ajustes = `<button class="btn-icono" id="ajustes" aria-label="Ajustes">⚙︎</button>`;
+  const ajustes = `<span class="acciones-cab"><button class="btn-icono" id="metricas" aria-label="Resultados del piloto">📊</button>
+    <button class="btn-icono" id="ajustes" aria-label="Ajustes">⚙︎</button></span>`;
   const activos = pacientes.filter((p) => p.ultima && p.ultima.slice(0, 10) >= new Date(Date.now() - 7 * 864e5).toISOString().slice(0, 10)).length;
   const conPlan = pacientes.filter((p) => p.adherencia != null);
   const adhMedia = conPlan.length ? Math.round(conPlan.reduce((a, p) => a + p.adherencia, 0) / conPlan.length) : null;
@@ -596,6 +597,7 @@ async function fisioInicio() {
   const atencion = pacientes.filter((p) => urgencia(p) < 2).sort((a, b) => urgencia(a) - urgencia(b));
   pintar(`<main class="pantalla">${cabecera("Mis pacientes", { atras: false, derecha: ajustes })}
     <div class="contenido sin-tabs">
+      ${S.usuario.clinica ? `<p class="clinica">🏥 ${esc(S.usuario.clinica)}</p>` : ""}
       <div class="kpis" style="margin:6px 0 4px">
         <div class="kpi"><b>${pacientes.length}</b><span>pacientes</span></div>
         <div class="kpi"><b>${activos}</b><span>activos esta semana</span></div>
@@ -629,6 +631,7 @@ async function fisioInicio() {
     document.getElementById("buscar").oninput = (e) => pintarLista(e.target.value);
     document.getElementById("nuevo").onclick = hojaNuevoPaciente;
     document.getElementById("ajustes").onclick = hojaAjustesFisio;
+    document.getElementById("metricas").onclick = () => ir(fisioMetricas);
   });
 }
 
@@ -645,9 +648,10 @@ function hojaNuevoPaciente() {
       <div class="campo"><label for="n-edad">Edad</label><input id="n-edad" inputmode="numeric" pattern="[0-9]*"></div>
       <div class="campo"><label for="n-notas">Lesión / notas</label><textarea id="n-notas" placeholder="p. ej. Prótesis de rodilla derecha"></textarea></div>
       <div class="dos-col">
-        <div class="campo"><label for="n-p1">Contraseña</label><input id="n-p1" type="password" autocomplete="new-password"></div>
+        <div class="campo"><label for="n-p1">Contraseña</label><input id="n-p1" type="password" autocomplete="new-password" placeholder="Opcional"></div>
         <div class="campo"><label for="n-p2">Repetir</label><input id="n-p2" type="password" autocomplete="new-password"></div>
       </div>
+      <p class="ayuda">Si la dejas vacía, te daremos un enlace y un QR para que el paciente cree la suya desde su móvil.</p>
       <p class="error" id="n-err"></p>
       <div class="fila-btns"><button class="btn" type="submit">Dar de alta</button>
       <button class="btn fantasma" type="button" data-cerrar>Cancelar</button></div>
@@ -663,6 +667,7 @@ function hojaNuevoPaciente() {
         });
         cerrarHoja(); aviso(`✅ ${r.nombre} dado de alta. Ahora asígnale su plan.`);
         ir(() => fisioPaciente(r.id, "plan"));
+        if (r.invitacion) setTimeout(() => hojaInvitacion(r.nombre, r.invitacion), 400);
       } catch (err) { hoja.querySelector("#n-err").textContent = err.message; }
     };
   });
@@ -729,7 +734,7 @@ async function fisioPaciente(id, tab) {
     }).join("")}</div>` : vacio;
   }
 
-  pintar(`<main class="pantalla">${cabecera(nombre)}<div class="contenido">${cuerpo}</div>${pestañas}</main>`, () => {
+  pintar(`<main class="pantalla">${cabecera(nombre, { derecha: botonPdf(id) })}<div class="contenido">${cuerpo}</div>${pestañas}</main>`, () => {
     activarProgreso();
     app.querySelectorAll("[data-tab]").forEach((b) => (b.onclick = () => ir(() => fisioPaciente(id, b.dataset.tab), { reemplazar: true })));
     app.querySelectorAll("[data-serie]").forEach((b) => (b.onclick = () => hojaSerie(id, JSON.parse(b.dataset.serie))));
@@ -766,7 +771,7 @@ async function fisioPlan(id, datos, pestañas) {
   }).join("");
 
   const alertasReales = alertas.filter((a) => a.tipo !== "sin_plan");
-  pintar(`<main class="pantalla">${cabecera(nombre)}<div class="contenido">
+  pintar(`<main class="pantalla">${cabecera(nombre, { derecha: botonPdf(id) })}<div class="contenido">
     ${plan.length ? `<div class="tarjeta semana" style="margin-top:6px">
       <div class="anillo" style="--p:${adherencia ?? 0}"><b>${adherencia ?? 0}%</b></div>
       <div><b>Adherencia al plan</b><p>Series hechas de las recetadas en los últimos 7 días</p></div></div>`
@@ -776,6 +781,10 @@ async function fisioPlan(id, datos, pestañas) {
     <h3 class="seccion-tit">Ejercicios recetados</h3>
     <div class="lista">${filas}</div>
     <div class="pie-fijo" style="bottom:calc(70px + var(--seguro-abajo))"><button class="btn" id="guardar-plan">💾 Guardar plan</button></div>
+    <div class="tarjeta acceso">
+      <div><b>📲 Acceso del paciente</b><p>Envíale un enlace o enséñale el QR para que entre desde su móvil y cree su contraseña.</p></div>
+      <button class="btn secundario" id="invitar">Invitar</button>
+    </div>
     <div class="zona-peligro">
       <h3 class="seccion-tit" style="margin-top:0">Protección de datos</h3>
       <p>${consentimiento ? `Consentimiento ${consentimiento.vigente ? "aceptado" : "de una versión anterior, aceptado"} el ${fechaCorta(consentimiento.fecha)}.` : "El paciente aún no ha aceptado el consentimiento: se le pedirá al entrar en la app."}</p>
@@ -803,6 +812,12 @@ async function fisioPlan(id, datos, pestañas) {
       } catch (e) { aviso(e.message); ev.target.disabled = false; }
     };
     document.getElementById("borrar").onclick = () => hojaBorrarPaciente(id, nombre);
+    document.getElementById("invitar").onclick = async (ev) => {
+      ev.target.disabled = true;
+      try { hojaInvitacion(nombre, await api(`/api/fisio/pacientes/${id}/invitacion`, { method: "POST" })); }
+      catch (e) { aviso(e.message); }
+      ev.target.disabled = false;
+    };
     app.querySelectorAll("[data-tab]").forEach((b) => (b.onclick = () => ir(() => fisioPaciente(id, b.dataset.tab), { reemplazar: true })));
   });
 }
@@ -840,9 +855,127 @@ async function hojaSerie(id, s) {
   } catch (e) { abrirHoja(`<div class="vacio">${esc(e.message)}</div>`); }
 }
 
+
+// ─── Informe PDF ──────────────────────────────────────────────────────────────
+function botonPdf(id) {
+  return `<a class="btn-icono" href="/api/fisio/pacientes/${id}/informe.pdf?token=${encodeURIComponent(S.token)}"
+    target="_blank" rel="noopener" aria-label="Informe PDF" title="Informe PDF">📄</a>`;
+}
+
+// ─── Invitación (enlace + QR) ─────────────────────────────────────────────────
+function hojaInvitacion(nombre, inv) {
+  const enlace = `${location.origin}/#invitacion=${inv.codigo}`;
+  const qr = `/api/fisio/qr.svg?token=${encodeURIComponent(S.token)}&texto=${encodeURIComponent(enlace)}`;
+  const caduca = fechaCorta(inv.caduca);
+  abrirHoja(`<h2>Invitación para ${esc(nombre)}</h2>
+    <p class="privacidad-txt">Que escanee el QR con la cámara del móvil, o mándale el enlace. Entrará en la app y creará su propia contraseña.</p>
+    <img class="qr" src="${qr}" alt="Código QR de la invitación" width="220" height="220">
+    <input class="enlace-inv" id="inv-enlace" value="${esc(enlace)}" readonly aria-label="Enlace de invitación">
+    <p class="ayuda">Válida hasta el ${caduca} y para un solo uso. Si generas otra, esta deja de valer.</p>
+    <div class="fila-btns">
+      <button class="btn" id="inv-compartir">${navigator.share ? "📤 Enviar enlace" : "📋 Copiar enlace"}</button>
+      <button class="btn fantasma" data-cerrar>Cerrar</button>
+    </div>`, (hoja) => {
+    hoja.querySelector("#inv-enlace").onclick = (e) => e.target.select();
+    hoja.querySelector("#inv-compartir").onclick = async () => {
+      const texto = `Hola ${nombre}, este es tu acceso a TeleRehab para hacer en casa los ejercicios que te he pautado:`;
+      if (navigator.share) { try { await navigator.share({ title: "TeleRehab", text: texto, url: enlace }); } catch (_) { } return; }
+      try { await navigator.clipboard.writeText(enlace); aviso("📋 Enlace copiado"); }
+      catch (_) { hoja.querySelector("#inv-enlace").select(); aviso("Selecciona el enlace y cópialo"); }
+    };
+  });
+}
+
+async function pantallaInvitacion(codigo) {
+  pintar(`<div class="cargando">Comprobando invitación…</div>`);
+  let inv;
+  try { inv = await api(`/api/invitacion/${encodeURIComponent(codigo)}`); }
+  catch (e) {
+    return pintar(`<main class="pantalla login"><div class="marca"><img src="/static/icono-192.png" alt=""><h1>TeleRehab IA</h1>
+      <p>${esc(e.message)}</p></div><button class="btn" id="ir-login">Ir a iniciar sesión</button></main>`,
+      () => (document.getElementById("ir-login").onclick = () => inicio(pantallaLogin)));
+  }
+  pintar(`<main class="pantalla login">
+    <div class="marca">
+      <img src="/static/icono-192.png" alt="">
+      <h1>¡Hola, ${esc(inv.nombre)}!</h1>
+      <p>${inv.clinica ? `${esc(inv.clinica)} te ha invitado` : "Tu fisioterapeuta te ha invitado"} a hacer tu rehabilitación en casa con TeleRehab.</p>
+    </div>
+    <form id="f-inv" novalidate>
+      <div class="campo"><label for="i-u">Tu usuario</label>
+        <input id="i-u" name="username" autocomplete="username" value="${esc(inv.nombre)}" readonly></div>
+      <div class="campo"><label for="i-p1">Elige una contraseña</label>
+        <input id="i-p1" type="password" autocomplete="new-password" placeholder="Mínimo 6 caracteres"></div>
+      <div class="campo"><label for="i-p2">Repítela</label>
+        <input id="i-p2" type="password" autocomplete="new-password"></div>
+      <p class="error" id="i-err"></p>
+      <button class="btn" type="submit">Empezar</button>
+    </form>
+  </main>`, () => {
+    document.getElementById("f-inv").onsubmit = async (e) => {
+      e.preventDefault();
+      const btn = e.target.querySelector("button"); btn.disabled = true;
+      try {
+        const r = await api(`/api/invitacion/${encodeURIComponent(codigo)}`, {
+          method: "POST", body: JSON.stringify({ password: document.getElementById("i-p1").value, password2: document.getElementById("i-p2").value }),
+        });
+        S.token = r.token; S.usuario = r; guardar("sesion", r);
+        aviso("✅ Contraseña creada. Guárdala para la próxima vez.");
+        if (!r.consentimiento) inicio(pantallaConsentimiento); else entrar();
+      } catch (err) { document.getElementById("i-err").textContent = err.message; btn.disabled = false; }
+    };
+  });
+}
+
+// ─── Resultados del piloto ────────────────────────────────────────────────────
+async function fisioMetricas() {
+  pintar(`<div class="cargando">Calculando resultados…</div>`);
+  let d;
+  try { d = await api("/api/fisio/metricas"); } catch (e) { return pintar(`<div class="vacio">${esc(e.message)}</div>`); }
+  const r = d.resumen;
+  const pct = (v) => (v == null ? "–" : v + "%");
+  const barra = (v, clase) => `<div class="barra-h ${clase}"><span style="width:${v ?? 0}%"></span><b>${pct(v)}</b></div>`;
+  const filas = d.pacientes.map((p) => `<tr>
+      <td><b>${esc(p.nombre)}</b><small>${p.semanas ? `${p.semanas} sem · ${String(p.dias_por_semana).replace(".", ",")} días/sem` : "sin uso"}</small></td>
+      <td>${p.series}</td><td>${etiquetaAdherencia(p.adherencia)}</td>
+      <td>${p.mejora == null ? "–" : `<span class="mejora ${p.mejora > 0 ? "sube" : p.mejora < 0 ? "baja" : ""}">${p.mejora > 0 ? "+" : ""}${p.mejora}</span>`}</td>
+    </tr>`).join("");
+  pintar(`<main class="pantalla">${cabecera("Resultados del piloto")}
+    <div class="contenido sin-tabs">
+      ${d.clinica ? `<p class="clinica">🏥 ${esc(d.clinica)}</p>` : ""}
+      <div class="kpis" style="margin:6px 0 4px">
+        <div class="kpi"><b>${r.pacientes_activos}/${r.pacientes}</b><span>pacientes activos (7 días)</span></div>
+        <div class="kpi"><b>${pct(r.adherencia_media)}</b><span>adherencia media al plan</span></div>
+        <div class="kpi"><b>${r.dias_por_semana == null ? "–" : String(r.dias_por_semana).replace(".", ",")}</b><span>días de entreno por semana</span></div>
+      </div>
+      <div class="kpis" style="margin:0 0 4px">
+        <div class="kpi"><b>${r.series_totales}</b><span>series analizadas</span></div>
+        <div class="kpi"><b>${r.series_7d}</b><span>series esta semana</span></div>
+        <div class="kpi"><b>${r.pacientes_comparables ? `${r.pacientes_mejoran}/${r.pacientes_comparables}` : "–"}</b><span>mejoran su técnica</span></div>
+      </div>
+      <h3 class="seccion-tit">Técnica: ejecución correcta</h3>
+      <div class="tarjeta">
+        ${r.pacientes_comparables ? `<p class="ayuda" style="margin-top:0">Media de los pacientes con 2 semanas de uso o más (${r.pacientes_comparables}).</p>
+        <div class="comparativa"><span>1.ª semana</span>${barra(r.correcto_inicio, "antes")}</div>
+        <div class="comparativa"><span>Última semana</span>${barra(r.correcto_final, "despues")}</div>`
+        : `<p class="ayuda" style="margin:0">Aparecerá cuando algún paciente lleve 2 semanas usando la app.</p>`}
+      </div>
+      <h3 class="seccion-tit">Por paciente</h3>
+      <div class="tarjeta tabla-wrap"><table class="tabla-met">
+        <thead><tr><th>Paciente</th><th>Series</th><th>Adher.</th><th title="Puntos de % correcto entre la 1.ª y la última semana">Técnica</th></tr></thead>
+        <tbody>${filas || `<tr><td colspan="4">Sin pacientes</td></tr>`}</tbody></table></div>
+      <a class="btn secundario" style="margin-top:14px" href="/api/fisio/metricas.csv?token=${encodeURIComponent(S.token)}" download>⬇️ Descargar datos (CSV para Excel)</a>
+      <p class="ayuda">Úsalo para el informe del piloto. Contiene datos de salud de tus pacientes: guárdalo en un sitio seguro.</p>
+    </div></main>`);
+}
+
 // ─── Arranque ─────────────────────────────────────────────────────────────────
 const sesion = leer("sesion");
-if (sesion && sesion.token) {
+const invitacion = (location.hash.match(/^#invitacion=([\w-]+)/) || [])[1];
+if (invitacion) {
+  history.replaceState(null, "", location.pathname);  // el código no se queda en la barra ni en el historial
+  inicio(() => pantallaInvitacion(invitacion));
+} else if (sesion && sesion.token) {
   S.token = sesion.token; S.usuario = sesion;
   // Comprueba que la sesión sigue siendo válida (el servidor puede haberse reiniciado)
   api(sesion.rol === "fisio" ? "/api/fisio/pacientes" : "/api/consentimiento")

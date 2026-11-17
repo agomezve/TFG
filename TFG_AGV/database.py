@@ -18,6 +18,7 @@ from seguridad import generar_hash, verificar_hash
 # para los pacientes que todavía no tienen una contraseña propia, así nada deja de funcionar.
 CONTRASENA_INICIAL = "12345"
 USUARIO_FISIO = "fisio"
+CLINICA_PRINCIPAL = 1  # la clínica del usuario "fisio" de siempre
 
 
 def __getattr__(nombre):
@@ -94,10 +95,44 @@ def init_db():
             )
         ''')
 
+        # Varias clínicas: cada clínica tiene sus fisioterapeutas y sus pacientes.
+        # La clínica 1 es la de siempre: la del usuario "fisio" y todos los pacientes antiguos.
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS clinicas (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                nombre TEXT NOT NULL,
+                creada TEXT
+            )
+        ''')
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS fisios (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                usuario TEXT NOT NULL UNIQUE COLLATE NOCASE,
+                nombre TEXT,
+                password_hash TEXT NOT NULL,
+                clinica_id INTEGER NOT NULL,
+                FOREIGN KEY(clinica_id) REFERENCES clinicas(id)
+            )
+        ''')
+        if not cursor.execute("SELECT 1 FROM clinicas WHERE id = ?", (CLINICA_PRINCIPAL,)).fetchone():
+            cursor.execute("INSERT INTO clinicas (id, nombre, creada) VALUES (?, 'Clínica principal', ?)",
+                           (CLINICA_PRINCIPAL, datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+        # Invitaciones de un solo uso para que el paciente cree su contraseña (se guarda solo el hash del código)
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS invitaciones (
+                codigo_hash TEXT PRIMARY KEY,
+                paciente_id INTEGER NOT NULL,
+                caduca TEXT NOT NULL,
+                FOREIGN KEY(paciente_id) REFERENCES pacientes(id)
+            )
+        ''')
+
         # Migración: columna de contraseña (las BBDD del TFG no la tenían)
         columnas = [fila[1] for fila in cursor.execute("PRAGMA table_info(pacientes)")]
         if "password_hash" not in columnas:
             cursor.execute("ALTER TABLE pacientes ADD COLUMN password_hash TEXT")
+        if "clinica_id" not in columnas:
+            cursor.execute(f"ALTER TABLE pacientes ADD COLUMN clinica_id INTEGER NOT NULL DEFAULT {CLINICA_PRINCIPAL}")
 
         # Contraseña del fisioterapeuta: se crea con la de siempre y se puede cambiar desde la app
         existe = cursor.execute("SELECT 1 FROM ajustes WHERE clave = 'fisio_password_hash'").fetchone()
@@ -106,22 +141,31 @@ def init_db():
                            ("fisio_password_hash", generar_hash(CONTRASENA_INICIAL)))
 
 
-def crear_paciente(nombre, edad=None, notas="", password=None):
+def crear_paciente(nombre, edad=None, notas="", password=None, clinica_id=CLINICA_PRINCIPAL):
     """Crea un nuevo paciente y retorna su ID. Si se indica contraseña, se guarda con hash."""
     password_hash = generar_hash(password) if password else None
     with _conexion() as conn:
         cursor = conn.cursor()
-        cursor.execute('INSERT INTO pacientes (nombre, edad, notas, password_hash) VALUES (?, ?, ?, ?)',
-                       (nombre, edad, notas, password_hash))
+        cursor.execute('INSERT INTO pacientes (nombre, edad, notas, password_hash, clinica_id) VALUES (?, ?, ?, ?, ?)',
+                       (nombre, edad, notas, password_hash, clinica_id))
         paciente_id = cursor.lastrowid
     exportar_bbdd_texto()
     return paciente_id
 
 
-def obtener_pacientes():
-    """Devuelve una lista de todos los pacientes: (id, nombre, edad)."""
+def obtener_pacientes(clinica_id=None):
+    """Devuelve los pacientes (id, nombre, edad). Todos, o solo los de una clínica."""
     with _conexion() as conn:
-        return conn.execute('SELECT id, nombre, edad FROM pacientes ORDER BY nombre ASC').fetchall()
+        if clinica_id is None:
+            return conn.execute('SELECT id, nombre, edad FROM pacientes ORDER BY nombre ASC').fetchall()
+        return conn.execute('SELECT id, nombre, edad FROM pacientes WHERE clinica_id = ? ORDER BY nombre ASC',
+                            (clinica_id,)).fetchall()
+
+
+def clinica_de_paciente(paciente_id):
+    with _conexion() as conn:
+        fila = conn.execute('SELECT clinica_id FROM pacientes WHERE id = ?', (paciente_id,)).fetchone()
+    return fila[0] if fila else None
 
 
 def obtener_nombre_paciente(paciente_id):
@@ -182,6 +226,14 @@ def autenticar(usuario, password):
                 return "fisio", None
             return None, "Contraseña incorrecta"
 
+        # Fisioterapeutas de otras clínicas (app móvil)
+        fisio = conn.execute("SELECT id, usuario, nombre, password_hash, clinica_id FROM fisios WHERE usuario = ?",
+                             (usuario,)).fetchone()
+        if fisio:
+            if verificar_hash(password, fisio[3]):
+                return "fisio", {"fisio_id": fisio[0], "usuario": fisio[1], "nombre": fisio[2], "clinica_id": fisio[4]}
+            return None, "Contraseña incorrecta"
+
         paciente = conn.execute(
             "SELECT id, nombre, password_hash FROM pacientes WHERE lower(nombre) = lower(?) ORDER BY id LIMIT 1",
             (usuario,)).fetchone()
@@ -200,10 +252,119 @@ def cambiar_password_paciente(paciente_id, nueva_password):
         conn.execute("UPDATE pacientes SET password_hash = ? WHERE id = ?", (generar_hash(nueva_password), paciente_id))
 
 
-def cambiar_password_fisio(nueva_password):
+def cambiar_password_fisio(nueva_password, fisio_id=None):
+    """Cambia la contraseña del fisio de siempre o, si se indica fisio_id, la de un fisio de otra clínica."""
     with _conexion() as conn:
-        conn.execute("INSERT OR REPLACE INTO ajustes (clave, valor) VALUES ('fisio_password_hash', ?)",
-                     (generar_hash(nueva_password),))
+        if fisio_id is None:
+            conn.execute("INSERT OR REPLACE INTO ajustes (clave, valor) VALUES ('fisio_password_hash', ?)",
+                         (generar_hash(nueva_password),))
+        else:
+            conn.execute("UPDATE fisios SET password_hash = ? WHERE id = ?", (generar_hash(nueva_password), fisio_id))
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# CLÍNICAS Y FISIOTERAPEUTAS
+# ──────────────────────────────────────────────────────────────────────────────
+
+def crear_clinica(nombre):
+    with _conexion() as conn:
+        cursor = conn.execute("INSERT INTO clinicas (nombre, creada) VALUES (?, ?)",
+                              (nombre, datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+        return cursor.lastrowid
+
+
+def obtener_clinicas():
+    """Lista de (id, nombre, nº de fisios, nº de pacientes)."""
+    with _conexion() as conn:
+        return conn.execute('''
+            SELECT c.id, c.nombre,
+                   (SELECT COUNT(*) FROM fisios f WHERE f.clinica_id = c.id) + (c.id = ?),
+                   (SELECT COUNT(*) FROM pacientes p WHERE p.clinica_id = c.id)
+            FROM clinicas c ORDER BY c.id''', (CLINICA_PRINCIPAL,)).fetchall()
+
+
+def nombre_clinica(clinica_id):
+    with _conexion() as conn:
+        fila = conn.execute("SELECT nombre FROM clinicas WHERE id = ?", (clinica_id,)).fetchone()
+    return fila[0] if fila else None
+
+
+def renombrar_clinica(clinica_id, nombre):
+    with _conexion() as conn:
+        conn.execute("UPDATE clinicas SET nombre = ? WHERE id = ?", (nombre, clinica_id))
+
+
+def crear_fisio(usuario, password, clinica_id, nombre=None):
+    """Da de alta un fisioterapeuta en una clínica. El usuario no puede coincidir con otro fisio ni con un paciente."""
+    usuario = usuario.strip()
+    if usuario.lower() == USUARIO_FISIO or existe_paciente(usuario):
+        raise ValueError("Ese nombre de usuario ya está en uso")
+    with _conexion() as conn:
+        if conn.execute("SELECT 1 FROM fisios WHERE usuario = ?", (usuario,)).fetchone():
+            raise ValueError("Ese nombre de usuario ya está en uso")
+        if not conn.execute("SELECT 1 FROM clinicas WHERE id = ?", (clinica_id,)).fetchone():
+            raise ValueError("La clínica no existe")
+        cursor = conn.execute("INSERT INTO fisios (usuario, nombre, password_hash, clinica_id) VALUES (?, ?, ?, ?)",
+                              (usuario, nombre or usuario, generar_hash(password), clinica_id))
+        return cursor.lastrowid
+
+
+def usuario_de_fisio(fisio_id):
+    with _conexion() as conn:
+        fila = conn.execute("SELECT usuario FROM fisios WHERE id = ?", (fisio_id,)).fetchone()
+    return fila[0] if fila else None
+
+
+def existe_usuario_fisio(usuario):
+    usuario = (usuario or "").strip()
+    if usuario.lower() == USUARIO_FISIO:
+        return True
+    with _conexion() as conn:
+        return conn.execute("SELECT 1 FROM fisios WHERE usuario = ?", (usuario,)).fetchone() is not None
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# INVITACIONES (alta del paciente por enlace o QR)
+# ──────────────────────────────────────────────────────────────────────────────
+
+def _hash_codigo(codigo):
+    import hashlib
+    return hashlib.sha256(codigo.encode("utf-8")).hexdigest()
+
+
+def crear_invitacion(paciente_id, dias_validez=7):
+    """Crea un código de un solo uso (se devuelve en claro una única vez; en la BBDD solo queda su hash).
+
+    Cada nueva invitación anula las anteriores del mismo paciente.
+    """
+    import secrets
+    codigo = secrets.token_urlsafe(18)
+    caduca = (datetime.datetime.now() + datetime.timedelta(days=dias_validez)).strftime("%Y-%m-%d %H:%M:%S")
+    with _conexion() as conn:
+        conn.execute("DELETE FROM invitaciones WHERE paciente_id = ?", (paciente_id,))
+        conn.execute("INSERT INTO invitaciones (codigo_hash, paciente_id, caduca) VALUES (?, ?, ?)",
+                     (_hash_codigo(codigo), paciente_id, caduca))
+    return codigo, caduca
+
+
+def consultar_invitacion(codigo):
+    """Devuelve (paciente_id, nombre) si el código es válido y no ha caducado; si no, None."""
+    ahora = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    with _conexion() as conn:
+        return conn.execute('''
+            SELECT p.id, p.nombre FROM invitaciones i JOIN pacientes p ON p.id = i.paciente_id
+            WHERE i.codigo_hash = ? AND i.caduca > ?''', (_hash_codigo(codigo or ""), ahora)).fetchone()
+
+
+def usar_invitacion(codigo, nueva_password):
+    """Fija la contraseña del paciente y consume la invitación. Devuelve (paciente_id, nombre) o None."""
+    datos = consultar_invitacion(codigo)
+    if not datos:
+        return None
+    cambiar_password_paciente(datos[0], nueva_password)
+    with _conexion() as conn:
+        conn.execute("DELETE FROM invitaciones WHERE paciente_id = ?", (datos[0],))
+    return datos
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -265,7 +426,7 @@ def borrar_paciente(paciente_id):
         nombre = fila[0]
         # ¿Hay otro paciente con la misma carpeta? (nombres repetidos de BBDD antiguas): entonces no se toca
         otros = [n for (n,) in conn.execute("SELECT nombre FROM pacientes WHERE id != ?", (paciente_id,))]
-        for tabla in ("sesiones", "planes", "consentimientos"):
+        for tabla in ("sesiones", "planes", "consentimientos", "invitaciones"):
             conn.execute(f"DELETE FROM {tabla} WHERE paciente_id = ?", (paciente_id,))
         conn.execute("DELETE FROM pacientes WHERE id = ?", (paciente_id,))
     carpeta = nombre_carpeta_paciente(nombre)

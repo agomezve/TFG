@@ -29,7 +29,8 @@ from fastapi.staticfiles import StaticFiles
 import database
 import ejercicios
 from adherencia import plan_de_hoy, resumen_adherencia
-from config import directorio_datos
+from metricas import metricas_clinica, metricas_paciente
+from config import directorio_datos, nombre_carpeta_paciente
 from informes import buscar_informe_y_video
 from motor import SesionEjercicio
 
@@ -64,6 +65,16 @@ def _usuario(request_o_token, rol=None):
     return usuario
 
 
+def _fisio(request):
+    return _usuario(request, "fisio")
+
+
+def _paciente_de_mi_clinica(fisio, paciente_id):
+    """Un fisio solo ve y toca a los pacientes de su clínica (para el resto, 'no existe')."""
+    if database.clinica_de_paciente(paciente_id) != fisio["clinica_id"]:
+        raise HTTPException(404, "Paciente no encontrado")
+
+
 @app.post("/api/login")
 async def login(request: Request):
     datos = await request.json()
@@ -72,7 +83,11 @@ async def login(request: Request):
         raise HTTPException(401, info)
     token = secrets.token_urlsafe(24)
     if rol == "fisio":
-        _SESIONES[token] = {"rol": "fisio", "id": None, "nombre": "Fisioterapeuta"}
+        # info es None para el fisio de siempre (clínica principal) o los datos del fisio de otra clínica
+        clinica_id = info["clinica_id"] if info else database.CLINICA_PRINCIPAL
+        _SESIONES[token] = {"rol": "fisio", "id": None, "fisio_id": info["fisio_id"] if info else None,
+                            "nombre": (info["nombre"] if info else None) or "Fisioterapeuta",
+                            "clinica_id": clinica_id, "clinica": database.nombre_clinica(clinica_id)}
         return {"token": token, **_SESIONES[token]}
     _SESIONES[token] = {"rol": "paciente", "id": info[0], "nombre": info[1]}
     return {"token": token, **_SESIONES[token], "consentimiento": _consentimiento_vigente(info[0])}
@@ -209,9 +224,9 @@ async def mis_datos(request: Request):
 
 @app.get("/api/fisio/pacientes")
 async def fisio_pacientes(request: Request):
-    _usuario(request, "fisio")
+    fisio = _fisio(request)
     resultado = []
-    for pid, nombre, edad in database.obtener_pacientes():
+    for pid, nombre, edad in database.obtener_pacientes(fisio["clinica_id"]):
         historial = _historial_json(pid)
         plan = database.obtener_plan(pid)
         resultado.append({"id": pid, "nombre": nombre, "edad": edad, "series": len(historial),
@@ -222,31 +237,35 @@ async def fisio_pacientes(request: Request):
 
 @app.post("/api/fisio/pacientes")
 async def fisio_nuevo_paciente(request: Request):
-    _usuario(request, "fisio")
+    fisio = _fisio(request)
     d = await request.json()
     nombre = (d.get("nombre") or "").strip()
     password = d.get("password") or ""
     edad_txt = str(d.get("edad") or "").strip()
-    # Mismas validaciones que el formulario de la app de escritorio
-    if not nombre or not password:
-        raise HTTPException(400, "El nombre y la contraseña son obligatorios")
-    if nombre.lower() == database.USUARIO_FISIO:
+    # Mismas validaciones que el formulario de la app de escritorio. La contraseña es opcional:
+    # si se deja vacía, el paciente la crea él mismo con el enlace o el QR de invitación.
+    if not nombre:
+        raise HTTPException(400, "El nombre es obligatorio")
+    if nombre.lower() == database.USUARIO_FISIO or database.existe_usuario_fisio(nombre):
         raise HTTPException(400, "Ese nombre está reservado")
     if database.existe_paciente(nombre):
         raise HTTPException(400, "Ya existe un paciente con ese nombre")
-    if len(password) < 6:
-        raise HTTPException(400, "La contraseña debe tener al menos 6 caracteres")
-    if password != d.get("password2"):
-        raise HTTPException(400, "Las contraseñas no coinciden")
+    if password or d.get("password2"):
+        if len(password) < 6:
+            raise HTTPException(400, "La contraseña debe tener al menos 6 caracteres")
+        if password != d.get("password2"):
+            raise HTTPException(400, "Las contraseñas no coinciden")
     if edad_txt and not edad_txt.isdigit():
         raise HTTPException(400, "La edad debe ser un número")
-    pid = database.crear_paciente(nombre, int(edad_txt) if edad_txt else None, (d.get("notas") or "").strip(), password=password)
-    return {"id": pid, "nombre": nombre}
+    # Sin contraseña se pone una aleatoria que nadie conoce (nunca la inicial "12345")
+    pid = database.crear_paciente(nombre, int(edad_txt) if edad_txt else None, (d.get("notas") or "").strip(),
+                                  password=password or secrets.token_urlsafe(16), clinica_id=fisio["clinica_id"])
+    return {"id": pid, "nombre": nombre, "invitacion": None if password else _nueva_invitacion(request, pid)}
 
 
 @app.get("/api/fisio/pacientes/{paciente_id}/historial")
 async def fisio_historial(request: Request, paciente_id: int):
-    _usuario(request, "fisio")
+    _paciente_de_mi_clinica(_fisio(request), paciente_id)
     historial = _historial_json(paciente_id)
     plan = database.obtener_plan(paciente_id)
     consentimiento = database.obtener_consentimiento(paciente_id)
@@ -256,16 +275,10 @@ async def fisio_historial(request: Request, paciente_id: int):
                                "vigente": consentimiento[0] == VERSION_CONSENTIMIENTO} if consentimiento else None}
 
 
-def _paciente_existe(paciente_id):
-    if not any(pid == paciente_id for pid, _, _ in database.obtener_pacientes()):
-        raise HTTPException(404, "Paciente no encontrado")
-
-
 @app.put("/api/fisio/pacientes/{paciente_id}/plan")
 async def fisio_guardar_plan(request: Request, paciente_id: int):
     """El fisio receta el plan: lista de {ejercicio, nivel, series (1-10), dias_semana (1-7)}."""
-    _usuario(request, "fisio")
-    _paciente_existe(paciente_id)
+    _paciente_de_mi_clinica(_fisio(request), paciente_id)
     items = (await request.json()).get("plan")
     if not isinstance(items, list):
         raise HTTPException(400, "Formato de plan no válido")
@@ -289,10 +302,9 @@ async def fisio_guardar_plan(request: Request, paciente_id: int):
 @app.delete("/api/fisio/pacientes/{paciente_id}")
 async def fisio_borrar_paciente(request: Request, paciente_id: int):
     """Derecho de supresión: borra al paciente con todas sus sesiones, informes y vídeos."""
-    _usuario(request, "fisio")
+    _paciente_de_mi_clinica(_fisio(request), paciente_id)
     d = await request.json()
     nombre = database.obtener_nombre_paciente(paciente_id)
-    _paciente_existe(paciente_id)
     if (d.get("confirmacion") or "").strip().lower() != nombre.lower():
         raise HTTPException(400, "Escribe el nombre del paciente para confirmar")
     await run_in_threadpool(database.borrar_paciente, paciente_id)
@@ -304,13 +316,13 @@ async def fisio_borrar_paciente(request: Request, paciente_id: int):
 
 @app.get("/api/fisio/pacientes/{paciente_id}/progreso.png")
 async def fisio_progreso(request: Request, paciente_id: int, ejercicio: str):
-    _usuario(request, "fisio")
+    _paciente_de_mi_clinica(_fisio(request), paciente_id)
     return await run_in_threadpool(_png_progreso, paciente_id, ejercicio)
 
 
 @app.get("/api/fisio/serie")
 async def fisio_serie(request: Request, paciente_id: int, fecha: str, ejercicio: str, idx: int, ts: str = None):
-    _usuario(request, "fisio")
+    _paciente_de_mi_clinica(_fisio(request), paciente_id)
     nombre = database.obtener_nombre_paciente(paciente_id)
     ruta_txt, ruta_vid = buscar_informe_y_video(nombre, fecha, ejercicio, idx, ts)
     informe = None
@@ -325,27 +337,138 @@ async def fisio_serie(request: Request, paciente_id: int, fecha: str, ejercicio:
 
 @app.get("/api/fisio/video")
 async def fisio_video(request: Request, ruta: str):
-    _usuario(request, "fisio")
+    fisio = _fisio(request)
     base = os.path.realpath(os.path.join(directorio_datos(), "usuarios"))
     completa = os.path.realpath(os.path.join(directorio_datos(), ruta))
     if not completa.startswith(base + os.sep) or not completa.endswith(".mp4") or not os.path.exists(completa):
+        raise HTTPException(404, "Vídeo no encontrado")
+    carpeta = os.path.relpath(completa, base).split(os.sep)[0]
+    if carpeta not in {nombre_carpeta_paciente(n) for _, n, _ in database.obtener_pacientes(fisio["clinica_id"])}:
         raise HTTPException(404, "Vídeo no encontrado")
     return FileResponse(completa, media_type="video/mp4")
 
 
 @app.post("/api/fisio/password")
 async def fisio_password(request: Request):
-    _usuario(request, "fisio")
+    fisio = _fisio(request)
     d = await request.json()
     nueva = d.get("nueva") or ""
-    if database.autenticar(database.USUARIO_FISIO, d.get("actual"))[0] != "fisio":
+    usuario = database.usuario_de_fisio(fisio["fisio_id"]) if fisio["fisio_id"] else database.USUARIO_FISIO
+    if database.autenticar(usuario, d.get("actual"))[0] != "fisio":
         raise HTTPException(400, "La contraseña actual no es correcta")
     if len(nueva) < 6:
         raise HTTPException(400, "La nueva contraseña debe tener al menos 6 caracteres")
     if nueva != d.get("nueva2"):
         raise HTTPException(400, "Las contraseñas no coinciden")
-    database.cambiar_password_fisio(nueva)
+    database.cambiar_password_fisio(nueva, fisio["fisio_id"])
     return {"ok": True}
+
+
+# ─── Métricas del piloto e informe PDF ────────────────────────────────────────
+
+def _metricas(clinica_id):
+    filas = []
+    for pid, nombre, edad in database.obtener_pacientes(clinica_id):
+        m = metricas_paciente(database.obtener_plan(pid), _historial_json(pid))
+        filas.append({"id": pid, "nombre": nombre, "edad": edad, **m})
+    return {"clinica": database.nombre_clinica(clinica_id), "generado": datetime.date.today().isoformat(),
+            "resumen": metricas_clinica(filas), "pacientes": filas}
+
+
+@app.get("/api/fisio/metricas")
+async def fisio_metricas(request: Request):
+    """Resultados del piloto en la clínica: uso, adherencia y evolución de la técnica."""
+    return await run_in_threadpool(_metricas, _fisio(request)["clinica_id"])
+
+
+@app.get("/api/fisio/metricas.csv")
+async def fisio_metricas_csv(request: Request):
+    """Lo mismo en CSV (Excel en español: separador ';'), una fila por paciente."""
+    import csv
+    datos = await run_in_threadpool(_metricas, _fisio(request)["clinica_id"])
+    columnas = [("id", "ID"), ("nombre", "Paciente"), ("edad", "Edad"), ("primera", "Primera sesión"),
+                ("ultima", "Última sesión"), ("semanas", "Semanas de uso"), ("series", "Series"),
+                ("dias_activos", "Días activos"), ("dias_por_semana", "Días por semana"),
+                ("series_7d", "Series últimos 7 días"), ("adherencia", "Adherencia 7 días (%)"),
+                ("correcto_inicio", "% correcto 1.ª semana"), ("correcto_final", "% correcto última semana"),
+                ("mejora", "Mejora (puntos)")]
+    salida = io.StringIO()
+    escritor = csv.writer(salida, delimiter=";")
+    escritor.writerow([titulo for _, titulo in columnas])
+    for fila in datos["pacientes"]:
+        escritor.writerow(["" if fila[c] is None else str(fila[c]).replace(".", ",") if isinstance(fila[c], float) else fila[c]
+                           for c, _ in columnas])
+    nombre = f"metricas_piloto_{datos['generado']}.csv"
+    return Response("\ufeff" + salida.getvalue(), media_type="text/csv; charset=utf-8",
+                    headers={"Content-Disposition": f'attachment; filename="{nombre}"'})
+
+
+def _pdf_paciente(clinica_id, paciente_id):
+    from informe_pdf import generar_informe
+    historial = _historial_json(paciente_id)
+    plan = database.obtener_plan(paciente_id)
+    edad = next((e for pid, _, e in database.obtener_pacientes(clinica_id) if pid == paciente_id), None)
+    return generar_informe({"nombre": database.obtener_nombre_paciente(paciente_id), "edad": edad},
+                           database.nombre_clinica(clinica_id), historial, plan_de_hoy(plan, historial),
+                           resumen_adherencia(plan, historial), metricas_paciente(plan, historial))
+
+
+@app.get("/api/fisio/pacientes/{paciente_id}/informe.pdf")
+async def fisio_informe_pdf(request: Request, paciente_id: int):
+    fisio = _fisio(request)
+    _paciente_de_mi_clinica(fisio, paciente_id)
+    pdf = await run_in_threadpool(_pdf_paciente, fisio["clinica_id"], paciente_id)
+    nombre = f"informe_{nombre_carpeta_paciente(database.obtener_nombre_paciente(paciente_id))}_{datetime.date.today()}.pdf"
+    return Response(pdf, media_type="application/pdf", headers={"Content-Disposition": f'inline; filename="{nombre}"'})
+
+
+# ─── Invitaciones: el paciente crea su contraseña con un enlace o un QR ──────────
+
+def _nueva_invitacion(request, paciente_id):
+    codigo, caduca = database.crear_invitacion(paciente_id)
+    return {"codigo": codigo, "caduca": caduca}
+
+
+@app.post("/api/fisio/pacientes/{paciente_id}/invitacion")
+async def fisio_invitacion(request: Request, paciente_id: int):
+    """Genera (o regenera) la invitación de un paciente. Anula las anteriores y su contraseña sigue igual
+    hasta que la use."""
+    _paciente_de_mi_clinica(_fisio(request), paciente_id)
+    return _nueva_invitacion(request, paciente_id)
+
+
+@app.get("/api/fisio/qr.svg")
+async def fisio_qr(request: Request, texto: str):
+    import segno
+    _fisio(request)
+    salida = io.BytesIO()
+    segno.make(texto, error="m").save(salida, kind="svg", scale=8, border=2, dark="#111", light="#fff")
+    return Response(salida.getvalue(), media_type="image/svg+xml", headers={"Cache-Control": "no-store"})
+
+
+@app.get("/api/invitacion/{codigo}")
+async def ver_invitacion(codigo: str):
+    datos = database.consultar_invitacion(codigo)
+    if not datos:
+        raise HTTPException(404, "La invitación no es válida o ha caducado. Pide a tu fisioterapeuta una nueva.")
+    return {"nombre": datos[1], "clinica": database.nombre_clinica(database.clinica_de_paciente(datos[0]))}
+
+
+@app.post("/api/invitacion/{codigo}")
+async def usar_invitacion(request: Request, codigo: str):
+    """El paciente elige su contraseña y entra directamente en la app."""
+    d = await request.json()
+    password = d.get("password") or ""
+    if len(password) < 6:
+        raise HTTPException(400, "La contraseña debe tener al menos 6 caracteres")
+    if password != d.get("password2"):
+        raise HTTPException(400, "Las contraseñas no coinciden")
+    datos = database.usar_invitacion(codigo, password)
+    if not datos:
+        raise HTTPException(404, "La invitación no es válida o ha caducado. Pide a tu fisioterapeuta una nueva.")
+    token = secrets.token_urlsafe(24)
+    _SESIONES[token] = {"rol": "paciente", "id": datos[0], "nombre": datos[1]}
+    return {"token": token, **_SESIONES[token], "consentimiento": _consentimiento_vigente(datos[0])}
 
 
 # ──────────────────────────────────────────────────────────────────────────────

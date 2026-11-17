@@ -9,7 +9,7 @@ import datetime
 import sys
 import ejercicios
 from config import directorio_datos, nombre_carpeta_paciente, abrir_con_aplicacion_del_sistema
-from database import (obtener_pacientes, crear_paciente, obtener_historial_paciente, autenticar,
+from database import (CLINICA_PRINCIPAL, obtener_pacientes, crear_paciente, obtener_historial_paciente, autenticar,
                       existe_paciente, cambiar_password_fisio)
 from modulos.camara_iphone import seleccionar_camara
 from motor import dibujar_landmarks_filtrados, convertir_grabacion_a_mp4
@@ -85,7 +85,10 @@ class AppRehabilitacion(ctk.CTk):
         # Las credenciales se comprueban contra la BBDD (contraseñas guardadas con hash).
         rol, datos = autenticar(self.entry_usuario.get(), self.entry_password.get())
 
-        if rol == "fisio":
+        if rol == "fisio" and datos:
+            # Fisios de otras clínicas: solo app móvil (el escritorio es de la clínica principal)
+            self.lbl_error.configure(text="Los fisioterapeutas de otras clínicas entran desde la app móvil")
+        elif rol == "fisio":
             self.mostrar_dashboard_fisio()
         elif rol == "paciente":
             self.paciente_activo_id, self.paciente_activo_nombre = datos
@@ -707,7 +710,7 @@ class AppRehabilitacion(ctk.CTk):
         lbl_titulo = ctk.CTkLabel(self.main_panel, text="Seleccione un Paciente", font=ctk.CTkFont(size=24, weight="bold"))
         lbl_titulo.pack(pady=(0, 20))
 
-        self.pacientes = obtener_pacientes()  # Siempre la lista actualizada
+        self.pacientes = obtener_pacientes(CLINICA_PRINCIPAL)  # Siempre la lista actualizada
         if not self.pacientes:
             ctk.CTkLabel(self.main_panel, text="Todavía no hay pacientes.\nPulsa «➕ Nuevo paciente» para dar de alta el primero.",
                          font=ctk.CTkFont(size=16)).pack(pady=40)

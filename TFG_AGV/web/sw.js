@@ -1,6 +1,6 @@
 // Service worker mínimo: permite instalar la app en el móvil y abrirla sin conexión
 // (muestra la pantalla de inicio). Los datos y el análisis siempre van al servidor.
-const CACHE = "telerehab-v2";
+const CACHE = "telerehab-v3";
 const ESTATICOS = ["/", "/static/app.css", "/static/app.js", "/static/icono-192.png", "/static/icono.svg"];
 
 self.addEventListener("install", (e) => {

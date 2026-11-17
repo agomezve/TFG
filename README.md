@@ -32,12 +32,15 @@ Las dos comparten base de datos, módulos de análisis, informes y grabaciones.
 - **Privacidad** (app móvil): consentimiento informado antes de grabar, descarga de sus datos y retirada del consentimiento.
 
 **Fisioterapeuta**
-- Alta de pacientes con contraseña propia.
+- Alta de pacientes con contraseña propia o **por invitación** (app móvil): un enlace o un QR de un solo uso, válido 7 días, con el que el paciente crea su contraseña desde su móvil.
 - **Plan por paciente** (app móvil): qué ejercicios, en qué nivel, cuántas series al día y cuántos días por semana.
 - **Adherencia y alertas** (app móvil): % de cumplimiento del plan en los últimos 7 días y aviso de los pacientes que requieren atención. Se avisa si un paciente lleva días sin entrenar, si cumple poco el plan o si repite errores en un ejercicio.
 - Calendario de sesiones por paciente.
 - Detalle de cada serie, con informe clínico y grabación.
 - Gráfica de evolución diaria: repeticiones correctas o con error y % de ejecución correcta.
+- **Informe PDF de evolución** (app móvil): adherencia, plan, avisos, gráficas por ejercicio y listado de series, listo para imprimir o adjuntar a la historia clínica.
+- **Resultados del piloto** (app móvil): pacientes activos, adherencia media, días de entreno por semana y evolución de la técnica entre la primera y la última semana, con descarga en CSV para Excel.
+- **Varias clínicas:** cada clínica tiene sus fisios y solo ve a sus pacientes. Se dan de alta con `python scripts/crear_clinica.py` (ver `--help`). El usuario `fisio` de siempre es la clínica principal.
 - Cambio de contraseña del fisioterapeuta.
 - Borrado de un paciente con todos sus datos (derecho de supresión).
 
@@ -105,6 +108,8 @@ python -m unittest discover -s tests -v
 | `motor.py` | Bucle de una serie (preparación, evaluación, cortafuegos, objetivo y grabación), común a escritorio y móvil |
 | `informes.py` | Localiza el informe y el vídeo de cada serie |
 | `adherencia.py` | Plan de hoy, % de adherencia y alertas para el fisio (funciones puras) |
+| `metricas.py` | Resultados del piloto por paciente y por clínica (funciones puras) |
+| `informe_pdf.py` | Informe PDF de evolución del paciente (matplotlib) |
 | `Dockerfile` + `despliegue/` | Imagen para la nube y guía para publicarla con dominio y HTTPS |
 | `modulos/` | Un módulo de análisis biomecánico por ejercicio (hereda de `modulo_base.py`) |
 | `ejercicios.py` | Catálogo único de ejercicios: módulo, carpeta de informes y vídeo |

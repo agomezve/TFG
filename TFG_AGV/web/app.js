@@ -8,11 +8,6 @@ const S = { token: null, usuario: null, ejercicios: null };
 const app = document.getElementById("app");
 
 const NOMBRES = { Propiocepcion: "Propiocepción", Bulgaras: "Búlgaras" };
-const EMOJIS = {
-  "Sentadilla": "🦵", "Peso Muerto": "🏋️", "Press Militar": "🙌", "Press Banca": "💪",
-  "Plancha": "⏱️", "Propiocepcion": "🦩", "Hombros Laterales": "🤸", "Hip Thrust": "🌉",
-  "Zancadas": "🚶", "Bulgaras": "🪑",
-};
 const NIVELES = [["principiante", "Principiante"], ["intermedio", "Intermedio"], ["avanzado", "Avanzado"]];
 const MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
 
@@ -20,6 +15,25 @@ const nombreVisible = (n) => NOMBRES[n] || n;
 const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const fechaCorta = (iso) => { const [a, m, d] = iso.slice(0, 10).split("-"); return `${+d} ${MESES[+m - 1]} ${a}`; };
 const esPorTiempo = (ej) => ej === "Plancha" || ej === "Propiocepcion";
+
+// Icono de línea del sprite de index.html
+const ic = (nombre, clase = "") => `<svg class="ic ${clase}" aria-hidden="true"><use href="#i-${nombre}"/></svg>`;
+// Miniatura del ejercicio (fotograma del vídeo explicativo), con sello de "hecho"
+function miniatura(nombreEj, hecho = false) {
+  const ej = (S.ejercicios || []).find((e) => e.nombre === nombreEj);
+  return `<span class="miniatura">${ej && ej.portada ? `<img src="${ej.portada}" alt="" loading="lazy">` : ic("actividad")}
+    ${hecho ? `<span class="sello-ok">${ic("check")}</span>` : ""}</span>`;
+}
+// Avatar con la inicial y un color estable por nombre
+const COLORES_AV = ["#0E8A7E", "#2563EB", "#7C3AED", "#DB2777", "#EA580C", "#0891B2", "#4D7C0F", "#9333EA"];
+function avatar(nombre) {
+  let h = 0; for (const c of nombre) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  return `<span class="av" style="background:${COLORES_AV[h % COLORES_AV.length]}">${esc(nombre.slice(0, 1).toUpperCase())}</span>`;
+}
+const vacioHtml = (icono, texto) => `<div class="vacio"><span class="ic-vacio">${ic(icono, "gr")}</span>${texto}</div>`;
+const DIAS = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
+const MESES_L = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+const hoyLargo = () => { const d = new Date(); return `${DIAS[d.getDay()]}, ${d.getDate()} de ${MESES_L[d.getMonth()]}`; };
 
 function guardar(clave, valor) { try { valor == null ? localStorage.removeItem(clave) : localStorage.setItem(clave, JSON.stringify(valor)); } catch (_) { } }
 function leer(clave) { try { return JSON.parse(localStorage.getItem(clave)); } catch (_) { return null; } }
@@ -67,8 +81,8 @@ function inicio(vista) { pila.length = 0; pila.push(vista); history.replaceState
 
 function cabecera(titulo, { atras = true, derecha = "" } = {}) {
   return `<header class="cabecera">
-    ${atras ? `<button class="btn-icono" data-atras aria-label="Volver">←</button>` : ""}
-    <h1>${esc(titulo)}</h1>${derecha}</header>`;
+    ${atras ? `<button class="btn-icono" data-atras aria-label="Volver">${ic("atras")}</button>` : ""}
+    ${titulo === null ? `<span class="marca-mini"><img src="/static/icono.svg" alt="">TeleRehab</span>` : `<h1>${esc(titulo)}</h1>`}${derecha}</header>`;
 }
 function pintar(html, alPintar) {
   app.innerHTML = html;
@@ -97,7 +111,7 @@ function pantallaLogin() {
     <div class="marca">
       <img src="/static/icono-192.png" alt="">
       <h1>TeleRehab IA</h1>
-      <p>Tu rehabilitación en casa, corregida en tiempo real por visión artificial.</p>
+      <p>Tu rehabilitación en casa, guiada por tu fisioterapeuta y corregida en tiempo real.</p>
     </div>
     <form id="f-login" autocomplete="on" novalidate>
       <div class="campo"><label for="u">Usuario</label>
@@ -107,6 +121,7 @@ function pantallaLogin() {
       <p class="error" id="err"></p>
       <button class="btn" type="submit">Entrar</button>
     </form>
+    <p class="sello">${ic("escudo", "mini")} Tus datos de salud solo los ve tu fisioterapeuta</p>
   </main>`, () => {
     document.getElementById("f-login").onsubmit = async (e) => {
       e.preventDefault();
@@ -150,7 +165,7 @@ async function pantallaConsentimiento() {
   try { version = (await api("/api/consentimiento")).version_actual; } catch (e) { return; }
   pintar(`<main class="pantalla">${cabecera("Tu privacidad", { atras: false })}
     <div class="contenido sin-tabs">
-      <div class="saludo"><h2>Antes de empezar 🔒</h2><p>Tus datos de salud son tuyos. Así es como los cuidamos.</p></div>
+      <div class="saludo"><h2>Antes de empezar</h2><p>Tus datos de salud son tuyos. Así es como los cuidamos.</p></div>
       <div class="tarjeta privacidad-txt">${TEXTO_PRIVACIDAD}</div>
       <label class="check"><input type="checkbox" id="acepto">
         <span>He leído la información y doy mi consentimiento para que se traten mis datos de salud con esta finalidad.</span></label>
@@ -173,10 +188,10 @@ async function pantallaConsentimiento() {
 function hojaCuentaPaciente() {
   abrirHoja(`<h2>Mi cuenta</h2>
     <div class="lista">
-      <button class="item" id="c-pass"><span class="emoji">🔑</span><span class="txt"><b>Cambiar contraseña</b></span><span class="flecha">›</span></button>
-      <button class="item" id="c-priv"><span class="emoji">🔒</span><span class="txt"><b>Privacidad y mis datos</b><small>Descargar, retirar consentimiento</small></span><span class="flecha">›</span></button>
+      <button class="item" id="c-pass"><span class="emoji">${ic("llave")}</span><span class="txt"><b>Cambiar contraseña</b></span><span class="flecha">${ic("flecha")}</span></button>
+      <button class="item" id="c-priv"><span class="emoji">${ic("escudo")}</span><span class="txt"><b>Privacidad y mis datos</b><small>Descargar, retirar consentimiento</small></span><span class="flecha">${ic("flecha")}</span></button>
     </div>
-    <div class="fila-btns" style="margin-top:14px"><button class="btn secundario" id="c-salir">Cerrar sesión</button></div>`, (hoja) => {
+    <div class="fila-btns" style="margin-top:14px"><button class="btn secundario" id="c-salir">${ic("salir", "peq")} Cerrar sesión</button></div>`, (hoja) => {
     hoja.querySelector("#c-salir").onclick = () => { cerrarHoja(); cerrarSesion(); };
     hoja.querySelector("#c-pass").onclick = hojaPasswordPaciente;
     hoja.querySelector("#c-priv").onclick = hojaPrivacidadPaciente;
@@ -200,7 +215,7 @@ function hojaPasswordPaciente() {
       const v = (id) => hoja.querySelector(id).value;
       try {
         await api("/api/mi-password", { method: "POST", body: JSON.stringify({ actual: v("#a-act"), nueva: v("#a-n1"), nueva2: v("#a-n2") }) });
-        cerrarHoja(); aviso("✅ Contraseña cambiada");
+        cerrarHoja(); aviso("Contraseña cambiada");
       } catch (err) { hoja.querySelector("#a-err").textContent = err.message; }
     };
   });
@@ -213,7 +228,7 @@ async function hojaPrivacidadPaciente() {
     <div class="privacidad-txt">${TEXTO_PRIVACIDAD}</div>
     <p class="receta">${c.fecha ? `Consentimiento aceptado el ${fechaCorta(c.fecha)}.` : ""}</p>
     <div class="fila-btns" style="margin-top:12px">
-      <button class="btn secundario" id="p-descargar">⬇️ Descargar mis datos</button>
+      <button class="btn secundario" id="p-descargar">${ic("descargar", "peq")} Descargar mis datos</button>
     </div>
     <div class="zona-peligro">
       <p>Si retiras el consentimiento no se grabarán más series hasta que lo vuelvas a aceptar. Para borrar todos tus datos, pídeselo a tu fisioterapeuta.</p>
@@ -259,7 +274,7 @@ function resumen(historial) {
 
 function tabs(actual, opciones) {
   return `<nav class="tabs" style="--n:${opciones.length}">${opciones.map(([id, icono, texto]) =>
-    `<button data-tab="${id}" ${id === actual ? 'aria-current="page"' : ""}><span>${icono}</span>${texto}</button>`).join("")}</nav>`;
+    `<button data-tab="${id}" ${id === actual ? 'aria-current="page"' : ""}>${ic(icono)}${texto}</button>`).join("")}</nav>`;
 }
 
 async function pacienteInicio(tab) {
@@ -270,70 +285,97 @@ async function pacienteInicio(tab) {
   S.plan = plan.plan;
 
   const r = resumen(historial);
-  const cuenta = `<button class="btn-icono" id="cuenta" aria-label="Mi cuenta" title="Mi cuenta">👤</button>`;
-  const pestañas = tabs(tab, [["hoy", "🏃", "Hoy"], ["progreso", "📈", "Mi progreso"]]);
+  const cuenta = `<button class="btn-icono avatar" id="cuenta" aria-label="Mi cuenta" title="Mi cuenta">${esc((S.usuario.nombre || "?").slice(0, 1).toUpperCase())}</button>`;
+  const pestañas = tabs(tab, [["hoy", "actividad", "Hoy"], ["progreso", "tendencia", "Mi progreso"]]);
+  // Días seguidos entrenando (hoy o ayer cuentan para no romper la racha por la mañana)
+  const diasHechos = new Set(historial.map((s) => s.fecha.slice(0, 10)));
+  let racha = 0;
+  for (let d = new Date(), i = 0; i < 400; i++, d.setDate(d.getDate() - 1)) {
+    const iso = new Date(d.getTime() - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
+    if (diasHechos.has(iso)) racha++; else if (i > 0) break;
+  }
 
   if (tab === "hoy") {
     const ultima = {};
     historial.forEach((s) => { ultima[s.ejercicio] ||= s.fecha; });
     const enPlan = new Set(plan.plan.map((p) => p.ejercicio));
-    const pendientes = plan.plan.filter((p) => !p.completado_hoy).length;
+    const pendientesLista = plan.plan.filter((p) => !p.completado_hoy);
+    const pendientes = pendientesLista.length;
     const itemEjercicio = (e) => `
           <button class="item" data-ej="${esc(e.nombre)}">
-            <span class="emoji">${EMOJIS[e.nombre] || "🏃"}</span>
+            ${miniatura(e.nombre)}
             <span class="txt"><b>${esc(nombreVisible(e.nombre))}</b>
               <small>${e.por_tiempo ? "30 segundos" : "10 repeticiones"} · ${ultima[e.nombre] ? "último: " + fechaCorta(ultima[e.nombre]) : "sin hacer aún"}</small></span>
-            <span class="flecha">›</span>
+            <span class="flecha">${ic("flecha")}</span>
           </button>`;
     const itemPlan = (p) => {
       const pct = Math.min(100, Math.round((100 * p.hechas_hoy) / p.series));
       return `<button class="item ${p.completado_hoy ? "hecho" : ""}" data-ej="${esc(p.ejercicio)}">
-        <span class="emoji">${p.completado_hoy ? "✅" : EMOJIS[p.ejercicio] || "🏃"}</span>
+        ${miniatura(p.ejercicio, p.completado_hoy)}
         <span class="txt"><b>${esc(nombreVisible(p.ejercicio))}</b>
           <small>${Math.min(p.hechas_hoy, p.series)} de ${p.series} ${p.series === 1 ? "serie" : "series"} hoy · ${esc(p.nivel)}</small>
           <span class="progreso" aria-hidden="true"><i style="width:${pct}%"></i></span></span>
-        <span class="flecha">›</span></button>`;
+        <span class="flecha">${ic("flecha")}</span></button>`;
     };
-    let saludo;
-    if (!plan.plan.length) saludo = r.semana ? `Llevas ${r.semana} ${r.semana === 1 ? "serie" : "series"} esta semana. ¡Sigue así!` : "Elige un ejercicio para empezar tu sesión de hoy.";
-    else if (!pendientes) saludo = "¡Plan de hoy completado! 🎉 Buen trabajo.";
-    else saludo = `Hoy te ${pendientes === 1 ? "queda 1 ejercicio" : `quedan ${pendientes} ejercicios`} de tu plan.`;
+    const seriesHoy = plan.plan.reduce((a, p) => a + Math.min(p.hechas_hoy, p.series), 0);
+    const seriesObjetivo = plan.plan.reduce((a, p) => a + p.series, 0);
+    const pctHoy = seriesObjetivo ? Math.round((100 * seriesHoy) / seriesObjetivo) : 0;
+    // ~1 min por serie de 10 reps o 30 s, más el descanso
+    const minutos = Math.max(1, Math.round(pendientesLista.reduce((a, p) => a + (p.series - Math.min(p.hechas_hoy, p.series)) * 1.5, 0)));
 
-    const bloquePlan = plan.plan.length ? `
-        <div class="tarjeta semana">
-          <div class="anillo" style="--p:${plan.adherencia ?? 0}"><b>${plan.adherencia ?? 0}%</b></div>
-          <div><b>Tu semana</b><p>${plan.plan.reduce((a, p) => a + Math.min(p.hechas_semana, p.objetivo_semana), 0)} de ${plan.plan.reduce((a, p) => a + p.objetivo_semana, 0)} series del plan en los últimos 7 días</p></div>
-        </div>
-        <h3 class="seccion-tit">Tu plan de hoy</h3>
+    const heroe = plan.plan.length ? `
+        <section class="heroe">
+          <div class="sup">
+            <div><small>Sesión de hoy</small>
+              <h3>${pendientes ? `${pendientes} ${pendientes === 1 ? "ejercicio pendiente" : "ejercicios pendientes"}` : "¡Plan de hoy completado!"}</h3>
+              <p>${pendientes ? `${seriesObjetivo - seriesHoy} series · unos ${minutos} min` : "Buen trabajo. Tu fisioterapeuta ya puede ver tus series."}</p></div>
+            <div class="anillo" style="--p:${pctHoy}" aria-label="${pctHoy}% del plan de hoy"><b>${pctHoy}%</b></div>
+          </div>
+          ${pendientes ? `<button class="btn claro" id="empezar-hoy">${ic("play", "peq")} ${seriesHoy ? "Continuar sesión" : "Empezar sesión de hoy"}</button>`
+        : `<div class="hecho">${ic("medalla")} Vuelve mañana para seguir con tu plan</div>`}
+        </section>
+        <div class="stats">
+          <div class="stat"><span class="ic-caja">${ic("diana", "peq")}</span><div><b>${plan.adherencia ?? 0}%</b><span>de tu plan esta semana</span></div></div>
+          <div class="stat"><span class="ic-caja ambar">${ic("llama", "peq")}</span><div><b>${racha} ${racha === 1 ? "día" : "días"}</b><span>seguidos entrenando</span></div></div>
+        </div>`
+      : `<section class="heroe">
+          <div class="sup"><div><small>Empieza cuando quieras</small><h3>Elige un ejercicio</h3>
+            <p>Mira el vídeo, colócate delante de la cámara y la app te corrige en directo.</p></div></div>
+        </section>
+        <div class="stats">
+          <div class="stat"><span class="ic-caja">${ic("actividad", "peq")}</span><div><b>${r.semana}</b><span>series esta semana</span></div></div>
+          <div class="stat"><span class="ic-caja ambar">${ic("llama", "peq")}</span><div><b>${racha} ${racha === 1 ? "día" : "días"}</b><span>seguidos entrenando</span></div></div>
+        </div>`;
+
+    const bloqueListas = plan.plan.length ? `
+        <h3 class="seccion-tit">Tu plan de hoy <small>${seriesHoy}/${seriesObjetivo} series</small></h3>
         <div class="lista">${plan.plan.map(itemPlan).join("")}</div>
         <h3 class="seccion-tit">Otros ejercicios</h3>
         <div class="lista">${lista.filter((e) => !enPlan.has(e.nombre)).map(itemEjercicio).join("")}</div>`
-      : `<div class="kpis">
-          <div class="kpi"><b>${r.semana}</b><span>series esta semana</span></div>
-          <div class="kpi"><b>${r.dias}</b><span>días entrenados</span></div>
-          <div class="kpi"><b>${r.correcto ?? "–"}${r.correcto != null ? "%" : ""}</b><span>ejecución correcta</span></div>
-        </div>
-        <h3 class="seccion-tit">Tus ejercicios</h3>
+      : `<h3 class="seccion-tit">Tus ejercicios</h3>
         <div class="lista">${lista.map(itemEjercicio).join("")}</div>`;
 
-    pintar(`<main class="pantalla">${cabecera("TeleRehab", { atras: false, derecha: cuenta })}
+    pintar(`<main class="pantalla">${cabecera(null, { atras: false, derecha: cuenta })}
       <div class="contenido">
-        <div class="saludo"><h2>Hola, ${esc(S.usuario.nombre)} 👋</h2><p>${saludo}</p></div>
-        ${bloquePlan}
+        <div class="saludo"><p class="fecha">${hoyLargo()}</p><h2>Hola, ${esc(S.usuario.nombre)}</h2></div>
+        ${heroe}
+        ${bloqueListas}
       </div>${pestañas}</main>`, () => {
       app.querySelectorAll("[data-ej]").forEach((b) => (b.onclick = () => ir(() => detalleEjercicio(b.dataset.ej))));
+      const empezar = document.getElementById("empezar-hoy");
+      if (empezar) empezar.onclick = () => ir(() => detalleEjercicio(pendientesLista[0].ejercicio));
     });
   } else {
     const hechos = lista.filter((e) => historial.some((s) => s.ejercicio === e.nombre));
     pintar(`<main class="pantalla">${cabecera("Mi progreso", { atras: false, derecha: cuenta })}
       <div class="contenido">
         <div class="kpis" style="margin-top:6px">
-          <div class="kpi"><b>${r.series}</b><span>series totales</span></div>
-          <div class="kpi"><b>${r.dias30}</b><span>días (últimos 30)</span></div>
-          <div class="kpi"><b>${r.correcto ?? "–"}${r.correcto != null ? "%" : ""}</b><span>ejecución correcta</span></div>
+          <div class="kpi">${ic("actividad", "peq")}<b>${r.series}</b><span>series totales</span></div>
+          <div class="kpi">${ic("calendario", "peq")}<b>${r.dias30}</b><span>días (últimos 30)</span></div>
+          <div class="kpi">${ic("check-circulo", "peq")}<b>${r.correcto ?? "–"}${r.correcto != null ? "%" : ""}</b><span>ejecución correcta</span></div>
         </div>
-        ${hechos.length ? bloqueProgreso(hechos.map((e) => e.nombre), historial, (ej) => `/api/mi-progreso.png?ejercicio=${encodeURIComponent(ej)}&token=${S.token}`)
-        : `<div class="vacio"><span class="emoji">📊</span>Cuando completes tu primera serie verás aquí tu evolución.</div>`}
+        ${hechos.length ? bloqueProgreso(hechos.map((e) => e.nombre), historial)
+        : vacioHtml("tendencia", "Cuando completes tu primera serie verás aquí tu evolución.")}
       </div>${pestañas}</main>`, () => activarProgreso());
   }
   document.getElementById("cuenta").onclick = hojaCuentaPaciente;
@@ -341,26 +383,60 @@ async function pacienteInicio(tab) {
 }
 
 /* Gráfica + lista por días de un ejercicio, con chips para cambiar de ejercicio. */
-function bloqueProgreso(nombres, historial, urlGrafica) {
+function bloqueProgreso(nombres, historial) {
   const html = `<h3 class="seccion-tit">Evolución por ejercicio</h3>
     <div class="chips" role="group" aria-label="Ejercicio">${nombres.map((n, i) =>
     `<button class="chip" data-chip="${esc(n)}" aria-pressed="${i === 0}">${esc(nombreVisible(n))}</button>`).join("")}</div>
     <div id="zona-progreso"></div>`;
-  bloqueProgreso.ctx = { historial, urlGrafica };
+  bloqueProgreso.ctx = { historial };
   return html;
 }
+
+/* Gráfica SVG: total diario (parte correcta y con error) y % de ejecución correcta.
+   Se dibuja en el navegador para que siga el tema claro/oscuro y se vea nítida en cualquier pantalla. */
+function graficaEvolucion(series, ej) {
+  const porDia = {};
+  series.forEach((s) => { const d = (porDia[s.fecha.slice(0, 10)] ||= [0, 0]); d[0] += s.repeticiones; d[1] += Math.min(s.errores, s.repeticiones); });
+  const dias = Object.keys(porDia).sort().slice(-14);
+  const W = 340, H = 190, iz = 30, de = 30, ar = 12, ab = 26;
+  const ancho = W - iz - de, alto = H - ar - ab;
+  const max = Math.max(1, ...dias.map((d) => porDia[d][0]));
+  const paso = ancho / dias.length, barra = Math.min(22, paso * 0.62);
+  const y = (v) => ar + alto - (alto * v) / max;
+  const yp = (p) => ar + alto - (alto * p) / 100;
+  const marcas = [0, Math.round(max / 2), max];
+  let svg = marcas.map((m) => `<line class="eje" x1="${iz}" x2="${W - de}" y1="${y(m)}" y2="${y(m)}" ${m ? 'stroke-dasharray="3 4"' : ""}/>
+    <text x="${iz - 6}" y="${y(m) + 3}" text-anchor="end">${m}</text>`).join("");
+  svg += [0, 50, 100].map((p) => `<text x="${W - de + 6}" y="${yp(p) + 3}">${p}%</text>`).join("");
+  const puntos = [];
+  dias.forEach((d, i) => {
+    const [tot, err] = porDia[d], ok = tot - err, cx = iz + paso * i + paso / 2;
+    if (ok) svg += `<rect class="b-ok" x="${cx - barra / 2}" y="${y(tot)}" width="${barra}" height="${y(err) - y(tot)}" rx="3"/>`;
+    if (err) svg += `<rect class="b-mal" x="${cx - barra / 2}" y="${y(err)}" width="${barra}" height="${ar + alto - y(err)}" rx="3"/>`;
+    if (i % Math.ceil(dias.length / 7) === 0 || i === dias.length - 1)
+      svg += `<text x="${cx}" y="${H - 8}" text-anchor="middle">${+d.slice(8, 10)} ${MESES[+d.slice(5, 7) - 1]}</text>`;
+    if (tot) puntos.push([cx, yp((100 * ok) / tot)]);  // un día sin repeticiones no es un 0 % de técnica
+  });
+  if (puntos.length > 1) svg += `<polyline class="linea" points="${puntos.map((p) => p.join(",")).join(" ")}"/>`;
+  svg += puntos.map(([cx, cy]) => `<circle class="punto" cx="${cx}" cy="${cy}" r="3.2"/>`).join("");
+  return `<div class="tarjeta grafica-svg">
+    <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Evolución de ${esc(nombreVisible(ej))} en los últimos ${dias.length} días entrenados">${svg}</svg>
+    <div class="leyenda"><span><i class="l-ok"></i>Correctas</span><span><i class="l-mal"></i>Con error</span><span><i class="l-pct"></i>% correcto</span>
+      <span style="margin-left:auto">${esPorTiempo(ej) ? "segundos" : "repeticiones"} por día</span></div></div>`;
+}
+
 function activarProgreso() {
   const chips = app.querySelectorAll("[data-chip]");
   if (!chips.length) return;
   const mostrar = (ej) => {
     chips.forEach((c) => c.setAttribute("aria-pressed", c.dataset.chip === ej));
-    const { historial, urlGrafica } = bloqueProgreso.ctx;
+    const { historial } = bloqueProgreso.ctx;
     const series = historial.filter((s) => s.ejercicio === ej);
     const porDia = {};
     series.forEach((s) => (porDia[s.fecha.slice(0, 10)] ||= []).unshift(s));
     const unidad = (n) => esPorTiempo(ej) ? "s" : (n === 1 ? " rep" : " reps");
     document.getElementById("zona-progreso").innerHTML = `
-      <img class="grafica" alt="Gráfica de evolución de ${esc(nombreVisible(ej))}" src="${urlGrafica(ej)}">
+      ${graficaEvolucion(series, ej)}
       <h3 class="seccion-tit">Historial</h3>
       <div class="lista">${Object.keys(porDia).sort().reverse().slice(0, 30).map((d) => `
         <div class="tarjeta dia"><h3>${fechaCorta(d)} <span class="etiqueta">${porDia[d].length} ${porDia[d].length === 1 ? "serie" : "series"}</span></h3>
@@ -379,17 +455,25 @@ async function detalleEjercicio(nombre, mensajeError) {
   let nivel = (recetado && recetado.nivel) || leer("nivel:" + nombre) || "principiante";
   pintar(`<main class="pantalla">${cabecera(nombreVisible(nombre))}
     <div class="contenido sin-tabs">
-      ${mensajeError ? `<div class="alerta">⚠️ ${esc(mensajeError)}</div>` : ""}
-      ${recetado ? `<div class="tarjeta" style="margin-bottom:14px"><b>📋 Recetado por tu fisioterapeuta</b>
-        <p class="receta" style="margin-top:4px">${recetado.series} ${recetado.series === 1 ? "serie" : "series"} al día · ${recetado.dias_semana} ${recetado.dias_semana === 1 ? "día" : "días"} por semana · nivel ${esc(recetado.nivel)}.
-        Hoy llevas ${Math.min(recetado.hechas_hoy, recetado.series)} de ${recetado.series}.</p></div>` : ""}
-      <video class="video-explicativo" src="${ej.video}" controls playsinline preload="metadata" ${mensajeError ? "autoplay" : ""}></video>
+      ${mensajeError ? `<div class="alerta">${ic("alerta")}<span>${esc(mensajeError)}</span></div>` : ""}
+      ${recetado ? `<div class="tarjeta receta-fisio"><span class="ic-caja">${ic("plan", "peq")}</span><div><b>Pautado por tu fisioterapeuta</b>
+        <p class="receta" style="margin-top:2px">${recetado.series} ${recetado.series === 1 ? "serie" : "series"} al día · ${recetado.dias_semana} ${recetado.dias_semana === 1 ? "día" : "días"} por semana.
+        Hoy llevas ${Math.min(recetado.hechas_hoy, recetado.series)} de ${recetado.series}.</p></div></div>` : ""}
+      <div class="marco-video">
+        <video class="video-explicativo" src="${ej.video}" ${ej.portada ? `poster="${ej.portada}"` : ""} controls playsinline muted loop autoplay preload="auto"></video>
+        <span class="marca-agua">${ic("play-circulo", "mini")} Cómo se hace</span>
+      </div>
+      <div class="pauta">
+        <span>${ic(ej.por_tiempo ? "reloj" : "repeticiones", "mini")} ${ej.por_tiempo ? "30 segundos" : "10 repeticiones"}</span>
+        <span>${ic("camara", "mini")} Te corrige en directo</span>
+        <span>${ic("alerta", "mini")} Para tras 3 errores</span>
+      </div>
       <h3 class="seccion-tit">Antes de empezar</h3>
       <ul class="consejos">${ej.consejos.map((c) => `<li>${esc(c)}</li>`).join("")}</ul>
       <h3 class="seccion-tit">Nivel</h3>
       <div class="segmentado" role="group" aria-label="Nivel">${NIVELES.map(([id, txt]) =>
     `<button data-nivel="${id}" aria-pressed="${id === nivel}">${txt}</button>`).join("")}</div>
-      <div class="pie-fijo"><button class="btn" id="empezar">▶ Empezar serie</button></div>
+      <div class="pie-fijo"><button class="btn" id="empezar">${ic("play", "peq")} Empezar serie</button></div>
     </div></main>`, () => {
     app.querySelectorAll("[data-nivel]").forEach((b) => (b.onclick = () => {
       nivel = b.dataset.nivel; guardar("nivel:" + nombre, nivel);
@@ -404,11 +488,11 @@ function elegirFuente(ej, nivel) {
   abrirHoja(`<h2>¿Cómo quieres hacer la serie?</h2>
     <div class="lista">
       ${hayCamara ? `
-      <button class="item" data-fuente="user"><span class="emoji">🤳</span><span class="txt"><b>Cámara frontal</b><small>Apoya el móvil y ponte delante</small></span><span class="flecha">›</span></button>
-      <button class="item" data-fuente="environment"><span class="emoji">📷</span><span class="txt"><b>Cámara trasera</b><small>Si otra persona te graba</small></span><span class="flecha">›</span></button>`
+      <button class="item" data-fuente="user"><span class="emoji">${ic("selfie")}</span><span class="txt"><b>Cámara frontal</b><small>Apoya el móvil y ponte delante</small></span><span class="flecha">${ic("flecha")}</span></button>
+      <button class="item" data-fuente="environment"><span class="emoji">${ic("camara")}</span><span class="txt"><b>Cámara trasera</b><small>Si otra persona te graba</small></span><span class="flecha">${ic("flecha")}</span></button>`
       : `<div class="alerta">Para usar la cámara abre la app con <b>https</b> o desde este mismo ordenador (localhost).</div>`}
-      <button class="item" data-fuente="archivo"><span class="emoji">🎞️</span><span class="txt"><b>Analizar un vídeo</b><small>Un vídeo grabado de tu ejercicio</small></span><span class="flecha">›</span></button>
-      <button class="item" data-fuente="ejemplo"><span class="emoji">🎬</span><span class="txt"><b>Probar con el vídeo de ejemplo</b><small>Demostración: analiza el vídeo explicativo</small></span><span class="flecha">›</span></button>
+      <button class="item" data-fuente="archivo"><span class="emoji">${ic("subir")}</span><span class="txt"><b>Analizar un vídeo</b><small>Un vídeo grabado de tu ejercicio</small></span><span class="flecha">${ic("flecha")}</span></button>
+      <button class="item" data-fuente="ejemplo"><span class="emoji">${ic("play-circulo")}</span><span class="txt"><b>Probar con el vídeo de ejemplo</b><small>Demostración: analiza el vídeo explicativo</small></span><span class="flecha">${ic("flecha")}</span></button>
     </div>
     <input type="file" id="archivo" accept="video/*" hidden>
     <button class="btn fantasma" data-cerrar style="margin-top:8px">Cancelar</button>`, (hoja) => {
@@ -417,7 +501,7 @@ function elegirFuente(ej, nivel) {
     hoja.querySelectorAll("[data-fuente]").forEach((b) => (b.onclick = () => {
       const f = b.dataset.fuente;
       if (f === "archivo") return input.click();
-      if (f === "ejemplo") return ir(() => serieDirecto(ej, nivel, { tipo: "video", url: ej.video }));
+      if (f === "ejemplo") return ir(() => serieDirecto(ej, nivel, { tipo: "video", url: ej.video_analisis || ej.video }));
       ir(() => serieDirecto(ej, nivel, { tipo: "camara", modo: f }));
     }));
   });
@@ -429,7 +513,7 @@ let limpiezaDirecto = null;
 async function serieDirecto(ej, nivel, fuente) {
   pintar(`<div class="directo">
     <div class="barra-sup">
-      <button class="btn-icono" id="cerrar" aria-label="Detener y salir">✕</button>
+      <button class="btn-icono" id="cerrar" aria-label="Detener y salir">${ic("cerrar")}</button>
       <h2>${esc(nombreVisible(ej.nombre))} · ${esc(nivel)}</h2>
       <span class="pildora" id="errores">0/3 errores</span>
     </div>
@@ -439,7 +523,7 @@ async function serieDirecto(ej, nivel, fuente) {
       <div class="mensaje" id="mensaje">Preparando la cámara…</div>
     </div>
     <div class="barra-inf">
-      <button class="btn peligro" id="detener">■ Terminar serie</button>
+      <button class="btn peligro" id="detener">${ic("parar", "peq")} Terminar serie</button>
     </div></div>`);
 
   const video = document.getElementById("entrada");
@@ -541,7 +625,7 @@ async function serieDirecto(ej, nivel, fuente) {
     if (d.estado === "completado" || d.estado === "cortafuegos") {
       terminado = true; mensaje.textContent = "Guardando la serie…"; return;
     }
-    if (!terminado) mensaje.textContent = d.persona_detectada ? "" : "No te veo bien 👀 Colócate como indican los consejos.";
+    if (!terminado) mensaje.textContent = d.persona_detectada ? "" : "No te veo bien. Colócate como indican los consejos.";
     enVuelo = Math.max(0, enVuelo - 1);
     queueMicrotask(enviar);
   };
@@ -549,18 +633,18 @@ async function serieDirecto(ej, nivel, fuente) {
 
 function resultadoSerie(ej, nivel, resultado) {
   const textos = {
-    completado: ["🎉", "¡Serie completada!", "Muy bien hecho. Tu fisioterapeuta ya puede ver el informe y el vídeo de la serie."],
-    cortafuegos: ["⚠️", "Paramos para cuidarte", "Vuelve a ver el vídeo explicativo para mejorar la técnica en el ejercicio."],
-    detenido: ["💾", "Serie guardada", "Has terminado la serie antes de tiempo. La hemos guardado igualmente."],
+    completado: ["check-circulo", "", "¡Serie completada!", "Muy bien hecho. Tu fisioterapeuta ya puede ver el informe y el vídeo de la serie."],
+    cortafuegos: ["alerta", "ambar", "Paramos para cuidarte", "Vuelve a ver el vídeo explicativo para mejorar la técnica en el ejercicio."],
+    detenido: ["guardar", "azul", "Serie guardada", "Has terminado la serie antes de tiempo. La hemos guardado igualmente."],
   };
-  const [icono, titulo, texto] = textos[resultado] || textos.detenido;
+  const [icono, tono, titulo, texto] = textos[resultado] || textos.detenido;
   hablar(titulo);
   pintar(`<main class="pantalla resultado">
-    <div class="grande">${icono}</div><h2>${titulo}</h2><p>${texto}</p>
+    <div class="grande ${tono}">${ic(icono)}</div><h2>${titulo}</h2><p>${texto}</p>
     <div class="fila-btns">
       ${resultado === "cortafuegos"
-      ? `<button class="btn" id="b1">🎬 Ver vídeo explicativo</button>`
-      : `<button class="btn" id="b1">↻ Hacer otra serie</button>`}
+      ? `<button class="btn" id="b1">${ic("play-circulo", "peq")} Ver vídeo explicativo</button>`
+      : `<button class="btn" id="b1">${ic("repetir", "peq")} Hacer otra serie</button>`}
       <button class="btn secundario" id="b2">Volver a mi plan</button>
     </div></main>`, () => {
     document.getElementById("b1").onclick = () => resultado === "cortafuegos"
@@ -575,9 +659,9 @@ function resultadoSerie(ej, nivel, resultado) {
       const linea = document.createElement("p");
       linea.className = "receta";
       linea.textContent = item.completado_hoy
-        ? `✅ Has completado las ${item.series} series de hoy de ${nombreVisible(ej.nombre)}.`
+        ? `Has completado las ${item.series} series de hoy de ${nombreVisible(ej.nombre)}.`
         : `Llevas ${item.hechas_hoy} de ${item.series} series de hoy de ${nombreVisible(ej.nombre)}.`;
-      document.querySelector(".resultado p")?.after(linea);
+      document.querySelector(".resultado > p")?.after(linea);
     }).catch(() => { });
   });
 }
@@ -587,8 +671,8 @@ async function fisioInicio() {
   pintar(`<div class="cargando">Cargando…</div>`);
   let pacientes;
   try { pacientes = await api("/api/fisio/pacientes"); } catch (e) { return pintar(`<div class="vacio">${esc(e.message)}</div>`); }
-  const ajustes = `<span class="acciones-cab"><button class="btn-icono" id="metricas" aria-label="Resultados del piloto">📊</button>
-    <button class="btn-icono" id="ajustes" aria-label="Ajustes">⚙︎</button></span>`;
+  const ajustes = `<span class="acciones-cab"><button class="btn-icono" id="metricas" aria-label="Resultados del piloto" title="Resultados del piloto">${ic("grafica")}</button>
+    <button class="btn-icono" id="ajustes" aria-label="Ajustes" title="Ajustes">${ic("ajustes")}</button></span>`;
   const activos = pacientes.filter((p) => p.ultima && p.ultima.slice(0, 10) >= new Date(Date.now() - 7 * 864e5).toISOString().slice(0, 10)).length;
   const conPlan = pacientes.filter((p) => p.adherencia != null);
   const adhMedia = conPlan.length ? Math.round(conPlan.reduce((a, p) => a + p.adherencia, 0) / conPlan.length) : null;
@@ -597,34 +681,34 @@ async function fisioInicio() {
   const atencion = pacientes.filter((p) => urgencia(p) < 2).sort((a, b) => urgencia(a) - urgencia(b));
   pintar(`<main class="pantalla">${cabecera("Mis pacientes", { atras: false, derecha: ajustes })}
     <div class="contenido sin-tabs">
-      ${S.usuario.clinica ? `<p class="clinica">🏥 ${esc(S.usuario.clinica)}</p>` : ""}
+      ${S.usuario.clinica ? `<p class="clinica">${ic("clinica", "mini")} ${esc(S.usuario.clinica)}</p>` : ""}
       <div class="kpis" style="margin:6px 0 4px">
-        <div class="kpi"><b>${pacientes.length}</b><span>pacientes</span></div>
-        <div class="kpi"><b>${activos}</b><span>activos esta semana</span></div>
-        <div class="kpi"><b>${adhMedia ?? "–"}${adhMedia != null ? "%" : ""}</b><span>adherencia media al plan</span></div>
+        <div class="kpi">${ic("usuarios", "peq")}<b>${pacientes.length}</b><span>pacientes</span></div>
+        <div class="kpi">${ic("actividad", "peq")}<b>${activos}</b><span>activos esta semana</span></div>
+        <div class="kpi">${ic("diana", "peq")}<b>${adhMedia ?? "–"}${adhMedia != null ? "%" : ""}</b><span>adherencia media al plan</span></div>
       </div>
       ${atencion.length ? `<h3 class="seccion-tit">Requieren atención (${atencion.length})</h3>
       <div class="atencion">${atencion.slice(0, 5).map((p) => {
         const a = p.alertas.find((x) => x.gravedad !== "info");
         return `<button class="aviso-pac ${a.gravedad}" data-pac="${p.id}"><span class="punto"></span>
           <span class="txt"><b>${esc(p.nombre)}</b><span>${esc(a.texto)}${p.alertas.filter((x) => x.gravedad !== "info").length > 1 ? " · y más" : ""}</span></span>
-          <span class="flecha">›</span></button>`;
+          <span class="flecha">${ic("flecha")}</span></button>`;
       }).join("")}</div>` : ""}
       <h3 class="seccion-tit">Todos</h3>
-      <input class="buscador" id="buscar" type="search" placeholder="🔍  Buscar paciente" aria-label="Buscar paciente">
+      <div class="buscador-caja">${ic("buscar", "peq")}<input class="buscador" id="buscar" type="search" placeholder="Buscar paciente" aria-label="Buscar paciente"></div>
       <div class="lista" id="lista"></div>
-      <div class="pie-fijo"><button class="btn" id="nuevo">＋ Nuevo paciente</button></div>
+      <div class="pie-fijo"><button class="btn" id="nuevo">${ic("usuario-mas", "peq")} Nuevo paciente</button></div>
     </div></main>`, () => {
     const pintarLista = (filtro = "") => {
       const f = filtro.trim().toLowerCase();
       const visibles = pacientes.filter((p) => p.nombre.toLowerCase().includes(f));
       document.getElementById("lista").innerHTML = visibles.length ? visibles.map((p) => `
         <button class="item" data-pac="${p.id}">
-          <span class="emoji">${esc(p.nombre.slice(0, 1).toUpperCase())}</span>
+          ${avatar(p.nombre)}
           <span class="txt"><b>${esc(p.nombre)}</b>
             <small>${p.edad ? p.edad + " años · " : ""}${p.series} series · ${p.ultima ? "última: " + fechaCorta(p.ultima) : "sin sesiones"}</small></span>
           ${etiquetaAdherencia(p.adherencia)}</button>`).join("")
-        : `<div class="vacio"><span class="emoji">🧑‍⚕️</span>${pacientes.length ? "Ningún paciente coincide." : "Aún no tienes pacientes. Da de alta el primero."}</div>`;
+        : vacioHtml("usuarios", pacientes.length ? "Ningún paciente coincide." : "Aún no tienes pacientes. Da de alta el primero.");
       app.querySelectorAll("[data-pac]").forEach((b) => (b.onclick = () => ir(() => fisioPaciente(+b.dataset.pac, "plan"))));
     };
     pintarLista();
@@ -665,7 +749,7 @@ function hojaNuevoPaciente() {
             nombre: v("#n-nombre"), edad: v("#n-edad"), notas: v("#n-notas"), password: v("#n-p1"), password2: v("#n-p2"),
           }),
         });
-        cerrarHoja(); aviso(`✅ ${r.nombre} dado de alta. Ahora asígnale su plan.`);
+        cerrarHoja(); aviso(`${r.nombre} dado de alta. Ahora asígnale su plan.`);
         ir(() => fisioPaciente(r.id, "plan"));
         if (r.invitacion) setTimeout(() => hojaInvitacion(r.nombre, r.invitacion), 400);
       } catch (err) { hoja.querySelector("#n-err").textContent = err.message; }
@@ -683,8 +767,8 @@ function hojaAjustesFisio() {
       </div>
       <p class="error" id="a-err"></p>
       <div class="fila-btns">
-        <button class="btn" type="submit">🔑 Cambiar contraseña</button>
-        <button class="btn secundario" type="button" id="salir">Cerrar sesión</button>
+        <button class="btn" type="submit">${ic("llave", "peq")} Cambiar contraseña</button>
+        <button class="btn secundario" type="button" id="salir">${ic("salir", "peq")} Cerrar sesión</button>
       </div>
     </form>`, (hoja) => {
     hoja.querySelector("#salir").onclick = () => { cerrarHoja(); cerrarSesion(); };
@@ -693,7 +777,7 @@ function hojaAjustesFisio() {
       const v = (id) => hoja.querySelector(id).value;
       try {
         await api("/api/fisio/password", { method: "POST", body: JSON.stringify({ actual: v("#a-act"), nueva: v("#a-n1"), nueva2: v("#a-n2") }) });
-        cerrarHoja(); aviso("✅ Contraseña cambiada");
+        cerrarHoja(); aviso("Contraseña cambiada");
       } catch (err) { hoja.querySelector("#a-err").textContent = err.message; }
     };
   });
@@ -705,8 +789,8 @@ async function fisioPaciente(id, tab) {
   try { datos = await api(`/api/fisio/pacientes/${id}/historial`); } catch (e) { return pintar(`<div class="vacio">${esc(e.message)}</div>`); }
   const { nombre, sesiones } = datos;
   const r = resumen(sesiones);
-  const pestañas = tabs(tab, [["plan", "📋", "Plan"], ["progreso", "📈", "Progreso"], ["sesiones", "🗓️", "Sesiones"]]);
-  const vacio = `<div class="vacio"><span class="emoji">🗓️</span>${esc(nombre)} todavía no tiene entrenamientos registrados.</div>`;
+  const pestañas = tabs(tab, [["plan", "plan", "Plan"], ["progreso", "tendencia", "Progreso"], ["sesiones", "calendario", "Sesiones"]]);
+  const vacio = vacioHtml("calendario", `${esc(nombre)} todavía no tiene entrenamientos registrados.`);
   let cuerpo;
 
   if (tab === "plan") {
@@ -714,22 +798,22 @@ async function fisioPaciente(id, tab) {
   } else if (tab === "progreso") {
     const nombresEj = [...new Set(sesiones.map((s) => s.ejercicio))];
     cuerpo = `<div class="kpis" style="margin-top:6px">
-        <div class="kpi"><b>${r.series}</b><span>series</span></div>
-        <div class="kpi"><b>${r.dias30}</b><span>días (últ. 30)</span></div>
-        <div class="kpi"><b>${r.correcto ?? "–"}${r.correcto != null ? "%" : ""}</b><span>correcto</span></div>
+        <div class="kpi">${ic("actividad", "peq")}<b>${r.series}</b><span>series</span></div>
+        <div class="kpi">${ic("calendario", "peq")}<b>${r.dias30}</b><span>días (últ. 30)</span></div>
+        <div class="kpi">${ic("check-circulo", "peq")}<b>${r.correcto ?? "–"}${r.correcto != null ? "%" : ""}</b><span>correcto</span></div>
       </div>
-      ${sesiones.length ? bloqueProgreso(nombresEj, sesiones, (ej) => `/api/fisio/pacientes/${id}/progreso.png?ejercicio=${encodeURIComponent(ej)}&token=${S.token}`) : vacio}`;
+      ${sesiones.length ? bloqueProgreso(nombresEj, sesiones) : vacio}`;
   } else {
     const porDia = {};
     sesiones.forEach((s) => (porDia[s.fecha.slice(0, 10)] ||= []).unshift(s));
     cuerpo = sesiones.length ? `<div class="lista" style="margin-top:6px">${Object.keys(porDia).sort().reverse().map((d) => {
       const porEj = {};
       porDia[d].forEach((s) => (porEj[s.ejercicio] ||= []).push(s));
-      return `<div class="tarjeta dia"><h3>📅 ${fechaCorta(d)} <span class="etiqueta">${porDia[d].length} ${porDia[d].length === 1 ? "serie" : "series"}</span></h3>
+      return `<div class="tarjeta dia"><h3>${fechaCorta(d)} <span class="etiqueta">${porDia[d].length} ${porDia[d].length === 1 ? "serie" : "series"}</span></h3>
         ${Object.entries(porEj).map(([ej, lista]) => lista.map((s, i) => `
           <div class="serie"><span><b>${esc(nombreVisible(ej))}</b> · serie ${i + 1}<br>
             <small class="etiqueta ${s.errores ? "mal" : "ok"}">${s.repeticiones}${esPorTiempo(ej) ? "s" : (s.repeticiones === 1 ? " rep" : " reps")} · ${s.errores} ${s.errores === 1 ? "error" : "errores"} · ${esc(s.nivel)}</small></span>
-            <button data-serie='${esc(JSON.stringify({ fecha: d, ejercicio: ej, idx: i, ts: s.fecha }))}'>Informe</button></div>`).join("")).join("")}
+            <button data-serie='${esc(JSON.stringify({ fecha: d, ejercicio: ej, idx: i, ts: s.fecha }))}'>${ic("video", "mini")} Informe</button></div>`).join("")).join("")}
       </div>`;
     }).join("")}</div>` : vacio;
   }
@@ -759,7 +843,7 @@ async function fisioPlan(id, datos, pestañas) {
   const filas = lista.map((e) => {
     const s = estado[e.nombre], p = porEj[e.nombre];
     return `<div class="fila-plan ${s.activo ? "activa" : ""}" data-fila="${esc(e.nombre)}">
-      <div class="cab"><span>${EMOJIS[e.nombre] || "🏃"}</span><b>${esc(nombreVisible(e.nombre))}
+      <div class="cab">${miniatura(e.nombre)}<b>${esc(nombreVisible(e.nombre))}
         ${p ? `<br><small class="receta" style="font-weight:400">${p.hechas_semana}/${p.objetivo_semana} series esta semana</small>` : ""}</b>
         <label class="interruptor"><input type="checkbox" data-activo="${esc(e.nombre)}" ${s.activo ? "checked" : ""} aria-label="Incluir ${esc(nombreVisible(e.nombre))} en el plan"><span></span></label></div>
       <div class="ajustes">
@@ -775,21 +859,21 @@ async function fisioPlan(id, datos, pestañas) {
     ${plan.length ? `<div class="tarjeta semana" style="margin-top:6px">
       <div class="anillo" style="--p:${adherencia ?? 0}"><b>${adherencia ?? 0}%</b></div>
       <div><b>Adherencia al plan</b><p>Series hechas de las recetadas en los últimos 7 días</p></div></div>`
-      : `<div class="alerta" style="margin-top:6px">📋 ${esc(nombre)} todavía no tiene plan. Activa los ejercicios que debe hacer y pulsa <b>Guardar plan</b>.</div>`}
+      : `<div class="alerta" style="margin-top:6px">${ic("info")}<span>${esc(nombre)} todavía no tiene plan. Activa los ejercicios que debe hacer y pulsa <b>Guardar plan</b>.</span></div>`}
     ${alertasReales.length ? `<h3 class="seccion-tit">Alertas</h3><div class="atencion">${alertasReales.map((a) =>
         `<div class="aviso-pac ${a.gravedad}"><span class="punto"></span><span class="txt">${esc(a.texto)}</span></div>`).join("")}</div>` : ""}
     <h3 class="seccion-tit">Ejercicios recetados</h3>
     <div class="lista">${filas}</div>
-    <div class="pie-fijo" style="bottom:calc(70px + var(--seguro-abajo))"><button class="btn" id="guardar-plan">💾 Guardar plan</button></div>
+    <div class="pie-fijo" style="bottom:calc(70px + var(--seguro-abajo))"><button class="btn" id="guardar-plan">${ic("guardar", "peq")} Guardar plan</button></div>
     <div class="tarjeta acceso">
-      <div><b>📲 Acceso del paciente</b><p>Envíale un enlace o enséñale el QR para que entre desde su móvil y cree su contraseña.</p></div>
+      <div><b>${ic("qr", "peq")} Acceso del paciente</b><p>Envíale un enlace o enséñale el QR para que entre desde su móvil y cree su contraseña.</p></div>
       <button class="btn secundario" id="invitar">Invitar</button>
     </div>
     <div class="zona-peligro">
       <h3 class="seccion-tit" style="margin-top:0">Protección de datos</h3>
       <p>${consentimiento ? `Consentimiento ${consentimiento.vigente ? "aceptado" : "de una versión anterior, aceptado"} el ${fechaCorta(consentimiento.fecha)}.` : "El paciente aún no ha aceptado el consentimiento: se le pedirá al entrar en la app."}</p>
       <p>Borrar al paciente elimina para siempre sus sesiones, informes y vídeos (derecho de supresión).</p>
-      <button class="btn borde-rojo" id="borrar">🗑 Borrar paciente y todos sus datos</button>
+      <button class="btn borde-rojo" id="borrar">${ic("papelera", "peq")} Borrar paciente y todos sus datos</button>
     </div>
   </div>${pestañas}</main>`, () => {
     const refrescar = (ej) => {
@@ -807,7 +891,7 @@ async function fisioPlan(id, datos, pestañas) {
       ev.target.disabled = true;
       try {
         await api(`/api/fisio/pacientes/${id}/plan`, { method: "PUT", body: JSON.stringify({ plan: items }) });
-        aviso(items.length ? `✅ Plan guardado: ${items.length} ${items.length === 1 ? "ejercicio" : "ejercicios"}` : "Plan vaciado");
+        aviso(items.length ? `Plan guardado: ${items.length} ${items.length === 1 ? "ejercicio" : "ejercicios"}` : "Plan vaciado");
         fisioPaciente(id, "plan");
       } catch (e) { aviso(e.message); ev.target.disabled = false; }
     };
@@ -849,7 +933,7 @@ async function hojaSerie(id, s) {
     const urlVideo = r.video ? `/api/fisio/video?ruta=${encodeURIComponent(r.video)}&token=${S.token}` : null;
     abrirHoja(`<h2>${esc(nombreVisible(s.ejercicio))} · serie ${s.idx + 1}</h2>
       ${urlVideo ? `<video class="video-serie" src="${urlVideo}" controls playsinline preload="metadata"></video>`
-        : `<div class="alerta">No hay vídeo disponible para esta serie.</div>`}
+        : `<div class="alerta">${ic("info")}<span>No hay vídeo disponible para esta serie.</span></div>`}
       <pre class="informe">${esc(r.informe || "No se encontró el informe en texto para esta serie.")}</pre>
       <button class="btn secundario" data-cerrar style="margin-top:14px">Cerrar</button>`);
   } catch (e) { abrirHoja(`<div class="vacio">${esc(e.message)}</div>`); }
@@ -859,7 +943,7 @@ async function hojaSerie(id, s) {
 // ─── Informe PDF ──────────────────────────────────────────────────────────────
 function botonPdf(id) {
   return `<a class="btn-icono" href="/api/fisio/pacientes/${id}/informe.pdf?token=${encodeURIComponent(S.token)}"
-    target="_blank" rel="noopener" aria-label="Informe PDF" title="Informe PDF">📄</a>`;
+    target="_blank" rel="noopener" aria-label="Informe PDF" title="Informe PDF">${ic("documento")}</a>`;
 }
 
 // ─── Invitación (enlace + QR) ─────────────────────────────────────────────────
@@ -873,14 +957,14 @@ function hojaInvitacion(nombre, inv) {
     <input class="enlace-inv" id="inv-enlace" value="${esc(enlace)}" readonly aria-label="Enlace de invitación">
     <p class="ayuda">Válida hasta el ${caduca} y para un solo uso. Si generas otra, esta deja de valer.</p>
     <div class="fila-btns">
-      <button class="btn" id="inv-compartir">${navigator.share ? "📤 Enviar enlace" : "📋 Copiar enlace"}</button>
+      <button class="btn" id="inv-compartir">${navigator.share ? ic("compartir", "peq") + " Enviar enlace" : ic("copiar", "peq") + " Copiar enlace"}</button>
       <button class="btn fantasma" data-cerrar>Cerrar</button>
     </div>`, (hoja) => {
     hoja.querySelector("#inv-enlace").onclick = (e) => e.target.select();
     hoja.querySelector("#inv-compartir").onclick = async () => {
       const texto = `Hola ${nombre}, este es tu acceso a TeleRehab para hacer en casa los ejercicios que te he pautado:`;
       if (navigator.share) { try { await navigator.share({ title: "TeleRehab", text: texto, url: enlace }); } catch (_) { } return; }
-      try { await navigator.clipboard.writeText(enlace); aviso("📋 Enlace copiado"); }
+      try { await navigator.clipboard.writeText(enlace); aviso("Enlace copiado"); }
       catch (_) { hoja.querySelector("#inv-enlace").select(); aviso("Selecciona el enlace y cópialo"); }
     };
   });
@@ -920,7 +1004,7 @@ async function pantallaInvitacion(codigo) {
           method: "POST", body: JSON.stringify({ password: document.getElementById("i-p1").value, password2: document.getElementById("i-p2").value }),
         });
         S.token = r.token; S.usuario = r; guardar("sesion", r);
-        aviso("✅ Contraseña creada. Guárdala para la próxima vez.");
+        aviso("Contraseña creada. Guárdala para la próxima vez.");
         if (!r.consentimiento) inicio(pantallaConsentimiento); else entrar();
       } catch (err) { document.getElementById("i-err").textContent = err.message; btn.disabled = false; }
     };
@@ -942,7 +1026,7 @@ async function fisioMetricas() {
     </tr>`).join("");
   pintar(`<main class="pantalla">${cabecera("Resultados del piloto")}
     <div class="contenido sin-tabs">
-      ${d.clinica ? `<p class="clinica">🏥 ${esc(d.clinica)}</p>` : ""}
+      ${d.clinica ? `<p class="clinica">${ic("clinica", "mini")} ${esc(d.clinica)}</p>` : ""}
       <div class="kpis" style="margin:6px 0 4px">
         <div class="kpi"><b>${r.pacientes_activos}/${r.pacientes}</b><span>pacientes activos (7 días)</span></div>
         <div class="kpi"><b>${pct(r.adherencia_media)}</b><span>adherencia media al plan</span></div>
@@ -964,7 +1048,7 @@ async function fisioMetricas() {
       <div class="tarjeta tabla-wrap"><table class="tabla-met">
         <thead><tr><th>Paciente</th><th>Series</th><th>Adher.</th><th title="Puntos de % correcto entre la 1.ª y la última semana">Técnica</th></tr></thead>
         <tbody>${filas || `<tr><td colspan="4">Sin pacientes</td></tr>`}</tbody></table></div>
-      <a class="btn secundario" style="margin-top:14px" href="/api/fisio/metricas.csv?token=${encodeURIComponent(S.token)}" download>⬇️ Descargar datos (CSV para Excel)</a>
+      <a class="btn secundario" style="margin-top:14px" href="/api/fisio/metricas.csv?token=${encodeURIComponent(S.token)}" download>${ic("descargar", "peq")} Descargar datos (CSV para Excel)</a>
       <p class="ayuda">Úsalo para el informe del piloto. Contiene datos de salud de tus pacientes: guárdalo en un sitio seguro.</p>
     </div></main>`);
 }

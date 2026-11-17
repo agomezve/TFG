@@ -7,7 +7,7 @@ COLOR_ERROR = "#E74C3C"
 EJERCICIOS_POR_TIEMPO = ("plancha", "propiocepcion")
 
 
-def figura_progreso(historial, ejercicio):
+def figura_progreso(historial, ejercicio, tamano=(9, 4)):
     """Barras apiladas por día de entrenamiento (suma de todas las series del día):
     parte correcta en verde y con error en rojo, más la línea de % de ejecución correcta.
 
@@ -29,13 +29,14 @@ def figura_progreso(historial, ejercicio):
     etiquetas = [f"{d[8:10]}/{d[5:7]}" for d in dias]
     unidad = "segundos" if ejercicio.lower() in EJERCICIOS_POR_TIEMPO else "repeticiones"
 
-    fig = Figure(figsize=(9, 4), dpi=100, facecolor=COLOR_FONDO)
+    fig = Figure(figsize=tamano, dpi=100, facecolor=COLOR_FONDO)
     ax = fig.add_subplot(111)
     ax.set_facecolor(COLOR_FONDO)
     x = list(range(len(dias)))
     ax.bar(x, correctas, color=COLOR_OK, label="Correctas")
     ax.bar(x, errores, bottom=correctas, color=COLOR_ERROR, label="Con error")
-    paso = max(1, len(dias) // 15)
+    max_etiquetas = 15 if tamano[0] >= 9 else 8  # menos fechas en el eje si la gráfica es estrecha (móvil)
+    paso = max(1, len(dias) // max_etiquetas)
     ax.set_xticks(x[::paso])
     ax.set_xticklabels(etiquetas[::paso], rotation=45, ha="right")
     ax.set_xlabel("Día de entrenamiento", color="white")

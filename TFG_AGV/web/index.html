@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0E1116">
+  <meta name="description" content="Telerehabilitación con visión artificial: tu fisioterapeuta te corrige en casa.">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="TeleRehab">
+  <title>TeleRehab IA</title>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/static/icono.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/static/icono-192.png">
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+  <div id="app" aria-live="polite"></div>
+  <div id="hoja" class="hoja" hidden>
+    <div class="hoja-fondo" data-cerrar></div>
+    <div class="hoja-panel" role="dialog" aria-modal="true">
+      <div class="hoja-asa"></div>
+      <div id="hoja-contenido"></div>
+    </div>
+  </div>
+  <div id="aviso" class="aviso" role="status" hidden></div>
+  <script src="/static/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "name": "TeleRehab IA",
+  "short_name": "TeleRehab",
+  "description": "Telerehabilitación con visión artificial: tu fisioterapeuta te corrige en casa.",
+  "lang": "es",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0E1116",
+  "theme_color": "#0E1116",
+  "icons": [
+    { "src": "/static/icono-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/static/icono-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/static/icono.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

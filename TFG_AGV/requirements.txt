@@ -6,3 +6,5 @@ numpy==2.4.6              # Cálculo vectorial de ángulos articulares
 customtkinter==5.2.2      # Interfaz gráfica de escritorio
 pillow==12.2.0            # Conversión de fotogramas para la interfaz
 matplotlib==3.10.9        # Gráficas de progreso en el panel del fisioterapeuta
+fastapi==0.115.6          # Servidor de la app móvil (API + WebSocket)
+uvicorn[standard]==0.32.1 # Servidor ASGI (incluye websockets)

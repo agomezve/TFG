@@ -6,35 +6,20 @@ import os
 import time
 import mediapipe as mp
 import datetime
-import shutil
-import subprocess
 import sys
 import ejercicios
 from config import directorio_datos, nombre_carpeta_paciente, abrir_con_aplicacion_del_sistema
 from database import (obtener_pacientes, crear_paciente, obtener_historial_paciente, autenticar,
                       existe_paciente, cambiar_password_fisio)
 from modulos.camara_iphone import seleccionar_camara
+from motor import dibujar_landmarks_filtrados, convertir_grabacion_a_mp4
+from informes import buscar_informe_y_video
 
 ES_MAC = sys.platform == "darwin"
 NOMBRE_WEBCAM = "📸 Webcam del Mac" if ES_MAC else "📸 Webcam"
 
 ctk.set_appearance_mode("Dark")
 ctk.set_default_color_theme("blue")
-
-def dibujar_landmarks_filtrados(frame, pose_landmarks, indices_relevantes, conexiones_relevantes, color=(245, 66, 230)):
-    """Dibuja en el frame solo los landmarks y conexiones relevantes para el ejercicio."""
-    h, w, _ = frame.shape
-    for a, b in conexiones_relevantes:
-        pt_a = pose_landmarks.landmark[a]
-        pt_b = pose_landmarks.landmark[b]
-        x_a, y_a = int(pt_a.x * w), int(pt_a.y * h)
-        x_b, y_b = int(pt_b.x * w), int(pt_b.y * h)
-        cv2.line(frame, (x_a, y_a), (x_b, y_b), color, 4)
-    for idx in indices_relevantes:
-        pt = pose_landmarks.landmark[idx]
-        cx, cy = int(pt.x * w), int(pt.y * h)
-        cv2.circle(frame, (cx, cy), 6, color, -1)
-        cv2.circle(frame, (cx, cy), 8, (255, 255, 255), 1)
 
 class AppRehabilitacion(ctk.CTk):
     def __init__(self):
@@ -405,77 +390,7 @@ class AppRehabilitacion(ctk.CTk):
         btn_web.pack(pady=15)
 
     # ── Consejos por ejercicio ─────────────────────────────────────────────────
-    CONSEJOS_EJERCICIO = {
-        "Sentadilla": [
-            "📐 Cámara de LADO (lateral), a la altura de tu cadera.",
-            "📏 Sépate al menos 2 m para que se vea el cuerpo entero.",
-            "🦵 Asegúrate de que ambas piernas son visibles en todo momento.",
-            "🔦 Buena iluminación frontal, sin sombras en las piernas.",
-            "👕 Ropa que contraste con el fondo.",
-        ],
-        "Peso Muerto": [
-            "📐 Cámara de LADO (lateral), a la altura de tu cadera.",
-            "📏 Sépate al menos 2 m para que se vean pies, rodillas, caderas y hombros.",
-            "🎯 Oriéntate perpendicular a la cámara (perfil puro, no en diagonal).",
-            "🔦 Iluminación lateral para que el contorno del cuerpo sea nítido.",
-            "🦴 Evita ropa muy holgada que oculte la posición de la cadera.",
-        ],
-        "Press Militar": [
-            "📐 Cámara DE FRENTE (frontal), a la altura de tu pecho.",
-            "📏 Sépate al menos 1.5 m para ver los brazos completamente extendidos.",
-            "💪 Asegúrate de que codos y muñecas son visibles en todo el recorrido.",
-            "🔦 Iluminación uniforme sin sombras sobre los brazos.",
-            "🧍 Manténte centrado en el encuadre durante todo el ejercicio.",
-        ],
-        "Press Banca": [
-            "📐 Cámara de LADO (lateral), a la altura del banco o del suelo.",
-            "📏 Sépate al menos 2 m para ver todo tu cuerpo horizontal.",
-            "🛏️ Asegúrate de que la cámara captura desde la cabeza hasta los pies.",
-            "💪 Los codos y muñecas deben ser visibles en todo el recorrido.",
-            "🔦 Buena iluminación para distinguir brazos y torso del fondo.",
-        ],
-        "Plancha": [
-            "📐 Cámara de LADO (lateral), cerca del suelo o a poca altura.",
-            "📏 Sépate al menos 2 m para ver hombros, cadera y tobillos.",
-            "🎯 Oriéntate perpendicular a la cámara (perfil puro).",
-            "🔦 Iluminación lateral para ver bien la línea del cuerpo.",
-            "🧘 Quédate quieto en el mismo sitio durante todo el ejercicio.",
-        ],
-        "Propiocepcion": [
-            "📐 Cámara DE FRENTE (frontal), a la altura de tu pecho.",
-            "📏 Sépate al menos 2 m para ver el cuerpo entero de cabeza a pies.",
-            "🦵 Fondo despejado y sin movimiento para mejorar la detección.",
-            "👟 Empieza con los dos pies en el suelo y levanta uno al iniciar.",
-            "🔦 Iluminación uniforme sin sombras en el suelo.",
-        ],
-        "Hombros Laterales": [
-            "📐 Cámara DE FRENTE (frontal), a la altura de tu cintura.",
-            "📏 Sépate al menos 1.5 m para ver ambos brazos elevados.",
-            "💪 Asegúrate de que codos y muñecas son visibles al elevar.",
-            "🔦 Iluminación frontal sin sombras sobre los brazos.",
-            "🧍 Manténte centrado en el encuadre durante todo el ejercicio.",
-        ],
-        "Hip Thrust": [
-            "📐 Cámara de LADO (lateral), a la altura del banco o suelo.",
-            "📏 Sépate al menos 2 m para ver hombros, cadera y rodillas.",
-            "🎯 Oriéntate perpendicular a la cámara (perfil puro, no en diagonal).",
-            "🔦 Iluminación lateral para detectar bien la extensión de cadera.",
-        ],
-        "Zancadas": [
-            "📐 Cámara de LADO (lateral), a la altura de tu cadera.",
-            "📏 Sépate al menos 2.5 m para ver ambas piernas en la zancada.",
-            "🦵 Realiza las zancadas en línea recta, no en diagonal.",
-            "🔦 Iluminación lateral para ver bien ambas rodillas.",
-            "👕 Evita ropa similar al fondo, especialmente en las piernas.",
-        ],
-        "Bulgaras": [
-            "📐 Cámara de LADO (lateral), a la altura de tu cadera.",
-            "📏 Sépate al menos 2.5 m para ver ambas piernas.",
-            "🦵 El pie trasero elevado debe ser visible — no debe taparse.",
-            "🎯 Oriéntate perpendicular a la cámara (perfil puro).",
-            "🔦 Buena iluminación lateral para distinguir ambas piernas.",
-        ],
-    }
+    CONSEJOS_EJERCICIO = ejercicios.CONSEJOS
 
     def _trigger_inicio(self, popup, ejercicio, nivel, usar_iphone=False):
         popup.destroy()
@@ -615,38 +530,9 @@ class AppRehabilitacion(ctk.CTk):
         self.video_writer.release()
         self.video_writer = None
 
-        ruta_avi = getattr(self, 'ruta_video_actual', None)
-        frames = getattr(self, 'frames_grabados_vid', 0)
-        inicio = getattr(self, 'inicio_grabacion_vid', None)
-        if not ruta_avi or inicio is None or not os.path.exists(ruta_avi):
-            return
-        duracion = time.time() - inicio
-        if duracion <= 0 or frames <= 0:
-            return
-
-        fps_real = frames / duracion
-        ruta_mp4 = ruta_avi.replace(".avi", ".mp4")
-        convertido = False
-        if shutil.which("ffmpeg"):
-            try:
-                resultado = subprocess.run([
-                    "ffmpeg", "-y", "-r", str(fps_real),
-                    "-i", ruta_avi,
-                    "-c:v", "libx264", "-preset", "ultrafast",
-                    "-pix_fmt", "yuv420p", ruta_mp4
-                ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-                convertido = (resultado.returncode == 0 and os.path.exists(ruta_mp4)
-                              and os.path.getsize(ruta_mp4) > 0)
-            except OSError:
-                convertido = False
-
-        if convertido:
-            os.remove(ruta_avi)
-        else:
-            try:
-                os.rename(ruta_avi, ruta_avi.replace(".avi", f"_fps{fps_real:.2f}.avi"))
-            except OSError:
-                pass
+        convertir_grabacion_a_mp4(getattr(self, 'ruta_video_actual', None),
+                                  getattr(self, 'frames_grabados_vid', 0),
+                                  getattr(self, 'inicio_grabacion_vid', None))
 
     def _disparar_fin_serie(self, nombre_ejercicio):
         """Finaliza la sesión automáticamente al completar el objetivo y muestra mensaje de éxito."""
@@ -931,73 +817,9 @@ class AppRehabilitacion(ctk.CTk):
         for widget in self.main_panel.winfo_children():
             widget.destroy()
             
-        # Buscar el informe y video en la carpeta
-        nombre_pac_limpio = nombre_carpeta_paciente(nombre)
-        carpeta_dia = os.path.join(directorio_datos(), "usuarios", nombre_pac_limpio, fecha)
-        # Los informes los guarda cada módulo en su carpeta (p. ej. "hombro_lateral") y los vídeos
-        # se guardan con el nombre del ejercicio (p. ej. "hombros_laterales"): se buscan ambas.
-        carpeta_ej_informes = os.path.join(carpeta_dia, ejercicios.carpeta_informes(ejercicio))
-        carpeta_ej_videos = os.path.join(carpeta_dia, ejercicio.lower().replace(" ", "_"))
-        carpeta_txt = os.path.join(carpeta_ej_informes, "informes")
-        carpeta_vid = os.path.join(carpeta_ej_videos, "videos")
-        if not os.path.exists(carpeta_txt) and os.path.exists(carpeta_ej_informes):
-            carpeta_txt = carpeta_ej_informes  # Estructura antigua: informes sin subcarpeta
+        # Buscar el informe y el vídeo de la serie (lógica compartida con la app móvil)
+        ruta_txt, ruta_mp4 = buscar_informe_y_video(nombre, fecha, ejercicio, serie_idx, db_timestamp_str)
 
-        archivos_txt = []
-        archivos_mp4 = []
-        if os.path.exists(carpeta_txt):
-            archivos_txt = sorted([f for f in os.listdir(carpeta_txt) if f.endswith(".txt")])
-        if os.path.exists(carpeta_vid):
-            archivos_mp4 = sorted([f for f in os.listdir(carpeta_vid) if f.endswith(".mp4") or f.endswith(".avi")])
-
-        ruta_txt = None
-        ruta_mp4 = None
-        t_txt = None
-
-        def extraer_dt(filename):
-            try:
-                name = filename.rsplit('.', 1)[0]
-                if "_fps" in name:
-                    name = name.split("_fps")[0]
-                parts = name.split('_')
-                d_str = parts[-2]
-                t_str = parts[-1]
-                return datetime.datetime.strptime(f"{d_str}_{t_str}", "%Y-%m-%d_%H-%M-%S")
-            except:
-                return datetime.datetime.min
-                
-        # 1. Intentar buscar el TXT por el timestamp de la BBDD (super preciso, a prueba de borrados)
-        if db_timestamp_str:
-            try:
-                db_t = datetime.datetime.strptime(db_timestamp_str, "%Y-%m-%d %H:%M:%S")
-                min_diff = 999999
-                for txt in archivos_txt:
-                    t = extraer_dt(txt)
-                    diff = abs((db_t - t).total_seconds())
-                    if diff < min_diff and diff <= 15: # Margen de 15 segundos entre BBDD y guardado de archivo
-                        min_diff = diff
-                        ruta_txt = os.path.join(carpeta_txt, txt)
-                        t_txt = t
-            except:
-                pass
-                
-        # 2. Fallback: buscar por índice si no se encontró por fecha (legacy)
-        if not ruta_txt and serie_idx < len(archivos_txt):
-            ruta_txt = os.path.join(carpeta_txt, archivos_txt[serie_idx])
-            t_txt = extraer_dt(archivos_txt[serie_idx])
-            
-        # 3. Si hay TXT, buscar su vídeo correspondiente
-        if ruta_txt and t_txt:
-            video_match = None
-            for vid in archivos_mp4:
-                t_vid = extraer_dt(vid)
-                diff = (t_txt - t_vid).total_seconds()
-                if 0 <= diff <= 1200: 
-                    video_match = vid
-                    
-            if video_match:
-                ruta_mp4 = os.path.join(carpeta_vid, video_match)
-            
         btn_volver = ctk.CTkButton(self.main_panel, text="⬅ Cerrar Detalle", command=lambda: self.mostrar_calendario_paciente_fisio(paciente_id, nombre), fg_color="gray", hover_color="darkgray")
         btn_volver.pack(anchor="nw", pady=10)
         

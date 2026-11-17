@@ -43,3 +43,6 @@ TFG_AGV/datos_demo/
 
 # ── Ficheros temporales de Office ──
 ~$*
+
+# Certificados HTTPS locales de la app móvil
+TFG_AGV/certs/

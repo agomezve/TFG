@@ -123,13 +123,14 @@ async def lista_ejercicios(request: Request):
 
     def recurso(carpeta, archivo):
         # Versión ligera para el móvil (720p, sin audio) y portada, si existen; si no, el original
-        return f"/videos_explicativos/{carpeta}/{archivo}" if os.path.exists(
+        return f"/videos_explicativos/{carpeta + '/' if carpeta else ''}{archivo}" if os.path.exists(
             os.path.join(RAIZ, "videos_explicativos", carpeta, archivo)) else None
 
     return [
         {"nombre": e.nombre,
          "video": recurso("web", e.video_explicativo) or f"/videos_explicativos/{e.video_explicativo}",
-         "video_analisis": f"/videos_explicativos/{e.video_explicativo}",  # el original, para «Probar con el vídeo de ejemplo»
+         # el original, para «Probar con el vídeo de ejemplo» (en la demo en la nube solo está la versión ligera)
+         "video_analisis": recurso("", e.video_explicativo) or recurso("web", e.video_explicativo),
          "portada": recurso("portadas", e.video_explicativo.rsplit(".", 1)[0] + ".jpg"),
          "consejos": ejercicios.CONSEJOS.get(e.nombre, []),
          "por_tiempo": e.nombre in ("Plancha", "Propiocepcion")}
